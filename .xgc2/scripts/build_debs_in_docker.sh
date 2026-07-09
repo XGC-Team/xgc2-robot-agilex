@@ -70,6 +70,11 @@ docker run --rm \
       -o /etc/apt/keyrings/xgc2-archive-keyring.gpg
     echo "deb [signed-by=/etc/apt/keyrings/xgc2-archive-keyring.gpg] ${XGC2_APT_BASE_URL} ${XGC2_APT_DISTRIBUTION} main" \
       > /etc/apt/sources.list.d/xgc2.list
+    apt-get install -y --no-install-recommends gnupg
+    apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE \
+      || apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C8B3A55A6F3EFCDE
+    echo "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo bionic main" \
+      > /etc/apt/sources.list.d/realsense-public.list
     apt-get update
     apt-get install -y --no-install-recommends \
       build-essential \
