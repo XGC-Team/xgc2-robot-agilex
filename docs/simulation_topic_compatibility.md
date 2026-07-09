@@ -1,9 +1,10 @@
 # AgileX Real-Vehicle and Gazebo Topic Compatibility
 
-This note records the current compatibility gap between the recovered AgileX
-real-vehicle ROS 1 stack and the Scout Gazebo simulator. It is intentionally a
-documentation snapshot only; no simulator or onboard package behavior is changed
-by this file.
+This note records the current compatibility state between the recovered AgileX
+real-vehicle ROS 1 stack and the Scout Gazebo simulator after aligning the
+control, chassis status, and IMU ROS interfaces. LiDAR and camera model
+differences are documented but intentionally left out of the current alignment
+scope.
 
 ## Scope
 
@@ -33,18 +34,20 @@ and real-vehicle driver products.
 ## Overall Summary
 
 The current simulator is command-compatible with the Scout chassis at the
-`geometry_msgs/Twist` level, but it is not sensor-compatible with the recovered
-vehicle stack.
+`geometry_msgs/Twist` level. It now also publishes a synthetic
+`scout_msgs/ScoutStatus` compatibility topic and uses the real-vehicle IMU topic
+basename `imu/data_raw`. Namespace policy still differs by launch setup, and the
+simulated sensor hardware remains different from the recovered vehicle stack.
 
 | Interface | Real vehicle | Gazebo simulator | Current match |
 | --- | --- | --- | --- |
 | Motion command | `/cmd_vel` | `/ugv1/cmd_vel` by default | Message-compatible, topic differs |
 | Motion command type | `geometry_msgs/Twist` | `geometry_msgs/Twist` | Compatible |
 | Used command fields | `linear.x`, `angular.z` | `linear.x`, `angular.z` | Compatible |
-| Chassis status | `/scout_status` | no equivalent by default | Missing in simulator |
+| Chassis status | `/scout_status` | `/ugv1/scout_status` by default | Message-compatible, synthetic state |
 | Odometry | driver parameters exist; recovered code has odom publish disabled | `/odom` or `/ugvX/odom` from Gazebo model state | Source differs |
 | TF | real odom-to-base TF path exists but is disabled in recovered code | model-state-based TF plus `robot_state_publisher` | Not equivalent |
-| IMU | `/imu/data_raw`, frame `imu_link` | `imu` under robot namespace, frame `imu_link` | Sensor exists, topic differs |
+| IMU | `/imu/data_raw`, frame `imu_link`, measured about 200 Hz | `/ugv1/imu/data_raw` by default, frame `imu_link`, 200 Hz | Message/frame/rate-compatible, source differs |
 | 3D LiDAR | RoboSense `RSHELIOS_16`, `/rslidar_points`, frame `rslidar` | 2D ray laser `/scan`, frame `laser_link` | Not equivalent |
 | Depth/RGB camera | Intel RealSense driver topics under `/camera` | OpenNI/Kinect-style depth camera under `/camera` | Partially topic-compatible |
 | Infrared camera | `/infrared_camera/image_raw`, frame `infrared_camera` | no equivalent by default | Missing in simulator |
@@ -192,13 +195,14 @@ The simulator has an IMU plugin on `imu_link`:
 sensor type: imu
 plugin: libgazebo_ros_imu_sensor.so
 robotNamespace: $(arg ns)
-topicName: imu
+topicName: imu/data_raw
 frameName: $(arg frame_prefix)imu_link
-update rate: 100 Hz
+update rate: 200 Hz
 ```
 
 With the default accurate launch namespace `ugv1`, this is expected to appear as
-a namespaced `imu` topic rather than the real vehicle's global `/imu/data_raw`.
+a namespaced `/ugv1/imu/data_raw` topic rather than the real vehicle's global
+`/imu/data_raw`.
 
 ### Gazebo 2D Laser
 
@@ -279,14 +283,53 @@ Simulator:
 Both consume `geometry_msgs/Twist` and use `linear.x` plus `angular.z`, but the
 default topic namespace and low-level execution semantics differ.
 
+In `accurate.launch`, the simulator applies the same recovered SDK command
+limits before converting the body command into wheel controller commands:
+
+```text
+linear.x   [-1.5, 1.5] m/s
+angular.z  [-0.5235, 0.5235] rad/s
+```
+
+The limits are enabled by default and can be overridden with
+`enable_command_limits`, `max_linear_speed`, and `max_angular_speed` launch
+arguments. This mirrors the real stack behavior where `/cmd_vel` can carry
+larger values, but the SDK clamps the command before transmission to the chassis.
+
 ### Chassis Feedback
 
 The real driver publishes `scout_msgs/ScoutStatus` containing chassis state,
 battery voltage, fault code, motor state, and light state.
 
-The simulator does not publish `/scout_status` by default. It exposes Gazebo
-joint/controller state and odometry instead, which is not a drop-in replacement
-for vehicle health monitoring code.
+The simulator now publishes a compatibility `scout_msgs/ScoutStatus` through
+`sim_scout_status`. By default it appears as:
+
+```text
+/ugv1/scout_status
+```
+
+The node subscribes to simulated odometry and joint states, then fills:
+
+```text
+linear_velocity   from odom.twist.twist.linear.x
+angular_velocity  from odom.twist.twist.angular.z
+motor_states[*].rpm from wheel joint velocity converted from rad/s to rpm
+battery_voltage   from launch parameter, default 29.2
+base_state        from launch/node parameter, default 0
+control_mode      from launch/node parameter, default 1
+fault_code        from launch/node parameter, default 0
+```
+
+It also subscribes to `scout_msgs/ScoutLightCmd` on `/ugv1/scout_light_control`
+by default and mirrors the commanded light fields into the status message. This
+is ROS API compatible with vehicle health monitoring code, but it is still
+synthetic: battery voltage, fault code, motor current, and motor temperature are
+parameters rather than physical or electrical simulation results.
+
+This interface requires the `scout_msgs` message package in the simulator
+runtime. The Noetic simulator product declares `ros-noetic-scout-msgs` as the
+interface deb dependency; the package repository used for deployment must provide
+that Noetic message deb.
 
 ### Odometry
 
@@ -316,12 +359,13 @@ Real vehicle:
 Simulator:
 
 ```text
-$(arg ns)/imu or /imu depending on namespace handling
+/$(arg ns)/imu/data_raw
 frame_id=$(arg frame_prefix)imu_link
 ```
 
 The simulator has an IMU model, so the gap is smaller than a missing sensor. The
-main mismatch is topic naming and, potentially, the noise/calibration model.
+topic basename, message type, frame, and nominal rate are aligned. The remaining
+mismatch is namespace policy, Gazebo source model, and noise/calibration model.
 
 ### LiDAR
 
@@ -419,33 +463,36 @@ control and odometry:
 ```text
 /ugv1/cmd_vel
 /ugv1/odom
-/ugv1/imu
+/ugv1/imu/data_raw
+/ugv1/scout_status
+/ugv1/scout_light_control
 /ugv2/cmd_vel
 /ugv2/odom
-/ugv2/imu
+/ugv2/imu/data_raw
+/ugv2/scout_status
+/ugv2/scout_light_control
 ```
 
-Before changing code, choose whether the shared application contract should be a
-global single-robot interface or a namespaced multi-robot interface. The
-simulator and vehicle can then be aligned through launch remaps, bridge nodes,
-or simulator model changes.
+The current simulator defaults to the namespaced multi-robot convention. For a
+single-robot workflow that must exactly match the real vehicle's global topics,
+launch with remapped or overridden status/light topics, and use the selected
+namespace policy consistently for command and IMU topics.
 
 ## Future Alignment Priority
 
 1. Decide the shared topic namespace policy for single-robot and multi-robot
    workflows.
-2. Remap or parameterize simulator command and IMU topics to match the selected
-   policy.
-3. Add a simulator compatibility source for `/scout_status` if upper layers
-   monitor chassis health.
-4. Decide whether `/scan` is only a navigation convenience topic or whether the
+2. Provide/publish the Noetic `scout_msgs` interface deb used by the simulator
+   product dependency.
+3. Decide whether `/scan` is only a navigation convenience topic or whether the
    simulator must provide a RoboSense-style `/rslidar_points` point cloud.
-5. Add RealSense-compatible aligned depth and frame naming if RGB-D algorithms
+4. Add RealSense-compatible aligned depth and frame naming if RGB-D algorithms
    require RealSense semantics.
-6. Add or synthesize `/infrared_camera/image_raw` if infrared workflows are part
+5. Add or synthesize `/infrared_camera/image_raw` if infrared workflows are part
    of the product surface.
 
-The strongest compatibility point today is chassis command semantics. Sensor
-topics, sensor message types, frames, ranges, and namespaces are not yet aligned
-well enough to treat Gazebo as a drop-in replacement for the recovered
-real-vehicle sensor stack.
+The strongest compatibility points today are chassis command semantics, the
+`scout_msgs/ScoutStatus` ROS API, and the IMU topic/message/frame contract.
+LiDAR, camera, and exact namespace behavior are not yet aligned well enough to
+treat Gazebo as a drop-in replacement for the recovered real-vehicle sensor
+stack.
