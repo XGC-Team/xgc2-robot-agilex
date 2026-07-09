@@ -1,7 +1,7 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-ros1
 name: XGC2 AgileX Onboard ROS1
-version: 0.1.0-1
+version: 0.1.1-1
 kind: ros1-apt
 summary: ROS Melodic onboard IMU and Scout chassis packages for the AgileX onboard computer.
 groups:
@@ -13,7 +13,6 @@ ros:
   workspace: onboard/ros1
   packages:
   - agilex_onboard_imu
-  - imu_launch
   - wrp_io
   - ugv_sdk
   - scout_msgs
@@ -69,15 +68,17 @@ usage:
   notes: |
     The launch defaults match the recovered vehicle startup chain:
     port=/dev/imu, baud=115200, topic=/imu/data_raw, frame_id=imu_link.
-    The deb also provides an imu_launch compatibility package so the recovered
-    roslaunch imu_launch imu_msg.launch autostart command still resolves.
+    The IMU deb also installs a one-time udev setup script for /dev/imu:
+    /opt/ros/melodic/share/agilex_onboard_imu/scripts/install_imu_udev_rule.sh.
     The Scout chassis packages are split by ROS package so SDK, messages,
     description, driver, and bringup can be installed independently.
+    Internal Debian dependencies include >= version constraints so driver and
+    bringup packages do not silently bind to older SDK/message packages.
 ownership:
   paths:
   - /opt/ros/melodic/share/agilex_onboard_imu
-  - /opt/ros/melodic/share/imu_launch
   - /opt/ros/melodic/lib/agilex_onboard_imu/agilex_onboard_imu_node
+  - /opt/ros/melodic/share/agilex_onboard_imu/scripts/install_imu_udev_rule.sh
   - /opt/ros/melodic/share/wrp_io
   - /opt/ros/melodic/share/ugv_sdk
   - /opt/ros/melodic/share/scout_msgs

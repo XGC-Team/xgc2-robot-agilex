@@ -7,7 +7,7 @@ independently installable Debian packages.
 
 | Debian package | ROS package | Purpose |
 | --- | --- | --- |
-| `ros-melodic-xgc2-agilex-onboard-imu` | `agilex_onboard_imu`, `imu_launch` | Serial IMU driver and compatibility launch package |
+| `ros-melodic-xgc2-agilex-onboard-imu` | `agilex_onboard_imu` | Serial IMU driver and one-time `/dev/imu` udev setup script |
 | `ros-melodic-xgc2-agilex-wrp-io` | `wrp_io` | Weston Robot Platform IO support |
 | `ros-melodic-xgc2-agilex-ugv-sdk` | `ugv_sdk` | AgileX/Scout CAN protocol SDK |
 | `ros-melodic-xgc2-agilex-scout-msgs` | `scout_msgs` | Scout status and command message definitions |
@@ -26,10 +26,10 @@ IMU:
 roslaunch agilex_onboard_imu imu_msg.launch
 ```
 
-Recovered IMU autostart compatibility:
+Install the IMU udev rule once on a vehicle:
 
 ```bash
-roslaunch imu_launch imu_msg.launch
+sudo /opt/ros/melodic/share/agilex_onboard_imu/scripts/install_imu_udev_rule.sh
 ```
 
 Scout chassis:
@@ -51,6 +51,11 @@ ip link set can0 up type can bitrate 500000
 ```
 
 Systemd autostart files are intentionally not packaged in this product batch.
+
+Internal Debian dependencies use `>=` constraints between XGC2 packages. For
+example, `scout_base` requires compatible `ugv_sdk` and `scout_msgs` package
+versions, and `scout_bringup` requires compatible base and description package
+versions.
 
 ## Build
 

@@ -16,7 +16,6 @@ deb_packages=(
 
 ros_packages=(
   agilex_onboard_imu
-  imu_launch
   wrp_io
   ugv_sdk
   scout_msgs
@@ -39,8 +38,8 @@ for package in "${ros_packages[@]}"; do
 done
 
 test -f "${PREFIX}/share/agilex_onboard_imu/launch/imu_msg.launch"
-test -f "${PREFIX}/share/imu_launch/launch/imu_msg.launch"
 test -x "${PREFIX}/lib/agilex_onboard_imu/agilex_onboard_imu_node"
+test -x "${PREFIX}/share/agilex_onboard_imu/scripts/install_imu_udev_rule.sh"
 
 test -f "${PREFIX}/include/wrp_io/async_can.hpp"
 test -f "${PREFIX}/include/ugv_sdk/scout/scout_base.hpp"
@@ -50,7 +49,6 @@ test -f "${PREFIX}/lib/libugv_sdk.so"
 test -x "${PREFIX}/lib/scout_base/scout_base_node"
 
 roslaunch --files agilex_onboard_imu imu_msg.launch >/dev/null
-roslaunch --files imu_launch imu_msg.launch >/dev/null
 roslaunch --files scout_base scout_mini_base.launch >/dev/null
 roslaunch --files scout_bringup scout_minimal.launch >/dev/null
 

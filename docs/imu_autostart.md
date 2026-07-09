@@ -38,6 +38,19 @@ sleep 9
 roslaunch imu_launch imu_msg.launch
 ```
 
+In the productized ROS package, the compatibility-only `imu_launch` wrapper is
+not kept. Use the real IMU package directly:
+
+```bash
+roslaunch agilex_onboard_imu imu_msg.launch
+```
+
+The productized IMU package also installs the one-time udev setup script:
+
+```bash
+sudo /opt/ros/melodic/share/agilex_onboard_imu/scripts/install_imu_udev_rule.sh
+```
+
 The launch file starts two nodes:
 
 ```xml
@@ -220,7 +233,8 @@ initenv.sh
 handsfree_imu.sh
   -> sources ROS environments
   -> waits for ROS master
-  -> launches imu_launch/imu_msg.launch
+  -> launches imu_launch/imu_msg.launch on the recovered vehicle
+     or agilex_onboard_imu/imu_msg.launch in the productized package
 
 serial_imu
   -> opens /dev/imu

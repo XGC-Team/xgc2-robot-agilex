@@ -19,6 +19,9 @@ by XGC2.
 - Release branch: `melodic`
 - ROS distribution: Melodic
 
+The ROS Debian packages are versioned per ROS package from each package's
+`package.xml`, with internal `>=` dependency constraints between split packages.
+
 ## Repository Boundary
 
 This repository owns real AgileX onboard-computer runtime notes, startup

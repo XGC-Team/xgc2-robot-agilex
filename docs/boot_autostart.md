@@ -66,6 +66,19 @@ sleep 9
 roslaunch imu_launch imu_msg.launch
 ```
 
+The productized package removes the compatibility-only `imu_launch` wrapper.
+For packaged deployments, use:
+
+```bash
+roslaunch agilex_onboard_imu imu_msg.launch
+```
+
+The one-time `/dev/imu` udev setup script is installed as:
+
+```bash
+sudo /opt/ros/melodic/share/agilex_onboard_imu/scripts/install_imu_udev_rule.sh
+```
+
 Launch file:
 
 ```xml

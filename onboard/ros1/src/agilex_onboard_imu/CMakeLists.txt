@@ -36,3 +36,7 @@ install(DIRECTORY launch/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
   FILES_MATCHING PATTERN "*.launch"
 )
+
+install(PROGRAMS scripts/install_imu_udev_rule.sh
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/scripts
+)
