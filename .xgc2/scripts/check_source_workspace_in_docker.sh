@@ -64,31 +64,43 @@ docker run --rm \
       ca-certificates \
       cmake \
       git \
+      libpcap-dev \
+      libpcl-dev \
+      librealsense2-dev \
+      libyaml-cpp-dev \
       rsync \
       ros-melodic-controller-manager \
+      ros-melodic-cv-bridge \
+      ros-melodic-ddynamic-reconfigure \
+      ros-melodic-diagnostic-updater \
+      ros-melodic-genmsg \
       ros-melodic-geometry-msgs \
-      ros-melodic-joint-state-publisher \
+      ros-melodic-image-transport \
       ros-melodic-message-generation \
       ros-melodic-message-runtime \
       ros-melodic-nav-msgs \
+      ros-melodic-nodelet \
+      ros-melodic-pcl-conversions \
+      ros-melodic-pcl-ros \
       ros-melodic-roscpp \
       ros-melodic-roslaunch \
+      ros-melodic-roslib \
       ros-melodic-rospack \
-      ros-melodic-robot-state-publisher \
       ros-melodic-scout-msgs \
       ros-melodic-sensor-msgs \
       ros-melodic-serial \
       ros-melodic-std-msgs \
+      ros-melodic-std-srvs \
+      ros-melodic-swarm-ros-bridge \
       ros-melodic-tf \
       ros-melodic-tf2 \
       ros-melodic-tf2-ros \
       ros-melodic-topic-tools \
-      ros-melodic-urdf \
       ros-melodic-xacro
 
     rm -rf /workspace/work/build /workspace/work/devel /workspace/work/install-root /workspace/work/src
     mkdir -p /workspace/work/src/agilex-onboard
-    rsync -a --delete /workspace/agilex/onboard/ros1/src/ /workspace/work/src/agilex-onboard/
+    rsync -a --delete --exclude extend/ /workspace/agilex/onboard/ros1/src/ /workspace/work/src/agilex-onboard/
 
     cd /workspace/work
     set +u
@@ -104,12 +116,19 @@ docker run --rm \
     test "$(rospack find wrp_io)" = "/workspace/work/src/agilex-onboard/chassis/wrp_io"
     test "$(rospack find ugv_sdk)" = "/workspace/work/src/agilex-onboard/chassis/ugv_sdk"
     test "$(rospack find scout_msgs)" = "/opt/ros/melodic/share/scout_msgs"
-    test "$(rospack find scout_description)" = "/workspace/work/src/agilex-onboard/description/scout_description"
+    test "$(rospack find swarm_ros_bridge)" = "/opt/ros/melodic/share/swarm_ros_bridge"
     test "$(rospack find scout_base)" = "/workspace/work/src/agilex-onboard/chassis/scout_base"
     test "$(rospack find scout_bringup)" = "/workspace/work/src/agilex-onboard/scout_bringup"
+    test "$(rospack find agilex_swarm_ros_bridge)" = "/workspace/work/src/agilex-onboard/communication/agilex_swarm_ros_bridge"
+    test "$(rospack find realsense2_camera)" = "/workspace/work/src/agilex-onboard/sensors/realsense2_camera"
+    test "$(rospack find realsense2_description)" = "/workspace/work/src/agilex-onboard/sensors/realsense2_description"
+    test "$(rospack find rslidar_sdk)" = "/workspace/work/src/agilex-onboard/sensors/rslidar_sdk"
     roslaunch --files agilex_onboard_imu imu_msg.launch >/tmp/xgc2-agilex-onboard-imu-files.txt
     roslaunch --files scout_base scout_mini_base.launch >/tmp/xgc2-agilex-scout-base-files.txt
     roslaunch --files scout_bringup scout_minimal.launch >/tmp/xgc2-agilex-scout-bringup-files.txt
+    roslaunch --files agilex_swarm_ros_bridge agilex_swarm_ros_bridge.launch >/tmp/xgc2-agilex-swarm-ros-bridge-files.txt
+    roslaunch --files realsense2_camera rs_camera.launch >/tmp/xgc2-agilex-realsense2-camera-files.txt
+    roslaunch --files rslidar_sdk start.launch >/tmp/xgc2-agilex-rslidar-sdk-files.txt
   '
 
 echo "Source workspace compliance check passed"

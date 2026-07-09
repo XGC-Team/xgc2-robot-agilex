@@ -1,0 +1,4 @@
+[submodule "onboard/ros1/src/extend"]
+	path = onboard/ros1/src/extend
+	url = git@github.com:lxk36/xgc2-robot-agilex-extend.git
+	branch = melodic

@@ -148,8 +148,12 @@ Launch chain:
 scout_bringup scout_minimal.launch
   -> scout_base/launch/scout_mini_base.launch
      -> scout_base_node
-  -> scout_description/launch/description.launch
 ```
+
+The recovered vehicle also contained a `scout_description` visualization/model
+tree, but the onboard core startup does not need it for chassis experiments. It
+is preserved in `xgc2-scout-description` on branch
+`melodic-agilex-real-description`.
 
 The base driver uses:
 
@@ -186,6 +190,14 @@ source /home/agilex/swarm_ros_bridge_ws/devel/setup.bash
 
 sleep 3
 roslaunch swarm_ros_bridge test.launch
+```
+
+In the productized layout, the generic `swarm_ros_bridge` binary is installed
+from `ros-melodic-swarm-ros-bridge`, while the AgileX-specific YAML and launch
+wrapper are provided by `agilex_swarm_ros_bridge`:
+
+```bash
+roslaunch agilex_swarm_ros_bridge agilex_swarm_ros_bridge.launch
 ```
 
 Launch file:

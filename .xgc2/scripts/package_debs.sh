@@ -6,7 +6,7 @@ OUTPUT_DIR=""
 ROS_DISTRO="${ROS_DISTRO:-melodic}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-PACKAGE_REVISION="${PACKAGE_REVISION:-3}"
+PACKAGE_REVISION="${PACKAGE_REVISION:-4}"
 
 ros_package_xml() {
   local ros_pkg="$1"
@@ -207,8 +207,9 @@ build_deb \
 wrp_io_dep="ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io))"
 ugv_sdk_dep="ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk))"
 scout_msgs_dep="ros-${ROS_DISTRO}-scout-msgs (>= 0.3.3-1)"
-scout_description_dep="ros-${ROS_DISTRO}-xgc2-agilex-scout-description (>= $(deb_version scout_description))"
+swarm_ros_bridge_dep="ros-${ROS_DISTRO}-swarm-ros-bridge (>= 1.0.0-1)"
 scout_base_dep="ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))"
+realsense2_description_dep="ros-${ROS_DISTRO}-xgc2-agilex-realsense2-description (>= $(deb_version realsense2_description))"
 
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk" \
@@ -216,12 +217,6 @@ build_deb \
   "ros-${ROS_DISTRO}-catkin, ${wrp_io_dep}" \
   "XGC2 AgileX UGV SDK" \
   "lib/libugv_sdk.*"
-
-build_deb \
-  "ros-${ROS_DISTRO}-xgc2-agilex-scout-description" \
-  "scout_description" \
-  "ros-${ROS_DISTRO}-urdf, ros-${ROS_DISTRO}-xacro, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher" \
-  "XGC2 AgileX Scout robot description"
 
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-scout-base" \
@@ -233,7 +228,31 @@ build_deb \
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-scout-bringup" \
   "scout_bringup" \
-  "ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-std-msgs, ${scout_base_dep}, ${scout_description_dep}" \
+  "ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-std-msgs, ${scout_base_dep}" \
   "XGC2 AgileX Scout bringup launch files"
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge" \
+  "agilex_swarm_ros_bridge" \
+  "ros-${ROS_DISTRO}-roslaunch, ${swarm_ros_bridge_dep}" \
+  "XGC2 AgileX swarm bridge configuration"
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-realsense2-description" \
+  "realsense2_description" \
+  "ros-${ROS_DISTRO}-xacro" \
+  "XGC2 AgileX RealSense description assets"
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-realsense2-camera" \
+  "realsense2_camera" \
+  "librealsense2-dev, ros-${ROS_DISTRO}-cv-bridge, ros-${ROS_DISTRO}-ddynamic-reconfigure, ros-${ROS_DISTRO}-diagnostic-updater, ros-${ROS_DISTRO}-image-transport, ros-${ROS_DISTRO}-message-runtime, ros-${ROS_DISTRO}-nav-msgs, ros-${ROS_DISTRO}-nodelet, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-std-msgs, ros-${ROS_DISTRO}-std-srvs, ros-${ROS_DISTRO}-tf, ${realsense2_description_dep}" \
+  "XGC2 AgileX RealSense camera driver"
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-rslidar-sdk" \
+  "rslidar_sdk" \
+  "libpcap-dev, libpcl-dev, libyaml-cpp-dev, ros-${ROS_DISTRO}-pcl-conversions, ros-${ROS_DISTRO}-pcl-ros, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-roslib, ros-${ROS_DISTRO}-sensor-msgs" \
+  "XGC2 AgileX RoboSense LiDAR SDK driver"
 
 find "${OUTPUT_DIR}" -maxdepth 1 -type f -name "ros-${ROS_DISTRO}-xgc2-agilex-*.deb" -print | sort

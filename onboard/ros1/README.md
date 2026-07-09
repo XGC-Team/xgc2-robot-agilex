@@ -10,13 +10,24 @@ independently installable Debian packages.
 | `ros-melodic-xgc2-agilex-onboard-imu` | `agilex_onboard_imu` | Serial IMU driver and one-time `/dev/imu` udev setup script |
 | `ros-melodic-xgc2-agilex-wrp-io` | `wrp_io` | Weston Robot Platform IO support |
 | `ros-melodic-xgc2-agilex-ugv-sdk` | `ugv_sdk` | AgileX/Scout CAN protocol SDK |
-| `ros-melodic-xgc2-agilex-scout-description` | `scout_description` | URDF/xacro model and robot description assets |
 | `ros-melodic-xgc2-agilex-scout-base` | `scout_base` | Scout base driver node |
 | `ros-melodic-xgc2-agilex-scout-bringup` | `scout_bringup` | Scout launch entry points |
+| `ros-melodic-xgc2-agilex-swarm-ros-bridge` | `agilex_swarm_ros_bridge` | AgileX topic/IP configuration for `swarm_ros_bridge` |
+| `ros-melodic-xgc2-agilex-realsense2-camera` | `realsense2_camera` | Intel RealSense camera driver |
+| `ros-melodic-xgc2-agilex-realsense2-description` | `realsense2_description` | RealSense URDF, meshes, launch, and RViz assets |
+| `ros-melodic-xgc2-agilex-rslidar-sdk` | `rslidar_sdk` | RoboSense LiDAR ROS1 driver |
 
-The packages are split by ROS package so SDK, description, driver, and bringup
-can be installed independently. `scout_msgs` is installed from the standalone
-`ros-melodic-scout-msgs` package and keeps the original ROS package name.
+The packages are split by ROS package so SDK, driver, and bringup can be
+installed independently. `scout_msgs` is installed from the standalone
+`ros-melodic-scout-msgs` package and keeps the original ROS package name. The
+recovered real-vehicle `scout_description` tree is preserved in
+`xgc2-scout-description` on branch `melodic-agilex-real-description`, but it is
+not packaged in this onboard product. The generic `swarm_ros_bridge` binary is
+installed from the standalone `ros-melodic-swarm-ros-bridge` communication
+product; this product only packages the AgileX-specific YAML and launch wrapper.
+Base onboard sensor drivers live under `onboard/ros1/src/sensors` and are split
+into independent packages so camera and LiDAR support can be installed
+separately.
 
 ## Runtime Launch
 
@@ -50,12 +61,33 @@ with the recovered runtime configuration:
 ip link set can0 up type can bitrate 500000
 ```
 
+Swarm bridge:
+
+```bash
+roslaunch agilex_swarm_ros_bridge agilex_swarm_ros_bridge.launch
+```
+
+The default bridge configuration sends `/imu/data_raw` to the configured QGC
+peer and receives `/cmd_vel` from that peer.
+
+RealSense:
+
+```bash
+roslaunch realsense2_camera rs_camera.launch
+```
+
+RoboSense LiDAR:
+
+```bash
+roslaunch rslidar_sdk start.launch
+```
+
 Systemd autostart files are intentionally not packaged in this product batch.
 
 Internal Debian dependencies use `>=` constraints between XGC2 packages. For
 example, `scout_base` requires compatible `ugv_sdk` plus the external
-`ros-melodic-scout-msgs` package, and `scout_bringup` requires compatible base
-and description package versions.
+`ros-melodic-scout-msgs` package, and `scout_bringup` requires a compatible
+base package version.
 
 ## Build
 

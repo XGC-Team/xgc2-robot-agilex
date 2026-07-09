@@ -43,23 +43,18 @@ The ROS launch path is:
 scout_bringup/scout_minimal.launch
   -> scout_base/launch/scout_mini_base.launch
       -> scout_base_node
-  -> scout_description/launch/description.launch
-      -> robot_description
-      -> joint_state_publisher
-      -> robot_state_publisher
 ```
 
 ## Related Packages
 
-The chassis control path uses four ROS packages and two lower-level SDK/IO
+The chassis control path uses three ROS packages and two lower-level SDK/IO
 packages.
 
 | Package | Role | Directly required for motion |
 | --- | --- | --- |
-| `scout_bringup` | Launch entry point. Provides `scout_minimal.launch` and wires the base driver and robot description together. | Yes |
+| `scout_bringup` | Launch entry point. Provides `scout_minimal.launch` and starts the base driver. | Yes |
 | `scout_base` | Main ROS chassis driver. Starts `scout_base_node`, subscribes `/cmd_vel`, publishes `/scout_status`, and calls the SDK. | Yes |
 | `scout_msgs` | Custom ROS messages for chassis status and light control, such as `ScoutStatus` and `ScoutLightCmd`. | Yes |
-| `scout_description` | URDF/xacro robot model for RViz, `robot_description`, `robot_state_publisher`, and fixed sensor/body frames. | No, not for basic motion |
 | `ugv_sdk` | AgileX/Scout protocol implementation. Encodes velocity commands to CAN frames and decodes chassis feedback. | Yes |
 | `wrp_io` | Low-level IO support used by the SDK, including SocketCAN/serial transport wrappers. | Yes |
 
@@ -75,9 +70,11 @@ scout_bringup
   -> chassis controller
 ```
 
-`scout_description` runs in parallel with the base driver. It is useful for
+The recovered real-vehicle `scout_description` tree is useful for
 visualization, TF structure, and sensor extrinsics, but it does not participate
-in `/cmd_vel -> CAN -> chassis` motion command transmission.
+in `/cmd_vel -> CAN -> chassis` motion command transmission. It is preserved in
+`xgc2-scout-description` on branch `melodic-agilex-real-description` and is not
+packaged in the onboard runtime product.
 
 ## Role
 

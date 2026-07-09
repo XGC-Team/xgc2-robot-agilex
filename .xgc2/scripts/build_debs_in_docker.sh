@@ -78,31 +78,43 @@ docker run --rm \
       dpkg-dev \
       fakeroot \
       git \
+      libpcap-dev \
+      libpcl-dev \
+      librealsense2-dev \
+      libyaml-cpp-dev \
       rsync \
       ros-melodic-controller-manager \
+      ros-melodic-cv-bridge \
+      ros-melodic-ddynamic-reconfigure \
+      ros-melodic-diagnostic-updater \
+      ros-melodic-genmsg \
       ros-melodic-geometry-msgs \
-      ros-melodic-joint-state-publisher \
+      ros-melodic-image-transport \
       ros-melodic-message-generation \
       ros-melodic-message-runtime \
       ros-melodic-nav-msgs \
+      ros-melodic-nodelet \
+      ros-melodic-pcl-conversions \
+      ros-melodic-pcl-ros \
       ros-melodic-roscpp \
       ros-melodic-roslaunch \
+      ros-melodic-roslib \
       ros-melodic-rospack \
-      ros-melodic-robot-state-publisher \
       ros-melodic-scout-msgs \
       ros-melodic-sensor-msgs \
       ros-melodic-serial \
       ros-melodic-std-msgs \
+      ros-melodic-std-srvs \
+      ros-melodic-swarm-ros-bridge \
       ros-melodic-tf \
       ros-melodic-tf2 \
       ros-melodic-tf2-ros \
       ros-melodic-topic-tools \
-      ros-melodic-urdf \
       ros-melodic-xacro
 
     rm -rf /workspace/work/build /workspace/work/devel /workspace/work/install-root /workspace/work/src
     mkdir -p /workspace/work/src/agilex-onboard
-    rsync -a --delete /workspace/agilex/onboard/ros1/src/ /workspace/work/src/agilex-onboard/
+    rsync -a --delete --exclude extend/ /workspace/agilex/onboard/ros1/src/ /workspace/work/src/agilex-onboard/
 
     cd /workspace/work
     set +u

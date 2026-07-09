@@ -1,0 +1,21 @@
+### AgileX onboard swarm_ros_bridge topic configuration.
+### The generic bridge binary currently supports:
+### sensor_msgs/Imu, geometry_msgs/Twist, std_msgs/String.
+
+IP:
+  self: '*'
+  qgc: 192.168.51.150
+  test_local: 127.0.0.1
+
+send_topics:
+- topic_name: /imu/data_raw
+  msg_type: sensor_msgs/Imu
+  max_freq: 50
+  srcIP: self
+  srcPort: 3001
+
+recv_topics:
+- topic_name: /cmd_vel
+  msg_type: geometry_msgs/Twist
+  srcIP: qgc
+  srcPort: 3001
