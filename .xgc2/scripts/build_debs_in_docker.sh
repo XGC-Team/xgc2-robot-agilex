@@ -81,6 +81,7 @@ docker run --rm \
       ros-melodic-sensor-msgs \
       ros-melodic-serial \
       ros-melodic-std-msgs \
+      ros-melodic-tf \
       ros-melodic-tf2 \
       ros-melodic-tf2-ros \
       ros-melodic-topic-tools \

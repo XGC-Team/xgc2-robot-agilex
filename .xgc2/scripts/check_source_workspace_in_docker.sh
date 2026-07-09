@@ -67,6 +67,7 @@ docker run --rm \
       ros-melodic-sensor-msgs \
       ros-melodic-serial \
       ros-melodic-std-msgs \
+      ros-melodic-tf \
       ros-melodic-tf2 \
       ros-melodic-tf2-ros \
       ros-melodic-topic-tools \
@@ -87,13 +88,13 @@ docker run --rm \
     set +u
     source devel/setup.bash
     set -u
-    test "$(rospack find agilex_onboard_imu)" = "/workspace/work/src/agilex-onboard/agilex_onboard_imu"
-    test "$(rospack find wrp_io)" = "/workspace/work/src/agilex-onboard/wrp_io"
-    test "$(rospack find ugv_sdk)" = "/workspace/work/src/agilex-onboard/ugv_sdk"
-    test "$(rospack find scout_msgs)" = "/workspace/work/src/agilex-onboard/scout_msgs"
-    test "$(rospack find scout_description)" = "/workspace/work/src/agilex-onboard/scout_description"
-    test "$(rospack find scout_base)" = "/workspace/work/src/agilex-onboard/scout_base"
-    test "$(rospack find scout_bringup)" = "/workspace/work/src/agilex-onboard/scout_bringup"
+    test "$(rospack find agilex_onboard_imu)" = "/workspace/work/src/agilex-onboard/imu/agilex_onboard_imu"
+    test "$(rospack find wrp_io)" = "/workspace/work/src/agilex-onboard/chassis/wrp_io"
+    test "$(rospack find ugv_sdk)" = "/workspace/work/src/agilex-onboard/chassis/ugv_sdk"
+    test "$(rospack find scout_msgs)" = "/workspace/work/src/agilex-onboard/chassis/scout_msgs"
+    test "$(rospack find scout_description)" = "/workspace/work/src/agilex-onboard/chassis/scout_description"
+    test "$(rospack find scout_base)" = "/workspace/work/src/agilex-onboard/chassis/scout_base"
+    test "$(rospack find scout_bringup)" = "/workspace/work/src/agilex-onboard/chassis/scout_bringup"
     roslaunch --files agilex_onboard_imu imu_msg.launch >/tmp/xgc2-agilex-onboard-imu-files.txt
     roslaunch --files scout_base scout_mini_base.launch >/tmp/xgc2-agilex-scout-base-files.txt
     roslaunch --files scout_bringup scout_minimal.launch >/tmp/xgc2-agilex-scout-bringup-files.txt

@@ -8,10 +8,24 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 PACKAGE_REVISION="${PACKAGE_REVISION:-1}"
 
+ros_package_xml() {
+  local ros_pkg="$1"
+  local package_xml
+  package_xml="$(find "${REPO_ROOT}/onboard/ros1/src" \
+    -type f \
+    -path "*/${ros_pkg}/package.xml" \
+    -print | sort | head -n 1)"
+  if [[ -z "${package_xml}" ]]; then
+    echo "missing package.xml for ${ros_pkg}" >&2
+    exit 1
+  fi
+  printf '%s\n' "${package_xml}"
+}
+
 ros_package_version() {
   local ros_pkg="$1"
   sed -n 's:.*<version>\(.*\)</version>.*:\1:p' \
-    "${REPO_ROOT}/onboard/ros1/src/${ros_pkg}/package.xml" | head -n 1
+    "$(ros_package_xml "${ros_pkg}")" | head -n 1
 }
 
 deb_version() {
@@ -218,7 +232,7 @@ build_deb \
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-scout-base" \
   "scout_base" \
-  "ros-${ROS_DISTRO}-controller-manager, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-nav-msgs, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-tf2, ros-${ROS_DISTRO}-tf2-ros, ros-${ROS_DISTRO}-topic-tools, ${scout_msgs_dep}, ${ugv_sdk_dep}" \
+  "ros-${ROS_DISTRO}-controller-manager, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-nav-msgs, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-tf, ros-${ROS_DISTRO}-tf2, ros-${ROS_DISTRO}-tf2-ros, ros-${ROS_DISTRO}-topic-tools, ${scout_msgs_dep}, ${ugv_sdk_dep}" \
   "XGC2 AgileX Scout base driver" \
   "lib/libscout_messenger.*"
 

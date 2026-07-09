@@ -30,3 +30,11 @@ resources.
 
 This repository does not own generated logs, rosbags, or unrelated simulator
 assets.
+
+## Runtime Notes
+
+- `docs/boot_autostart.md`: recovered boot-time systemd service chain.
+- `docs/chassis_control.md`: real Scout chassis command and feedback path.
+- `docs/imu_autostart.md`: onboard serial IMU startup and ROS topic path.
+- `docs/simulation_topic_compatibility.md`: real-vehicle and Gazebo Scout topic
+  compatibility notes.
