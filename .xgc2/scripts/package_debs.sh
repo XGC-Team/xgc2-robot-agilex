@@ -6,7 +6,7 @@ OUTPUT_DIR=""
 ROS_DISTRO="${ROS_DISTRO:-melodic}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-PACKAGE_REVISION="${PACKAGE_REVISION:-1}"
+PACKAGE_REVISION="${PACKAGE_REVISION:-2}"
 
 ros_package_xml() {
   local ros_pkg="$1"
