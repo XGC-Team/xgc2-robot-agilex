@@ -112,7 +112,7 @@ docker run --rm \
     set +u
     source devel/setup.bash
     set -u
-    test "$(rospack find agilex_onboard_imu)" = "/workspace/work/src/agilex-onboard/imu/agilex_onboard_imu"
+    test "$(rospack find agilex_onboard_imu)" = "/workspace/work/src/agilex-onboard/sensors/agilex_onboard_imu"
     test "$(rospack find wrp_io)" = "/workspace/work/src/agilex-onboard/chassis/wrp_io"
     test "$(rospack find ugv_sdk)" = "/workspace/work/src/agilex-onboard/chassis/ugv_sdk"
     test "$(rospack find scout_msgs)" = "/opt/ros/melodic/share/scout_msgs"

@@ -148,7 +148,7 @@ but the default remains:
 Productized package:
 
 ```text
-onboard/ros1/src/imu/agilex_onboard_imu
+onboard/ros1/src/sensors/agilex_onboard_imu
 ```
 
 Recovered deployment path:
