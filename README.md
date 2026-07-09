@@ -5,7 +5,9 @@ by XGC2.
 
 ## Package
 
-- Product id: `xgc2-agilex`
+- Product family: `xgc2-agilex`
+- Active product id: `xgc2-agilex-onboard-imu`
+- Debian package: `ros-melodic-xgc2-agilex-onboard-imu`
 - Source path: `products/robotics/agilex`
 - Release branch: `melodic`
 - ROS distribution: Melodic

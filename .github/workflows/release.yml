@@ -1,0 +1,165 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_version:
+        description: Expected .xgc2/product.yml version
+        required: true
+        type: string
+      expected_source_sha:
+        description: Expected source commit SHA
+        required: true
+        type: string
+      publish_apt:
+        description: Publish debs to the APT repository
+        required: true
+        type: boolean
+        default: false
+      run_cpp_quality:
+        description: Run C++ quality checks
+        required: true
+        type: boolean
+        default: false
+      run_source_tests:
+        description: Run source tests
+        required: true
+        type: boolean
+        default: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  validate-release-inputs:
+    name: Validate release inputs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Validate release inputs
+        run: |
+          set -euo pipefail
+          actual_version="$(awk -F': *' '/^version:/ {print $2; exit}' .xgc2/product.yml)"
+          actual_sha="$(git rev-parse HEAD)"
+          test "${actual_version}" = "${{ inputs.expected_version }}"
+          test "${actual_sha}" = "${{ inputs.expected_source_sha }}"
+
+  cpp-quality:
+    name: C++ quality
+    if: ${{ inputs.run_cpp_quality }}
+    needs: validate-release-inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: No standalone C++ quality gate configured
+        run: echo "No standalone C++ quality gate is configured for xgc2-agilex-onboard-imu."
+
+  source-tests:
+    name: Source build and tests
+    if: ${{ inputs.run_source_tests }}
+    needs: validate-release-inputs
+    runs-on: ubuntu-latest
+    container: ros:melodic-ros-base-bionic
+    steps:
+      - name: Install checkout dependencies
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates git
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Install build dependencies
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            build-essential \
+            ca-certificates \
+            cmake \
+            git \
+            rsync \
+            ros-melodic-roscpp \
+            ros-melodic-roslaunch \
+            ros-melodic-rospack \
+            ros-melodic-sensor-msgs \
+            ros-melodic-serial
+
+      - name: Build package and run launch compliance
+        run: |
+          set -euo pipefail
+          work_dir="${RUNNER_TEMP}/agilex-onboard-imu-source"
+          install_root="${RUNNER_TEMP}/agilex-onboard-imu-install-root"
+          rm -rf "$work_dir" "$install_root"
+          mkdir -p "$work_dir/src/agilex-onboard"
+          rsync -a --delete "$GITHUB_WORKSPACE/onboard/ros1/src/" "$work_dir/src/agilex-onboard/"
+
+          cd "$work_dir"
+          set +u
+          source /opt/ros/melodic/setup.bash
+          set -u
+          DESTDIR="$install_root" catkin_make install \
+            -DCMAKE_INSTALL_PREFIX=/opt/ros/melodic \
+            -DCMAKE_BUILD_TYPE=Release
+          set +u
+          source devel/setup.bash
+          set -u
+          roslaunch --files agilex_onboard_imu imu_msg.launch >/tmp/xgc2-agilex-onboard-imu-files.txt
+          roslaunch --files imu_launch imu_msg.launch >/tmp/xgc2-agilex-imu-launch-files.txt
+
+  build-debs:
+    name: Build debs (${{ matrix.arch }})
+    needs: validate-release-inputs
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and install-check deb package
+        run: |
+          .xgc2/scripts/build_debs_in_docker.sh \
+            --work-dir "$RUNNER_TEMP/xgc2-agilex-onboard-imu-${{ matrix.arch }}" \
+            --output-dir "$GITHUB_WORKSPACE/debs"
+
+      - name: Upload deb artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: xgc2-agilex-onboard-imu-debs-${{ matrix.arch }}
+          path: debs/*.deb
+
+  publish-apt:
+    name: Publish APT
+    if: inputs.publish_apt
+    needs: build-debs
+    runs-on: ubuntu-latest
+    env:
+      APT_REPO_HOST: ${{ secrets.APT_REPO_HOST }}
+      APT_REPO_PORT: ${{ secrets.APT_REPO_PORT }}
+      APT_REPO_DISTRIBUTION: bionic
+      APT_REPO_SSH_KEY: ${{ secrets.APT_REPO_SSH_KEY }}
+      APT_REPO_KNOWN_HOSTS: ${{ secrets.APT_REPO_KNOWN_HOSTS }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download deb artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: xgc2-agilex-onboard-imu-debs-*
+          path: debs
+          merge-multiple: true
+
+      - name: Publish to self-hosted APT repository
+        if: ${{ env.APT_REPO_HOST != '' && env.APT_REPO_PORT != '' && env.APT_REPO_SSH_KEY != '' && env.APT_REPO_KNOWN_HOSTS != '' }}
+        run: .xgc2/scripts/publish_apt_repo.sh --deb-dir debs

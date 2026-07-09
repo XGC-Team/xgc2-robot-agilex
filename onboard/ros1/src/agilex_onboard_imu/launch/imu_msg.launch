@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="port" default="/dev/imu" />
+  <arg name="baud" default="115200" />
+  <arg name="topic" default="imu/data_raw" />
+  <arg name="frame_id" default="imu_link" />
+  <arg name="poll_rate_hz" default="500" />
+  <arg name="print_packets" default="false" />
+
+  <node pkg="agilex_onboard_imu" type="agilex_onboard_imu_node" name="agilex_onboard_imu" output="screen">
+    <param name="port" value="$(arg port)" />
+    <param name="baud" value="$(arg baud)" />
+    <param name="topic" value="$(arg topic)" />
+    <param name="frame_id" value="$(arg frame_id)" />
+    <param name="poll_rate_hz" value="$(arg poll_rate_hz)" />
+    <param name="print_packets" value="$(arg print_packets)" />
+  </node>
+</launch>
