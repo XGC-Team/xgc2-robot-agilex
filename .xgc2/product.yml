@@ -1,0 +1,45 @@
+schema: xgc2.product.v1
+id: xgc2-agilex-onboard-imu
+name: XGC2 AgileX Onboard IMU
+version: 0.1.0-1
+kind: ros1-apt
+summary: ROS Melodic serial IMU driver and launch files for the AgileX onboard computer.
+groups:
+- robotics
+- agilex
+- onboard
+ros:
+  distro: melodic
+  workspace: onboard/ros1
+  packages:
+  - agilex_onboard_imu
+  - imu_launch
+apt:
+  distribution: bionic
+  install:
+  - ros-melodic-xgc2-agilex-onboard-imu
+  packages:
+  - ros-melodic-xgc2-agilex-onboard-imu
+  depends:
+  - ros-melodic-roscpp
+  - ros-melodic-sensor-msgs
+  - ros-melodic-serial
+usage:
+  install: |
+    sudo apt update
+    sudo apt install ros-melodic-xgc2-agilex-onboard-imu
+  smoke_test: |
+    rospack find agilex_onboard_imu
+    roslaunch --files agilex_onboard_imu imu_msg.launch
+  notes: |
+    The launch defaults match the recovered vehicle startup chain:
+    port=/dev/imu, baud=115200, topic=/imu/data_raw, frame_id=imu_link.
+    The deb also provides an imu_launch compatibility package so the recovered
+    roslaunch imu_launch imu_msg.launch autostart command still resolves.
+ownership:
+  paths:
+  - /opt/ros/melodic/share/agilex_onboard_imu
+  - /opt/ros/melodic/share/imu_launch
+  - /opt/ros/melodic/lib/agilex_onboard_imu/agilex_onboard_imu_node
+release:
+  workflow: release.yml

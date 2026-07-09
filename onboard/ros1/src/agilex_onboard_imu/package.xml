@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>agilex_onboard_imu</name>
+  <version>0.1.0</version>
+  <description>AgileX onboard ROS1 serial IMU driver and launch files.</description>
+
+  <maintainer email="lxk@example.com">XGC2</maintainer>
+  <license>Proprietary</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>serial</depend>
+</package>
