@@ -17,44 +17,25 @@ jobs:
   package-compliance:
     name: Package compliance
     runs-on: ubuntu-latest
-    container: ros:melodic-ros-base-bionic
     steps:
-      - name: Install checkout dependencies
-        run: |
-          export DEBIAN_FRONTEND=noninteractive
-          apt-get update
-          apt-get install -y --no-install-recommends ca-certificates git
-
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
-      - name: Install build dependencies
+      - name: Install metadata check dependencies
         run: |
-          export DEBIAN_FRONTEND=noninteractive
-          apt-get update
-          apt-get install -y --no-install-recommends \
-            build-essential \
-            ca-certificates \
-            cmake \
-            git \
-            libxml2-utils \
-            rsync \
-            ros-melodic-roscpp \
-            ros-melodic-roslaunch \
-            ros-melodic-rospack \
-            ros-melodic-sensor-msgs \
-            ros-melodic-serial
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libxml2-utils
 
       - name: Check package metadata
         run: |
           set -euo pipefail
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git diff --check HEAD
           bash -n .xgc2/scripts/build_debs_in_docker.sh
           bash -n .xgc2/scripts/check_installed_packages.sh
           bash -n .xgc2/scripts/package_debs.sh
           bash -n .xgc2/scripts/publish_apt_repo.sh
+          bash -n .xgc2/scripts/check_source_workspace_in_docker.sh
           xmllint --noout \
             onboard/ros1/src/agilex_onboard_imu/package.xml \
             onboard/ros1/src/agilex_onboard_imu/launch/imu_msg.launch \
@@ -64,28 +45,7 @@ jobs:
             onboard/ros1/src/imu_launch/launch/imu_rviz.launch
 
       - name: Build package and run launch compliance
-        run: |
-          set -euo pipefail
-          work_dir="${RUNNER_TEMP}/agilex-onboard-imu-compliance"
-          install_root="${RUNNER_TEMP}/agilex-onboard-imu-install-root"
-          rm -rf "$work_dir" "$install_root"
-          mkdir -p "$work_dir/src/agilex-onboard"
-          rsync -a --delete "$GITHUB_WORKSPACE/onboard/ros1/src/" "$work_dir/src/agilex-onboard/"
-
-          cd "$work_dir"
-          set +u
-          source /opt/ros/melodic/setup.bash
-          set -u
-          DESTDIR="$install_root" catkin_make install \
-            -DCMAKE_INSTALL_PREFIX=/opt/ros/melodic \
-            -DCMAKE_BUILD_TYPE=Release
-          set +u
-          source devel/setup.bash
-          set -u
-          test "$(rospack find agilex_onboard_imu)" = "$work_dir/src/agilex-onboard/agilex_onboard_imu"
-          test "$(rospack find imu_launch)" = "$work_dir/src/agilex-onboard/imu_launch"
-          roslaunch --files agilex_onboard_imu imu_msg.launch >/tmp/xgc2-agilex-onboard-imu-files.txt
-          roslaunch --files imu_launch imu_msg.launch >/tmp/xgc2-agilex-imu-launch-files.txt
+        run: .xgc2/scripts/check_source_workspace_in_docker.sh --work-dir "$RUNNER_TEMP/agilex-onboard-imu-compliance"
 
   build-debs:
     strategy:
