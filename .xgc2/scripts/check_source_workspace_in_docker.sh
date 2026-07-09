@@ -7,6 +7,8 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 DOCKER_IMAGE="${DOCKER_IMAGE:-ros:melodic-ros-base-bionic}"
 DOCKER_NETWORK="${DOCKER_NETWORK:-}"
 WORK_DIR="${WORK_DIR:-${REPO_ROOT}/.work/source-compliance}"
+XGC2_APT_BASE_URL="${XGC2_APT_BASE_URL:-https://xgc2.apt.xiaokang.ink}"
+XGC2_APT_DISTRIBUTION="${XGC2_APT_DISTRIBUTION:-bionic}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -40,6 +42,8 @@ docker pull "${DOCKER_IMAGE}"
 docker run --rm \
   "${docker_network_args[@]}" \
   -e DEBIAN_FRONTEND=noninteractive \
+  -e XGC2_APT_BASE_URL="${XGC2_APT_BASE_URL}" \
+  -e XGC2_APT_DISTRIBUTION="${XGC2_APT_DISTRIBUTION}" \
   -v "${REPO_ROOT}:/workspace/agilex:ro" \
   -v "${WORK_DIR}:/workspace/work" \
   "${DOCKER_IMAGE}" \
@@ -47,6 +51,13 @@ docker run --rm \
     set -euo pipefail
 
     export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install -y --no-install-recommends ca-certificates curl
+    mkdir -p /etc/apt/keyrings
+    curl -fsSL "${XGC2_APT_BASE_URL}/xgc2-archive-keyring.gpg" \
+      -o /etc/apt/keyrings/xgc2-archive-keyring.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/xgc2-archive-keyring.gpg] ${XGC2_APT_BASE_URL} ${XGC2_APT_DISTRIBUTION} main" \
+      > /etc/apt/sources.list.d/xgc2.list
     apt-get update
     apt-get install -y --no-install-recommends \
       build-essential \
