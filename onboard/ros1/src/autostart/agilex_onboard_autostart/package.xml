@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>agilex_onboard_autostart</name>
+  <version>0.1.0</version>
+  <description>XGC2 AgileX onboard systemd autostart configuration.</description>
+
+  <maintainer email="apt@example.com">XGC2</maintainer>
+  <license>Proprietary</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>agilex_onboard_imu</exec_depend>
+  <exec_depend>agilex_swarm_ros_bridge</exec_depend>
+  <exec_depend>roslaunch</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>scout_bringup</exec_depend>
+</package>

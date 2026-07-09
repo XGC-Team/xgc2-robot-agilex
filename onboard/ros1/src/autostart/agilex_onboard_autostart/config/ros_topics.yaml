@@ -1,0 +1,21 @@
+### XGC2 AgileX onboard swarm_ros_bridge topic configuration.
+### Installed to /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml by the
+### autostart Debian package so vehicle IP/port settings remain local config.
+
+IP:
+  self: '*'
+  qgc: 192.168.51.150
+  test_local: 127.0.0.1
+
+send_topics:
+- topic_name: /imu/data_raw
+  msg_type: sensor_msgs/Imu
+  max_freq: 50
+  srcIP: self
+  srcPort: 3001
+
+recv_topics:
+- topic_name: /cmd_vel
+  msg_type: geometry_msgs/Twist
+  srcIP: qgc
+  srcPort: 3001

@@ -1,0 +1,14 @@
+[Unit]
+Description=XGC2 AgileX CAN interface setup
+After=network.target
+PartOf=xgc2-agilex-onboard.target
+
+[Service]
+Type=oneshot
+Environment=CAN_IF=can0
+Environment=CAN_BITRATE=500000
+RemainAfterExit=yes
+ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/setup-can0
+
+[Install]
+WantedBy=xgc2-agilex-onboard.target

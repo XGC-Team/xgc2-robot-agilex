@@ -1,0 +1,15 @@
+[Unit]
+Description=XGC2 ROS master
+After=network-online.target
+Wants=network-online.target
+PartOf=xgc2-agilex-onboard.target
+
+[Service]
+Type=simple
+Environment=ROS_DISTRO=melodic
+ExecStart=/bin/bash -lc 'source /opt/ros/melodic/setup.bash; exec roscore'
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=xgc2-agilex-onboard.target

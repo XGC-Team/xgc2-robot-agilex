@@ -1,0 +1,17 @@
+[Unit]
+Description=XGC2 AgileX Scout chassis
+Requires=xgc2-roscore.service xgc2-agilex-can0.service
+After=xgc2-roscore.service xgc2-agilex-can0.service
+PartOf=xgc2-agilex-onboard.target
+
+[Service]
+Type=simple
+Environment=CAN_IF=can0
+Environment=SCOUT_SIMULATED_ROBOT=false
+Environment=SCOUT_ODOM_TOPIC=odom
+ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/start-chassis
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=xgc2-agilex-onboard.target

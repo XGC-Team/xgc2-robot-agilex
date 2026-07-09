@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+source /opt/ros/melodic/setup.bash
+
+/opt/ros/melodic/lib/agilex_onboard_autostart/wait-ros-master --timeout "${ROS_MASTER_WAIT_TIMEOUT:-60}"
+/opt/ros/melodic/lib/agilex_onboard_autostart/wait-device "${IMU_DEVICE:-/dev/imu}" --timeout "${IMU_DEVICE_WAIT_TIMEOUT:-60}"
+
+exec roslaunch agilex_onboard_imu imu_msg.launch \
+  port:="${IMU_DEVICE:-/dev/imu}" \
+  baud:="${IMU_BAUD:-115200}" \
+  topic:="${IMU_TOPIC:-imu/data_raw}" \
+  frame_id:="${IMU_FRAME_ID:-imu_link}" \
+  poll_rate_hz:="${IMU_POLL_RATE_HZ:-500}" \
+  print_packets:="${IMU_PRINT_PACKETS:-false}"

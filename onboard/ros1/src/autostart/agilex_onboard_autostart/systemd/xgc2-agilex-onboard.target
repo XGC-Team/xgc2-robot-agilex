@@ -1,0 +1,11 @@
+[Unit]
+Description=XGC2 AgileX onboard runtime
+Wants=xgc2-roscore.service
+Wants=xgc2-agilex-imu.service
+Wants=xgc2-agilex-can0.service
+Wants=xgc2-agilex-chassis.service
+Wants=xgc2-agilex-swarm-ros-bridge.service
+After=network-online.target
+
+[Install]
+WantedBy=multi-user.target

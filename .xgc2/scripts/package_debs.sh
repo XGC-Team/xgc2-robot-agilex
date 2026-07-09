@@ -6,7 +6,7 @@ OUTPUT_DIR=""
 ROS_DISTRO="${ROS_DISTRO:-melodic}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-PACKAGE_REVISION="${PACKAGE_REVISION:-4}"
+PACKAGE_REVISION="${PACKAGE_REVISION:-5}"
 
 ros_package_xml() {
   local ros_pkg="$1"
@@ -188,6 +188,101 @@ build_deb() {
   fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${deb_pkg}_${version}_${ARCH}.deb" >/dev/null
 }
 
+build_autostart_deb() {
+  local deb_pkg="ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart"
+  local ros_pkg="agilex_onboard_autostart"
+  local version
+  local pkg_root="${BUILD_DIR}/${deb_pkg}"
+  version="$(deb_version "${ros_pkg}")"
+
+  mkdir -p "${pkg_root}"
+  copy_ros_package_paths "${ros_pkg}" "${pkg_root}"
+
+  if [[ ! -e "${pkg_root}${PREFIX}/share/${ros_pkg}/package.xml" ]]; then
+    echo "missing installed package.xml for ${ros_pkg}" >&2
+    exit 1
+  fi
+
+  mkdir -p \
+    "${pkg_root}/etc/udev/rules.d" \
+    "${pkg_root}/etc/xgc2/agilex/swarm_ros_bridge" \
+    "${pkg_root}/lib/systemd/system"
+
+  cp -a "${PREFIX_ROOT}/share/${ros_pkg}/udev/99-xgc2-agilex-imu.rules" \
+    "${pkg_root}/etc/udev/rules.d/99-xgc2-agilex-imu.rules"
+  cp -a "${PREFIX_ROOT}/share/${ros_pkg}/config/ros_topics.yaml" \
+    "${pkg_root}/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml"
+  cp -a "${PREFIX_ROOT}/share/${ros_pkg}/systemd/"* \
+    "${pkg_root}/lib/systemd/system/"
+
+  write_control \
+    "${pkg_root}" \
+    "${deb_pkg}" \
+    "${version}" \
+    "iproute2, systemd, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-xgc2-agilex-onboard-imu (>= $(deb_version agilex_onboard_imu)), ros-${ROS_DISTRO}-xgc2-agilex-scout-bringup (>= $(deb_version scout_bringup)), ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version agilex_swarm_ros_bridge))" \
+    "XGC2 AgileX onboard systemd autostart configuration"
+  write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}" "${version}"
+
+  cat > "${pkg_root}/DEBIAN/conffiles" <<EOF
+/etc/udev/rules.d/99-xgc2-agilex-imu.rules
+/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
+EOF
+
+  cat > "${pkg_root}/DEBIAN/postinst" <<'EOF'
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ]; then
+  if command -v udevadm >/dev/null 2>&1; then
+    udevadm control --reload-rules >/dev/null 2>&1 || true
+    udevadm trigger --subsystem-match=tty >/dev/null 2>&1 || true
+  fi
+
+  if command -v systemctl >/dev/null 2>&1; then
+    systemctl daemon-reload >/dev/null 2>&1 || true
+    systemctl enable xgc2-agilex-onboard.target >/dev/null 2>&1 || true
+  fi
+fi
+
+exit 0
+EOF
+
+  cat > "${pkg_root}/DEBIAN/prerm" <<'EOF'
+#!/bin/sh
+set -e
+
+if [ "$1" = "remove" ] || [ "$1" = "deconfigure" ]; then
+  if command -v systemctl >/dev/null 2>&1; then
+    systemctl disable xgc2-agilex-onboard.target >/dev/null 2>&1 || true
+  fi
+fi
+
+exit 0
+EOF
+
+  cat > "${pkg_root}/DEBIAN/postrm" <<'EOF'
+#!/bin/sh
+set -e
+
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl daemon-reload >/dev/null 2>&1 || true
+fi
+
+exit 0
+EOF
+
+  find "${pkg_root}" -type d -exec chmod 0755 {} +
+  chmod 0755 "${pkg_root}/DEBIAN"
+  chmod 0644 "${pkg_root}/DEBIAN/control" "${pkg_root}/DEBIAN/conffiles"
+  chmod 0755 "${pkg_root}/DEBIAN/postinst" "${pkg_root}/DEBIAN/prerm" "${pkg_root}/DEBIAN/postrm"
+  chmod 0644 "${pkg_root}/usr/share/doc/${deb_pkg}/README"
+  find "${pkg_root}/lib/systemd/system" -type f -exec chmod 0644 {} +
+  chmod 0644 "${pkg_root}/etc/udev/rules.d/99-xgc2-agilex-imu.rules"
+  chmod 0644 "${pkg_root}/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml"
+
+  fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${deb_pkg}_${version}_${ARCH}.deb" >/dev/null
+}
+
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-onboard-imu" \
   "agilex_onboard_imu" \
@@ -254,5 +349,7 @@ build_deb \
   "rslidar_sdk" \
   "libpcap-dev, libpcl-dev, libyaml-cpp-dev, ros-${ROS_DISTRO}-pcl-conversions, ros-${ROS_DISTRO}-pcl-ros, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-roslib, ros-${ROS_DISTRO}-sensor-msgs" \
   "XGC2 AgileX RoboSense LiDAR SDK driver"
+
+build_autostart_deb
 
 find "${OUTPUT_DIR}" -maxdepth 1 -type f -name "ros-${ROS_DISTRO}-xgc2-agilex-*.deb" -print | sort

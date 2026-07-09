@@ -16,6 +16,7 @@ deb_packages=(
   "ros-${ROS_DISTRO}-xgc2-agilex-realsense2-camera"
   "ros-${ROS_DISTRO}-xgc2-agilex-realsense2-description"
   "ros-${ROS_DISTRO}-xgc2-agilex-rslidar-sdk"
+  "ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart"
 )
 
 ros_packages=(
@@ -30,6 +31,7 @@ ros_packages=(
   realsense2_camera
   realsense2_description
   rslidar_sdk
+  agilex_onboard_autostart
 )
 
 for package in "${deb_packages[@]}"; do
@@ -62,6 +64,20 @@ test -f "${PREFIX}/share/realsense2_description/urdf/_d435.urdf.xacro"
 test -x "${PREFIX}/lib/rslidar_sdk/rslidar_sdk_node"
 test -f "${PREFIX}/share/rslidar_sdk/launch/start.launch"
 test -f "${PREFIX}/share/rslidar_sdk/config/config.yaml"
+test -x "${PREFIX}/lib/agilex_onboard_autostart/wait-ros-master"
+test -x "${PREFIX}/lib/agilex_onboard_autostart/wait-ros-node"
+test -x "${PREFIX}/lib/agilex_onboard_autostart/wait-ros-topic"
+test -x "${PREFIX}/lib/agilex_onboard_autostart/start-imu"
+test -x "${PREFIX}/lib/agilex_onboard_autostart/start-chassis"
+test -x "${PREFIX}/lib/agilex_onboard_autostart/start-swarm-ros-bridge"
+test -f /lib/systemd/system/xgc2-agilex-onboard.target
+test -f /lib/systemd/system/xgc2-roscore.service
+test -f /lib/systemd/system/xgc2-agilex-imu.service
+test -f /lib/systemd/system/xgc2-agilex-can0.service
+test -f /lib/systemd/system/xgc2-agilex-chassis.service
+test -f /lib/systemd/system/xgc2-agilex-swarm-ros-bridge.service
+test -f /etc/udev/rules.d/99-xgc2-agilex-imu.rules
+test -f /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
 
 roslaunch --files agilex_onboard_imu imu_msg.launch >/dev/null
 roslaunch --files scout_base scout_mini_base.launch >/dev/null

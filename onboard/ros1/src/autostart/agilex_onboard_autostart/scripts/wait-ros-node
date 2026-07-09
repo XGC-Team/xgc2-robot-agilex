@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+from __future__ import print_function
+
+import argparse
+import socket
+import sys
+import time
+
+try:
+    from xmlrpc.client import ServerProxy
+except ImportError:
+    from xmlrpclib import ServerProxy
+
+import rosgraph
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Wait for one ROS node XML-RPC server.")
+    parser.add_argument("node_name")
+    parser.add_argument("--timeout", type=float, default=60.0)
+    parser.add_argument("--period", type=float, default=0.5)
+    parser.add_argument("--rpc-timeout", type=float, default=2.0)
+    args = parser.parse_args()
+
+    socket.setdefaulttimeout(args.rpc_timeout)
+    master = rosgraph.Master("/xgc2_wait_ros_node")
+    deadline = time.time() + args.timeout
+    last_error = None
+
+    while time.time() < deadline:
+        try:
+            node_uri = master.lookupNode(args.node_name)
+            ServerProxy(node_uri).getPid("/xgc2_wait_ros_node")
+            return 0
+        except Exception as exc:
+            last_error = exc
+            time.sleep(args.period)
+
+    print("ROS node %s did not become ready: %s" % (args.node_name, last_error), file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

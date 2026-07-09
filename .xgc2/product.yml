@@ -1,7 +1,7 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-ros1
 name: XGC2 AgileX Onboard ROS1
-version: 0.1.1-4
+version: 0.1.1-5
 kind: ros1-apt
 summary: ROS Melodic onboard IMU, Scout chassis, communication, and sensor packages for the AgileX onboard computer.
 groups:
@@ -21,6 +21,7 @@ ros:
   - realsense2_camera
   - realsense2_description
   - rslidar_sdk
+  - agilex_onboard_autostart
 apt:
   distribution: bionic
   install:
@@ -33,6 +34,7 @@ apt:
   - ros-melodic-xgc2-agilex-realsense2-camera
   - ros-melodic-xgc2-agilex-realsense2-description
   - ros-melodic-xgc2-agilex-rslidar-sdk
+  - ros-melodic-xgc2-agilex-onboard-autostart
   packages:
   - ros-melodic-xgc2-agilex-onboard-imu
   - ros-melodic-xgc2-agilex-wrp-io
@@ -43,6 +45,7 @@ apt:
   - ros-melodic-xgc2-agilex-realsense2-camera
   - ros-melodic-xgc2-agilex-realsense2-description
   - ros-melodic-xgc2-agilex-rslidar-sdk
+  - ros-melodic-xgc2-agilex-onboard-autostart
   depends:
   - ros-melodic-controller-manager
   - ros-melodic-cv-bridge
@@ -60,6 +63,7 @@ apt:
   - ros-melodic-roslaunch
   - ros-melodic-roslib
   - ros-melodic-rospy
+  - ros-melodic-rosgraph
   - ros-melodic-scout-msgs
   - ros-melodic-sensor-msgs
   - ros-melodic-serial
@@ -70,6 +74,9 @@ apt:
   - ros-melodic-tf2
   - ros-melodic-tf2-ros
   - ros-melodic-topic-tools
+  - systemd
+  - udev
+  - iproute2
   - ros-melodic-xacro
   - libpcap-dev
   - libpcl-dev
@@ -78,9 +85,7 @@ apt:
 usage:
   install: |
     sudo apt update
-    sudo apt install \
-      ros-melodic-xgc2-agilex-onboard-imu \
-      ros-melodic-xgc2-agilex-scout-bringup
+    sudo apt install ros-melodic-xgc2-agilex-onboard-autostart
   smoke_test: |
     rospack find agilex_onboard_imu
     roslaunch --files agilex_onboard_imu imu_msg.launch
@@ -103,6 +108,10 @@ usage:
     The onboard sensor packages are grouped under onboard/ros1/src/sensors and
     split into independent Debian packages for RealSense camera, RealSense
     description assets, and RoboSense LiDAR.
+    The optional autostart package installs systemd units, the IMU udev rule,
+    lightweight ROS readiness probes, and default swarm bridge configuration.
+    It enables xgc2-agilex-onboard.target but does not start the target during
+    installation.
     Internal Debian dependencies include >= version constraints so driver and
     bringup packages do not silently bind to older SDK/driver packages.
 ownership:
@@ -120,5 +129,10 @@ ownership:
   - /opt/ros/melodic/share/realsense2_description
   - /opt/ros/melodic/share/rslidar_sdk
   - /opt/ros/melodic/lib/rslidar_sdk/rslidar_sdk_node
+  - /opt/ros/melodic/share/agilex_onboard_autostart
+  - /opt/ros/melodic/lib/agilex_onboard_autostart/start-imu
+  - /lib/systemd/system/xgc2-agilex-onboard.target
+  - /etc/udev/rules.d/99-xgc2-agilex-imu.rules
+  - /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
 release:
   workflow: release.yml

@@ -16,6 +16,7 @@ independently installable Debian packages.
 | `ros-melodic-xgc2-agilex-realsense2-camera` | `realsense2_camera` | Intel RealSense camera driver |
 | `ros-melodic-xgc2-agilex-realsense2-description` | `realsense2_description` | RealSense URDF, meshes, launch, and RViz assets |
 | `ros-melodic-xgc2-agilex-rslidar-sdk` | `rslidar_sdk` | RoboSense LiDAR ROS1 driver |
+| `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | Systemd autostart, udev, and vehicle runtime configuration |
 
 The packages are split by ROS package so SDK, driver, and bringup can be
 installed independently. `scout_msgs` is installed from the standalone
@@ -82,7 +83,25 @@ RoboSense LiDAR:
 roslaunch rslidar_sdk start.launch
 ```
 
-Systemd autostart files are intentionally not packaged in this product batch.
+The optional autostart package installs `xgc2-agilex-onboard.target` plus
+service units for roscore, IMU, CAN setup, Scout chassis, and swarm bridge. It
+uses lightweight ROS XML-RPC/topic probes instead of `rosnode list` or
+`rostopic list`, installs the `/dev/imu` udev rule, and places the bridge YAML
+under `/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml`.
+
+Install it on the vehicle with:
+
+```bash
+sudo apt install ros-melodic-xgc2-agilex-onboard-autostart
+```
+
+The package enables `xgc2-agilex-onboard.target` for the next boot but does not
+start it during installation. Start it explicitly when the vehicle is safe to
+bring online:
+
+```bash
+sudo systemctl start xgc2-agilex-onboard.target
+```
 
 Internal Debian dependencies use `>=` constraints between XGC2 packages. For
 example, `scout_base` requires compatible `ugv_sdk` plus the external

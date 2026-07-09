@@ -1,0 +1,19 @@
+[Unit]
+Description=XGC2 AgileX onboard IMU
+Requires=xgc2-roscore.service
+After=xgc2-roscore.service
+PartOf=xgc2-agilex-onboard.target
+
+[Service]
+Type=simple
+Environment=IMU_DEVICE=/dev/imu
+Environment=IMU_BAUD=115200
+Environment=IMU_TOPIC=imu/data_raw
+Environment=IMU_FRAME_ID=imu_link
+Environment=IMU_POLL_RATE_HZ=500
+ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/start-imu
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=xgc2-agilex-onboard.target

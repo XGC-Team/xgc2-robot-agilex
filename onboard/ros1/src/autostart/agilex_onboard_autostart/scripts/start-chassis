@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+source /opt/ros/melodic/setup.bash
+
+/opt/ros/melodic/lib/agilex_onboard_autostart/wait-ros-master --timeout "${ROS_MASTER_WAIT_TIMEOUT:-60}"
+
+exec roslaunch scout_bringup scout_minimal.launch \
+  port_name:="${CAN_IF:-can0}" \
+  simulated_robot:="${SCOUT_SIMULATED_ROBOT:-false}" \
+  odom_topic_name:="${SCOUT_ODOM_TOPIC:-odom}"

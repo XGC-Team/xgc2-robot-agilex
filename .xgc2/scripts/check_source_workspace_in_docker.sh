@@ -127,6 +127,7 @@ docker run --rm \
     test "$(rospack find realsense2_camera)" = "/workspace/work/src/agilex-onboard/sensors/realsense2_camera"
     test "$(rospack find realsense2_description)" = "/workspace/work/src/agilex-onboard/sensors/realsense2_description"
     test "$(rospack find rslidar_sdk)" = "/workspace/work/src/agilex-onboard/sensors/rslidar_sdk"
+    test "$(rospack find agilex_onboard_autostart)" = "/workspace/work/src/agilex-onboard/autostart/agilex_onboard_autostart"
     roslaunch --files agilex_onboard_imu imu_msg.launch >/tmp/xgc2-agilex-onboard-imu-files.txt
     roslaunch --files scout_base scout_mini_base.launch >/tmp/xgc2-agilex-scout-base-files.txt
     roslaunch --files scout_bringup scout_minimal.launch >/tmp/xgc2-agilex-scout-bringup-files.txt

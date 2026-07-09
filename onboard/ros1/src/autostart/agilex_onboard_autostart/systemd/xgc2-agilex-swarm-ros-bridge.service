@@ -1,0 +1,18 @@
+[Unit]
+Description=XGC2 AgileX swarm ROS bridge
+Requires=xgc2-roscore.service xgc2-agilex-imu.service xgc2-agilex-chassis.service
+After=network-online.target xgc2-roscore.service xgc2-agilex-imu.service xgc2-agilex-chassis.service
+Wants=network-online.target
+PartOf=xgc2-agilex-onboard.target
+
+[Service]
+Type=simple
+Environment=SWARM_ROS_BRIDGE_CONFIG=/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
+Environment=IMU_READY_TOPIC=/imu/data_raw
+Environment=SCOUT_STATUS_TOPIC=/scout_status
+ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/start-swarm-ros-bridge
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=xgc2-agilex-onboard.target

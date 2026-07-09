@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+source /opt/ros/melodic/setup.bash
+
+CONFIG_FILE="${SWARM_ROS_BRIDGE_CONFIG:-/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml}"
+
+/opt/ros/melodic/lib/agilex_onboard_autostart/wait-ros-master --timeout "${ROS_MASTER_WAIT_TIMEOUT:-60}"
+/opt/ros/melodic/lib/agilex_onboard_autostart/wait-ros-topic "${IMU_READY_TOPIC:-/imu/data_raw}" --timeout "${IMU_TOPIC_WAIT_TIMEOUT:-60}"
+/opt/ros/melodic/lib/agilex_onboard_autostart/wait-ros-topic "${SCOUT_STATUS_TOPIC:-/scout_status}" --timeout "${SCOUT_STATUS_WAIT_TIMEOUT:-60}"
+
+exec roslaunch agilex_swarm_ros_bridge agilex_swarm_ros_bridge.launch config_file:="${CONFIG_FILE}"
