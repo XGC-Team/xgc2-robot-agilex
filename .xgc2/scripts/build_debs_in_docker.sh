@@ -78,6 +78,7 @@ docker run --rm \
       ros-melodic-roslaunch \
       ros-melodic-rospack \
       ros-melodic-robot-state-publisher \
+      ros-melodic-scout-msgs \
       ros-melodic-sensor-msgs \
       ros-melodic-serial \
       ros-melodic-std-msgs \

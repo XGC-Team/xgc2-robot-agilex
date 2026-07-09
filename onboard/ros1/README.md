@@ -10,13 +10,13 @@ independently installable Debian packages.
 | `ros-melodic-xgc2-agilex-onboard-imu` | `agilex_onboard_imu` | Serial IMU driver and one-time `/dev/imu` udev setup script |
 | `ros-melodic-xgc2-agilex-wrp-io` | `wrp_io` | Weston Robot Platform IO support |
 | `ros-melodic-xgc2-agilex-ugv-sdk` | `ugv_sdk` | AgileX/Scout CAN protocol SDK |
-| `ros-melodic-xgc2-agilex-scout-msgs` | `scout_msgs` | Scout status and command message definitions |
 | `ros-melodic-xgc2-agilex-scout-description` | `scout_description` | URDF/xacro model and robot description assets |
 | `ros-melodic-xgc2-agilex-scout-base` | `scout_base` | Scout base driver node |
 | `ros-melodic-xgc2-agilex-scout-bringup` | `scout_bringup` | Scout launch entry points |
 
-The packages are split by ROS package so SDK, messages, description, driver,
-and bringup can be installed independently.
+The packages are split by ROS package so SDK, description, driver, and bringup
+can be installed independently. `scout_msgs` is installed from the standalone
+`ros-melodic-scout-msgs` package and keeps the original ROS package name.
 
 ## Runtime Launch
 
@@ -53,9 +53,9 @@ ip link set can0 up type can bitrate 500000
 Systemd autostart files are intentionally not packaged in this product batch.
 
 Internal Debian dependencies use `>=` constraints between XGC2 packages. For
-example, `scout_base` requires compatible `ugv_sdk` and `scout_msgs` package
-versions, and `scout_bringup` requires compatible base and description package
-versions.
+example, `scout_base` requires compatible `ugv_sdk` plus the external
+`ros-melodic-scout-msgs` package, and `scout_bringup` requires compatible base
+and description package versions.
 
 ## Build
 

@@ -8,7 +8,7 @@ deb_packages=(
   "ros-${ROS_DISTRO}-xgc2-agilex-onboard-imu"
   "ros-${ROS_DISTRO}-xgc2-agilex-wrp-io"
   "ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk"
-  "ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs"
+  "ros-${ROS_DISTRO}-scout-msgs"
   "ros-${ROS_DISTRO}-xgc2-agilex-scout-description"
   "ros-${ROS_DISTRO}-xgc2-agilex-scout-base"
   "ros-${ROS_DISTRO}-xgc2-agilex-scout-bringup"

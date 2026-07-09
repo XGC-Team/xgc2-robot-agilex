@@ -6,7 +6,7 @@ OUTPUT_DIR=""
 ROS_DISTRO="${ROS_DISTRO:-melodic}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-PACKAGE_REVISION="${PACKAGE_REVISION:-2}"
+PACKAGE_REVISION="${PACKAGE_REVISION:-3}"
 
 ros_package_xml() {
   local ros_pkg="$1"
@@ -206,7 +206,7 @@ build_deb \
 
 wrp_io_dep="ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io))"
 ugv_sdk_dep="ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk))"
-scout_msgs_dep="ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs (>= $(deb_version scout_msgs))"
+scout_msgs_dep="ros-${ROS_DISTRO}-scout-msgs (>= 0.3.3-1)"
 scout_description_dep="ros-${ROS_DISTRO}-xgc2-agilex-scout-description (>= $(deb_version scout_description))"
 scout_base_dep="ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))"
 
@@ -216,12 +216,6 @@ build_deb \
   "ros-${ROS_DISTRO}-catkin, ${wrp_io_dep}" \
   "XGC2 AgileX UGV SDK" \
   "lib/libugv_sdk.*"
-
-build_deb \
-  "ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs" \
-  "scout_msgs" \
-  "ros-${ROS_DISTRO}-message-runtime, ros-${ROS_DISTRO}-std-msgs" \
-  "XGC2 AgileX Scout message definitions"
 
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-scout-description" \

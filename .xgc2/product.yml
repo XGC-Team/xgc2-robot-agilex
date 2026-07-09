@@ -1,7 +1,7 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-ros1
 name: XGC2 AgileX Onboard ROS1
-version: 0.1.1-2
+version: 0.1.1-3
 kind: ros1-apt
 summary: ROS Melodic onboard IMU and Scout chassis packages for the AgileX onboard computer.
 groups:
@@ -15,7 +15,6 @@ ros:
   - agilex_onboard_imu
   - wrp_io
   - ugv_sdk
-  - scout_msgs
   - scout_description
   - scout_base
   - scout_bringup
@@ -25,7 +24,6 @@ apt:
   - ros-melodic-xgc2-agilex-onboard-imu
   - ros-melodic-xgc2-agilex-wrp-io
   - ros-melodic-xgc2-agilex-ugv-sdk
-  - ros-melodic-xgc2-agilex-scout-msgs
   - ros-melodic-xgc2-agilex-scout-description
   - ros-melodic-xgc2-agilex-scout-base
   - ros-melodic-xgc2-agilex-scout-bringup
@@ -33,7 +31,6 @@ apt:
   - ros-melodic-xgc2-agilex-onboard-imu
   - ros-melodic-xgc2-agilex-wrp-io
   - ros-melodic-xgc2-agilex-ugv-sdk
-  - ros-melodic-xgc2-agilex-scout-msgs
   - ros-melodic-xgc2-agilex-scout-description
   - ros-melodic-xgc2-agilex-scout-base
   - ros-melodic-xgc2-agilex-scout-bringup
@@ -47,6 +44,7 @@ apt:
   - ros-melodic-roslaunch
   - ros-melodic-rospy
   - ros-melodic-robot-state-publisher
+  - ros-melodic-scout-msgs
   - ros-melodic-sensor-msgs
   - ros-melodic-serial
   - ros-melodic-std-msgs
@@ -73,9 +71,11 @@ usage:
     The IMU deb also installs a one-time udev setup script for /dev/imu:
     /opt/ros/melodic/share/agilex_onboard_imu/scripts/install_imu_udev_rule.sh.
     The Scout chassis packages are split by ROS package so SDK, messages,
-    description, driver, and bringup can be installed independently.
+    description, driver, and bringup can be installed independently. The
+    compatible Scout message definitions are maintained in xgc2-scout-msgs and
+    consumed as the external Debian package ros-melodic-scout-msgs.
     Internal Debian dependencies include >= version constraints so driver and
-    bringup packages do not silently bind to older SDK/message packages.
+    bringup packages do not silently bind to older SDK/driver packages.
 ownership:
   paths:
   - /opt/ros/melodic/share/agilex_onboard_imu
@@ -83,7 +83,6 @@ ownership:
   - /opt/ros/melodic/share/agilex_onboard_imu/scripts/install_imu_udev_rule.sh
   - /opt/ros/melodic/share/wrp_io
   - /opt/ros/melodic/share/ugv_sdk
-  - /opt/ros/melodic/share/scout_msgs
   - /opt/ros/melodic/share/scout_description
   - /opt/ros/melodic/share/scout_base
   - /opt/ros/melodic/share/scout_bringup

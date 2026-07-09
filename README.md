@@ -11,7 +11,6 @@ by XGC2.
   - `ros-melodic-xgc2-agilex-onboard-imu`
   - `ros-melodic-xgc2-agilex-wrp-io`
   - `ros-melodic-xgc2-agilex-ugv-sdk`
-  - `ros-melodic-xgc2-agilex-scout-msgs`
   - `ros-melodic-xgc2-agilex-scout-description`
   - `ros-melodic-xgc2-agilex-scout-base`
   - `ros-melodic-xgc2-agilex-scout-bringup`
@@ -21,6 +20,8 @@ by XGC2.
 
 The ROS Debian packages are versioned per ROS package from each package's
 `package.xml`, with internal `>=` dependency constraints between split packages.
+The compatible `scout_msgs` package is consumed from the standalone
+`ros-melodic-scout-msgs` product.
 
 ## Repository Boundary
 
