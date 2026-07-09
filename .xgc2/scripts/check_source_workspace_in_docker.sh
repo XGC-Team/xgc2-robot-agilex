@@ -106,7 +106,7 @@ docker run --rm \
     test "$(rospack find scout_msgs)" = "/opt/ros/melodic/share/scout_msgs"
     test "$(rospack find scout_description)" = "/workspace/work/src/agilex-onboard/description/scout_description"
     test "$(rospack find scout_base)" = "/workspace/work/src/agilex-onboard/chassis/scout_base"
-    test "$(rospack find scout_bringup)" = "/workspace/work/src/agilex-onboard/chassis/scout_bringup"
+    test "$(rospack find scout_bringup)" = "/workspace/work/src/agilex-onboard/scout_bringup"
     roslaunch --files agilex_onboard_imu imu_msg.launch >/tmp/xgc2-agilex-onboard-imu-files.txt
     roslaunch --files scout_base scout_mini_base.launch >/tmp/xgc2-agilex-scout-base-files.txt
     roslaunch --files scout_bringup scout_minimal.launch >/tmp/xgc2-agilex-scout-bringup-files.txt
