@@ -1,28 +1,60 @@
-# XGC2 AgileX Onboard ROS1 IMU
+# XGC2 AgileX Onboard ROS1
 
-This product packages the recovered AgileX onboard serial IMU driver as one
-ROS Melodic Debian package.
+This product packages recovered AgileX onboard ROS Melodic source packages into
+independently installable Debian packages.
 
-- ROS package: `agilex_onboard_imu`
-- Compatibility launch package: `imu_launch`
-- Debian package: `ros-melodic-xgc2-agilex-onboard-imu`
-- Default serial port: `/dev/imu`
-- Default baud rate: `115200`
-- Default topic: `/imu/data_raw`
+## Debian Packages
 
-Runtime launch:
+| Debian package | ROS package | Purpose |
+| --- | --- | --- |
+| `ros-melodic-xgc2-agilex-onboard-imu` | `agilex_onboard_imu`, `imu_launch` | Serial IMU driver and compatibility launch package |
+| `ros-melodic-xgc2-agilex-wrp-io` | `wrp_io` | Weston Robot Platform IO support |
+| `ros-melodic-xgc2-agilex-ugv-sdk` | `ugv_sdk` | AgileX/Scout CAN protocol SDK |
+| `ros-melodic-xgc2-agilex-scout-msgs` | `scout_msgs` | Scout status and command message definitions |
+| `ros-melodic-xgc2-agilex-scout-description` | `scout_description` | URDF/xacro model and robot description assets |
+| `ros-melodic-xgc2-agilex-scout-base` | `scout_base` | Scout base driver node |
+| `ros-melodic-xgc2-agilex-scout-bringup` | `scout_bringup` | Scout launch entry points |
+
+The packages are split by ROS package so SDK, messages, description, driver,
+and bringup can be installed independently.
+
+## Runtime Launch
+
+IMU:
 
 ```bash
 roslaunch agilex_onboard_imu imu_msg.launch
 ```
 
-Recovered vehicle autostart compatibility:
+Recovered IMU autostart compatibility:
 
 ```bash
 roslaunch imu_launch imu_msg.launch
 ```
 
-Build the package locally:
+Scout chassis:
+
+```bash
+roslaunch scout_bringup scout_minimal.launch
+```
+
+The chassis launch expects the vehicle CAN interface to be available as:
+
+```text
+can0
+```
+
+with the recovered runtime configuration:
+
+```bash
+ip link set can0 up type can bitrate 500000
+```
+
+Systemd autostart files are intentionally not packaged in this product batch.
+
+## Build
+
+Build and install-check the packages locally:
 
 ```bash
 .xgc2/scripts/build_debs_in_docker.sh --output-dir debs

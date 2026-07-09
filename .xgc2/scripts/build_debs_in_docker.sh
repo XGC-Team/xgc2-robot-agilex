@@ -68,11 +68,24 @@ docker run --rm \
       fakeroot \
       git \
       rsync \
+      ros-melodic-controller-manager \
+      ros-melodic-geometry-msgs \
+      ros-melodic-joint-state-publisher \
+      ros-melodic-message-generation \
+      ros-melodic-message-runtime \
+      ros-melodic-nav-msgs \
       ros-melodic-roscpp \
       ros-melodic-roslaunch \
       ros-melodic-rospack \
+      ros-melodic-robot-state-publisher \
       ros-melodic-sensor-msgs \
-      ros-melodic-serial
+      ros-melodic-serial \
+      ros-melodic-std-msgs \
+      ros-melodic-tf2 \
+      ros-melodic-tf2-ros \
+      ros-melodic-topic-tools \
+      ros-melodic-urdf \
+      ros-melodic-xacro
 
     rm -rf /workspace/work/build /workspace/work/devel /workspace/work/install-root /workspace/work/src
     mkdir -p /workspace/work/src/agilex-onboard
@@ -94,7 +107,7 @@ docker run --rm \
       --output-dir /workspace/out
 
     if [[ "${INSTALL_CHECK}" == "true" ]]; then
-      apt-get install -y /workspace/out/ros-melodic-xgc2-agilex-onboard-imu_*.deb
+      apt-get install -y /workspace/out/*.deb
       /workspace/agilex/.xgc2/scripts/check_installed_packages.sh
     fi
   '

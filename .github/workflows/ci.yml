@@ -36,16 +36,12 @@ jobs:
           bash -n .xgc2/scripts/package_debs.sh
           bash -n .xgc2/scripts/publish_apt_repo.sh
           bash -n .xgc2/scripts/check_source_workspace_in_docker.sh
-          xmllint --noout \
-            onboard/ros1/src/agilex_onboard_imu/package.xml \
-            onboard/ros1/src/agilex_onboard_imu/launch/imu_msg.launch \
-            onboard/ros1/src/agilex_onboard_imu/launch/imu_rviz.launch \
-            onboard/ros1/src/imu_launch/package.xml \
-            onboard/ros1/src/imu_launch/launch/imu_msg.launch \
-            onboard/ros1/src/imu_launch/launch/imu_rviz.launch
+          find onboard/ros1/src \
+            \( -name package.xml -o -name '*.launch' -o -name '*.xacro' -o -name '*.urdf' \) \
+            -print0 | xargs -0 xmllint --noout
 
       - name: Build package and run launch compliance
-        run: .xgc2/scripts/check_source_workspace_in_docker.sh --work-dir "$RUNNER_TEMP/agilex-onboard-imu-compliance"
+        run: .xgc2/scripts/check_source_workspace_in_docker.sh --work-dir "$RUNNER_TEMP/agilex-onboard-ros1-compliance"
 
   build-debs:
     strategy:
@@ -63,11 +59,11 @@ jobs:
       - name: Build and install-check deb package
         run: |
           .xgc2/scripts/build_debs_in_docker.sh \
-            --work-dir "$RUNNER_TEMP/xgc2-agilex-onboard-imu-${{ matrix.arch }}" \
+            --work-dir "$RUNNER_TEMP/xgc2-agilex-onboard-ros1-${{ matrix.arch }}" \
             --output-dir "$GITHUB_WORKSPACE/debs"
 
       - name: Upload deb artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: xgc2-agilex-onboard-imu-debs-${{ matrix.arch }}
+          name: xgc2-agilex-onboard-ros1-debs-${{ matrix.arch }}
           path: debs/*.deb

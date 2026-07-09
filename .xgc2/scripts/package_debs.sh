@@ -6,10 +6,6 @@ OUTPUT_DIR=""
 ROS_DISTRO="${ROS_DISTRO:-melodic}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-PACKAGE="ros-${ROS_DISTRO}-xgc2-agilex-onboard-imu"
-ROS_PACKAGE="agilex_onboard_imu"
-COMPAT_ROS_PACKAGE="imu_launch"
-NODE="agilex_onboard_imu_node"
 
 product_version() {
   awk -F': *' '/^version:/ {print $2; exit}' "${REPO_ROOT}/.xgc2/product.yml"
@@ -55,7 +51,7 @@ cleanup() {
 trap cleanup EXIT
 
 mkdir -p "${OUTPUT_DIR}"
-rm -f "${OUTPUT_DIR}/${PACKAGE}_"*.deb
+rm -f "${OUTPUT_DIR}/ros-${ROS_DISTRO}-xgc2-agilex-"*.deb
 
 copy_path() {
   local src="$1"
@@ -66,53 +62,151 @@ copy_path() {
   fi
 }
 
-pkg_root="${BUILD_DIR}/${PACKAGE}"
-mkdir -p "${pkg_root}"
+copy_glob() {
+  local dst_root="$1"
+  shift
+  local pattern
+  local src
+  shopt -s nullglob
+  for pattern in "$@"; do
+    for src in ${pattern}; do
+      copy_path "${src}" "${dst_root}"
+    done
+  done
+  shopt -u nullglob
+}
 
-copy_path "${PREFIX_ROOT}/share/${ROS_PACKAGE}" "${pkg_root}"
-copy_path "${PREFIX_ROOT}/share/${COMPAT_ROS_PACKAGE}" "${pkg_root}"
-copy_path "${PREFIX_ROOT}/lib/${ROS_PACKAGE}" "${pkg_root}"
+copy_ros_package_paths() {
+  local ros_pkg="$1"
+  local pkg_root="$2"
 
-if [[ ! -x "${pkg_root}${PREFIX}/lib/${ROS_PACKAGE}/${NODE}" ]]; then
-  echo "missing installed ${NODE} executable" >&2
-  exit 1
-fi
+  copy_path "${PREFIX_ROOT}/share/${ros_pkg}" "${pkg_root}"
+  copy_path "${PREFIX_ROOT}/lib/${ros_pkg}" "${pkg_root}"
+  copy_path "${PREFIX_ROOT}/include/${ros_pkg}" "${pkg_root}"
+  copy_glob "${pkg_root}" "${PREFIX_ROOT}"/lib/python*/dist-packages/"${ros_pkg}"
+  copy_path "${PREFIX_ROOT}/share/common-lisp/ros/${ros_pkg}" "${pkg_root}"
+  copy_path "${PREFIX_ROOT}/share/gennodejs/ros/${ros_pkg}" "${pkg_root}"
+  copy_path "${PREFIX_ROOT}/share/roseus/ros/${ros_pkg}" "${pkg_root}"
+}
 
-mkdir -p "${pkg_root}/DEBIAN" "${pkg_root}/usr/share/doc/${PACKAGE}"
-cat > "${pkg_root}/DEBIAN/control" <<EOF
-Package: ${PACKAGE}
+write_control() {
+  local pkg_root="$1"
+  local deb_pkg="$2"
+  local depends="$3"
+  local description="$4"
+
+  mkdir -p "${pkg_root}/DEBIAN"
+  cat > "${pkg_root}/DEBIAN/control" <<EOF
+Package: ${deb_pkg}
 Version: ${VERSION}
 Section: misc
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: XGC2 <apt@example.com>
-Depends: ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-serial
-Description: XGC2 AgileX onboard serial IMU driver
- ROS ${ROS_DISTRO} package for the AgileX onboard serial IMU. It preserves the
- recovered vehicle runtime surface by publishing sensor_msgs/Imu on /imu/data_raw
- from /dev/imu at 115200 baud by default.
+Depends: ${depends}
+Description: ${description}
+ XGC2 AgileX ROS ${ROS_DISTRO} package generated from the recovered onboard
+ source tree and split by ROS package for independent installation.
 EOF
+}
 
-cat > "${pkg_root}/usr/share/doc/${PACKAGE}/README" <<EOF
-XGC2 AgileX Onboard IMU
+write_readme() {
+  local pkg_root="$1"
+  local deb_pkg="$2"
+  local ros_pkg="$3"
+
+  mkdir -p "${pkg_root}/usr/share/doc/${deb_pkg}"
+  cat > "${pkg_root}/usr/share/doc/${deb_pkg}/README" <<EOF
+${deb_pkg}
 
 ROS package:
-  ${ROS_PACKAGE}
+  ${ros_pkg}
 
-Default launch:
-  roslaunch ${ROS_PACKAGE} imu_msg.launch
-
-Default runtime:
-  port=/dev/imu
-  baud=115200
-  topic=/imu/data_raw
-  frame_id=imu_link
+Install prefix:
+  ${PREFIX}
 EOF
+}
 
-find "${pkg_root}" -type d -exec chmod 0755 {} +
-find "${pkg_root}" -type f -exec chmod 0644 {} +
-chmod 0755 "${pkg_root}/DEBIAN"
-chmod 0755 "${pkg_root}${PREFIX}/lib/${ROS_PACKAGE}/${NODE}"
+build_deb() {
+  local deb_pkg="$1"
+  local ros_pkg="$2"
+  local depends="$3"
+  local description="$4"
+  shift 4
 
-fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${PACKAGE}_${VERSION}_${ARCH}.deb" >/dev/null
-find "${OUTPUT_DIR}" -maxdepth 1 -type f -name "${PACKAGE}_*.deb" -print | sort
+  local pkg_root="${BUILD_DIR}/${deb_pkg}"
+  mkdir -p "${pkg_root}"
+
+  copy_ros_package_paths "${ros_pkg}" "${pkg_root}"
+
+  local extra
+  for extra in "$@"; do
+    copy_glob "${pkg_root}" "${PREFIX_ROOT}/${extra}"
+  done
+
+  if [[ ! -e "${pkg_root}${PREFIX}/share/${ros_pkg}/package.xml" ]]; then
+    echo "missing installed package.xml for ${ros_pkg}" >&2
+    exit 1
+  fi
+
+  write_control "${pkg_root}" "${deb_pkg}" "${depends}" "${description}"
+  write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}"
+
+  find "${pkg_root}" -type d -exec chmod 0755 {} +
+  chmod 0755 "${pkg_root}/DEBIAN"
+  chmod 0644 "${pkg_root}/DEBIAN/control"
+  chmod 0644 "${pkg_root}/usr/share/doc/${deb_pkg}/README"
+
+  fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${deb_pkg}_${VERSION}_${ARCH}.deb" >/dev/null
+}
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-onboard-imu" \
+  "agilex_onboard_imu" \
+  "ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-serial" \
+  "XGC2 AgileX onboard serial IMU driver" \
+  "share/imu_launch" \
+  "lib/agilex_onboard_imu/agilex_onboard_imu_node"
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-wrp-io" \
+  "wrp_io" \
+  "ros-${ROS_DISTRO}-catkin" \
+  "XGC2 AgileX Weston Robot Platform IO library" \
+  "lib/libwrp_io.*" \
+  "include/asio" \
+  "include/asio.hpp"
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk" \
+  "ugv_sdk" \
+  "ros-${ROS_DISTRO}-catkin, ros-${ROS_DISTRO}-xgc2-agilex-wrp-io" \
+  "XGC2 AgileX UGV SDK" \
+  "lib/libugv_sdk.*"
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs" \
+  "scout_msgs" \
+  "ros-${ROS_DISTRO}-message-runtime, ros-${ROS_DISTRO}-std-msgs" \
+  "XGC2 AgileX Scout message definitions"
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-scout-description" \
+  "scout_description" \
+  "ros-${ROS_DISTRO}-urdf, ros-${ROS_DISTRO}-xacro, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher" \
+  "XGC2 AgileX Scout robot description"
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-scout-base" \
+  "scout_base" \
+  "ros-${ROS_DISTRO}-controller-manager, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-nav-msgs, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-tf2, ros-${ROS_DISTRO}-tf2-ros, ros-${ROS_DISTRO}-topic-tools, ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs, ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk" \
+  "XGC2 AgileX Scout base driver" \
+  "lib/libscout_messenger.*"
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-scout-bringup" \
+  "scout_bringup" \
+  "ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-std-msgs, ros-${ROS_DISTRO}-xgc2-agilex-scout-base, ros-${ROS_DISTRO}-xgc2-agilex-scout-description" \
+  "XGC2 AgileX Scout bringup launch files"
+
+find "${OUTPUT_DIR}" -maxdepth 1 -type f -name "ros-${ROS_DISTRO}-xgc2-agilex-*.deb" -print | sort
