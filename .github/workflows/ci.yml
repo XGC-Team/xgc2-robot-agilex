@@ -34,7 +34,6 @@ jobs:
           bash -n .xgc2/scripts/build_debs_in_docker.sh
           bash -n .xgc2/scripts/check_installed_packages.sh
           bash -n .xgc2/scripts/package_debs.sh
-          bash -n .xgc2/scripts/publish_apt_repo.sh
           bash -n .xgc2/scripts/check_source_workspace_in_docker.sh
           find onboard/ros1/src \
             -path onboard/ros1/src/extend -prune -o \
@@ -68,7 +67,7 @@ jobs:
           product_version="$(awk -F': *' '/^version:/ {print $2; exit}' .xgc2/product.yml)"
           python3 .xgc2/scripts/xgc2_artifact_manifest.py build \
             --deb-dir debs \
-            --output-dir build-manifests \
+            --output-dir .ci/build-manifests \
             --product xgc2-agilex-onboard-ros1 \
             --product-version "$product_version" \
             --distribution bionic \
@@ -84,6 +83,6 @@ jobs:
           name: xgc2-agilex-onboard-ros1-debs-${{ matrix.arch }}
           path: |
             debs/*.deb
-            build-manifests/*.json
+            .ci/build-manifests/*.json
           retention-days: 14
           include-hidden-files: true
