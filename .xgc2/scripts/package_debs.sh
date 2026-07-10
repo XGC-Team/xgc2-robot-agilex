@@ -6,7 +6,11 @@ OUTPUT_DIR=""
 ROS_DISTRO="${ROS_DISTRO:-melodic}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-PACKAGE_REVISION="${PACKAGE_REVISION:-5}"
+PACKAGE_VERSION="$(awk -F': *' '/^version:/ {print $2; exit}' "${REPO_ROOT}/.xgc2/product.yml")"
+if [[ -z "${PACKAGE_VERSION}" ]]; then
+  echo "missing product version in .xgc2/product.yml" >&2
+  exit 1
+fi
 
 ros_package_xml() {
   local ros_pkg="$1"
@@ -30,13 +34,11 @@ ros_package_version() {
 
 deb_version() {
   local ros_pkg="$1"
-  local version
-  version="$(ros_package_version "${ros_pkg}")"
-  if [[ -z "${version}" ]]; then
+  if [[ -z "$(ros_package_version "${ros_pkg}")" ]]; then
     echo "missing package.xml version for ${ros_pkg}" >&2
     exit 1
   fi
-  printf '%s-%s\n' "${version}" "${PACKAGE_REVISION}"
+  printf '%s\n' "${PACKAGE_VERSION}"
 }
 
 while [[ $# -gt 0 ]]; do
