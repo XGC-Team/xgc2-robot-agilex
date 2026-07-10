@@ -1,9 +1,10 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-ros1
 name: XGC2 AgileX Onboard ROS1
-version: 0.1.1-5
+version: 0.1.1-6
 kind: ros1-apt
-summary: ROS Melodic onboard IMU, Scout chassis, communication, and sensor packages for the AgileX onboard computer.
+summary: ROS Melodic onboard IMU, Scout chassis, communication, and sensor packages
+  for the AgileX onboard computer.
 groups:
 - robotics
 - agilex
@@ -83,37 +84,65 @@ apt:
   - librealsense2-dev
   - libyaml-cpp-dev
 usage:
-  install: |
-    sudo apt update
+  install: 'sudo apt update
+
     sudo apt install ros-melodic-xgc2-agilex-onboard-autostart
-  smoke_test: |
-    rospack find agilex_onboard_imu
+
+    '
+  smoke_test: 'rospack find agilex_onboard_imu
+
     roslaunch --files agilex_onboard_imu imu_msg.launch
+
     rospack find scout_base
+
     roslaunch --files scout_bringup scout_minimal.launch
+
     rospack find agilex_swarm_ros_bridge
+
     roslaunch --files agilex_swarm_ros_bridge agilex_swarm_ros_bridge.launch
-  notes: |
-    The launch defaults match the recovered vehicle startup chain:
+
+    '
+  notes: 'The launch defaults match the recovered vehicle startup chain:
+
     port=/dev/imu, baud=115200, topic=/imu/data_raw, frame_id=imu_link.
+
     The IMU deb also installs a one-time udev setup script for /dev/imu:
+
     /opt/ros/melodic/share/agilex_onboard_imu/scripts/install_imu_udev_rule.sh.
+
     The Scout chassis packages are split by ROS package so SDK, messages,
+
     driver, and bringup can be installed independently. The compatible Scout
+
     message definitions are maintained in xgc2-scout-msgs and consumed as the
+
     external Debian package ros-melodic-scout-msgs.
+
     The AgileX swarm bridge package only provides vehicle-specific YAML and
+
     launch files. It consumes the external generic package
+
     ros-melodic-swarm-ros-bridge.
+
     The onboard sensor packages are grouped under onboard/ros1/src/sensors and
+
     split into independent Debian packages for RealSense camera, RealSense
+
     description assets, and RoboSense LiDAR.
+
     The optional autostart package installs systemd units, the IMU udev rule,
+
     lightweight ROS readiness probes, and default swarm bridge configuration.
+
     It enables xgc2-agilex-onboard.target but does not start the target during
+
     installation.
+
     Internal Debian dependencies include >= version constraints so driver and
+
     bringup packages do not silently bind to older SDK/driver packages.
+
+    '
 ownership:
   paths:
   - /opt/ros/melodic/share/agilex_onboard_imu
