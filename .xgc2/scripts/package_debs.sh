@@ -303,8 +303,8 @@ build_deb \
 
 wrp_io_dep="ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io))"
 ugv_sdk_dep="ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk))"
-scout_msgs_dep="ros-${ROS_DISTRO}-scout-msgs (>= 0.3.3-1)"
-swarm_ros_bridge_dep="ros-${ROS_DISTRO}-swarm-ros-bridge (>= 1.0.0-1)"
+scout_msgs_dep="ros-${ROS_DISTRO}-scout-msgs (>= 0.3.3-4)"
+swarm_ros_bridge_dep="ros-${ROS_DISTRO}-swarm-ros-bridge (>= 1.1.0-2)"
 scout_base_dep="ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))"
 realsense2_description_dep="ros-${ROS_DISTRO}-xgc2-agilex-realsense2-description (>= $(deb_version realsense2_description))"
 
