@@ -1,7 +1,7 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-ros1
 name: XGC2 AgileX Onboard ROS1
-version: 0.1.1-11
+version: 0.1.1-12
 kind: ros1-apt
 summary: ROS Melodic onboard IMU, Scout chassis, communication, and sensor packages
   for the AgileX onboard computer.
@@ -70,7 +70,7 @@ apt:
   - ros-melodic-serial
   - ros-melodic-std-msgs
   - ros-melodic-std-srvs
-  - ros-melodic-swarm-ros-bridge (>= 1.1.0-2)
+  - ros-melodic-swarm-ros-bridge (>= 1.1.0-3)
   - ros-melodic-tf
   - ros-melodic-tf2
   - ros-melodic-tf2-ros
