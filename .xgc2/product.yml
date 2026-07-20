@@ -164,4 +164,7 @@ ownership:
   - /etc/udev/rules.d/99-xgc2-agilex-imu.rules
   - /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
 release:
+  dependency_policy:
+    xgc2-scout-msgs: rebuild
+    xgc2-swarm-ros-bridge: verify
   workflow: release.yml
