@@ -15,7 +15,7 @@ send_topics:
   srcPort: 3001
 
 recv_topics:
-- topic_name: /cmd_vel
+- topic_name: cmd_vel
   msg_type: geometry_msgs/Twist
   srcIP: qgc
   srcPort: 3001

@@ -50,6 +50,22 @@ Scout chassis:
 roslaunch scout_bringup scout_minimal.launch
 ```
 
+For a namespaced XGC2 robot, start the chassis and bridge in the same namespace:
+
+```bash
+roslaunch scout_bringup scout_minimal.launch robot_namespace:=/ugv1
+roslaunch agilex_swarm_ros_bridge agilex_swarm_ros_bridge.launch robot_namespace:=/ugv1
+```
+
+The Scout driver uses relative `cmd_vel`, `scout_status`, and light-control
+topics. The default namespace remains `/`, preserving the existing onboard
+topic names. Each ground-station bridge sender must bind that robot's
+`/<namespace>/cmd_vel` to a distinct network port; sharing one command port
+between vehicles would broadcast the same command to all of them.
+For systemd autostart, set the same `XGC2_ROBOT_NAMESPACE=/ugv1` override on
+both `xgc2-agilex-chassis.service` and
+`xgc2-agilex-swarm-ros-bridge.service`; their packaged default remains `/`.
+
 The chassis launch expects the vehicle CAN interface to be available as:
 
 ```text

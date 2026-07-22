@@ -8,4 +8,5 @@ source /opt/ros/melodic/setup.bash
 exec roslaunch scout_bringup scout_minimal.launch \
   port_name:="${CAN_IF:-can0}" \
   simulated_robot:="${SCOUT_SIMULATED_ROBOT:-false}" \
-  odom_topic_name:="${SCOUT_ODOM_TOPIC:-odom}"
+  odom_topic_name:="${SCOUT_ODOM_TOPIC:-odom}" \
+  robot_namespace:="${XGC2_ROBOT_NAMESPACE:-/}"

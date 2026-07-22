@@ -9,6 +9,7 @@ Type=simple
 Environment=CAN_IF=can0
 Environment=SCOUT_SIMULATED_ROBOT=false
 Environment=SCOUT_ODOM_TOPIC=odom
+Environment=XGC2_ROBOT_NAMESPACE=/
 ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/start-chassis
 Restart=always
 RestartSec=3

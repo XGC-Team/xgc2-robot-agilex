@@ -314,7 +314,7 @@ The node subscribes to simulated odometry and joint states, then fills:
 linear_velocity   from odom.twist.twist.linear.x
 angular_velocity  from odom.twist.twist.angular.z
 motor_states[*].rpm from wheel joint velocity converted from rad/s to rpm
-battery_voltage   from launch parameter, default 29.2
+battery_voltage   from launch parameter, default 28.765 (95% on the temporary linear Scout battery model)
 base_state        from launch/node parameter, default 0
 control_mode      from launch/node parameter, default 1
 fault_code        from launch/node parameter, default 0

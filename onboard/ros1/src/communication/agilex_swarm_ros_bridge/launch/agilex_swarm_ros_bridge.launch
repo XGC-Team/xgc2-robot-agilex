@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="config_file" default="$(find agilex_swarm_ros_bridge)/config/ros_topics.yaml" />
+  <arg name="robot_namespace" default="/" />
 
-  <node pkg="swarm_ros_bridge" type="bridge_node" name="swarm_bridge_node" output="screen">
+  <node pkg="swarm_ros_bridge" type="bridge_node" name="swarm_bridge_node" output="screen" ns="$(arg robot_namespace)">
     <rosparam command="load" file="$(arg config_file)" />
   </node>
 </launch>
