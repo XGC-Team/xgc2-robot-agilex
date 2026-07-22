@@ -66,6 +66,12 @@ For systemd autostart, set the same `XGC2_ROBOT_NAMESPACE=/ugv1` override on
 both `xgc2-agilex-chassis.service` and
 `xgc2-agilex-swarm-ros-bridge.service`; their packaged default remains `/`.
 
+The recovered onboard product is ROS Melodic on Ubuntu 18.04, while the XGC2
+Scout Robot Adapter is currently packaged for ROS Noetic on Ubuntu 20.04. Run
+that Adapter on a compatible target which can reach the vehicle ROS graph, or
+provide a per-robot bridge/sidecar; the Noetic package is not directly
+installable into this Melodic image.
+
 The chassis launch expects the vehicle CAN interface to be available as:
 
 ```text
