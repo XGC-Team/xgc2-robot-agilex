@@ -70,11 +70,10 @@ scout_bringup
   -> chassis controller
 ```
 
-The recovered real-vehicle `scout_description` tree is useful for
-visualization, TF structure, and sensor extrinsics, but it does not participate
-in `/cmd_vel -> CAN -> chassis` motion command transmission. It is preserved in
-`xgc2-scout-description` on branch `melodic-agilex-real-description` and is not
-packaged in the onboard runtime product.
+The standalone visual-only `scout_description` package provides URDF and meshes
+for display, but it does not participate in `/cmd_vel -> CAN -> chassis` motion
+command transmission. Display launch files and recovered maps, parameters, and
+RViz profiles are owned by `scout_bringup`.
 
 ## Role
 

@@ -304,6 +304,7 @@ build_deb \
 wrp_io_dep="ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io))"
 ugv_sdk_dep="ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk))"
 scout_msgs_dep="ros-${ROS_DISTRO}-scout-msgs (>= 0.3.3-5)"
+scout_description_dep="ros-${ROS_DISTRO}-xgc2-scout-description (>= 0.4.10-1)"
 swarm_ros_bridge_dep="ros-${ROS_DISTRO}-swarm-ros-bridge (>= 1.1.0-3)"
 scout_base_dep="ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))"
 realsense2_description_dep="ros-${ROS_DISTRO}-xgc2-agilex-realsense2-description (>= $(deb_version realsense2_description))"
@@ -325,8 +326,8 @@ build_deb \
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-scout-bringup" \
   "scout_bringup" \
-  "ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-std-msgs, ${scout_base_dep}" \
-  "XGC2 AgileX Scout bringup launch files"
+  "ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-joint-state-publisher-gui, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rviz, ${scout_base_dep}, ${scout_description_dep}" \
+  "XGC2 AgileX Scout bringup, display, and recovered navigation assets"
 
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge" \

@@ -62,6 +62,6 @@
     </node>
   </group>
 	<!--  **************** Visualization ****************  -->
-	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find hunter_bringup)/rviz/rtabmapping.rviz"/>
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find scout_bringup)/rviz/rtabmapping.rviz"/>
 
 </launch>

@@ -43,6 +43,6 @@
     <param name="freq" value="10.0"/>                            # Execution frequency.
     <param name="verbose" value="true" />                       # verbose
   </node>
-  <include file="$(find scout_description)/launch/display_scout_mini.launch">
+  <include file="$(find scout_bringup)/launch/display_scout_mini.launch">
  </include>
 </launch>

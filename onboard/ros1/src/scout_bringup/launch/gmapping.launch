@@ -56,11 +56,10 @@
     </rosparam>
  </node>
 
-  <node name="rviz1" pkg="rviz" type="rviz" args="-d $(find scout_description)/rviz/mapping.rviz" />
+  <node name="rviz1" pkg="rviz" type="rviz" args="-d $(find scout_bringup)/rviz/mapping.rviz" />
 <!--<include file="$(find scout_base)/launch/scout_base.launch">
       <arg name="port_name" default="can0" />
       <arg name="simulated_robot" default="false" />
   </include>-->
 
 </launch>
-

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="model_file" default="$(find scout_description)/urdf/scout_visual.urdf"/>
+  <arg name="gui" default="false"/>
+
+  <param name="robot_description" textfile="$(arg model_file)"/>
+  <node unless="$(arg gui)" name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+  <node if="$(arg gui)" name="joint_state_publisher" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+</launch>

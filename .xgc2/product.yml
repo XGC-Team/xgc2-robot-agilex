@@ -1,7 +1,7 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-ros1
 name: XGC2 AgileX Onboard ROS1
-version: 0.1.1-17
+version: 0.1.1-18
 kind: ros1-apt
 summary: ROS Melodic onboard IMU, Scout chassis, communication, and sensor packages
   for the AgileX onboard computer.
@@ -55,6 +55,8 @@ apt:
   - ros-melodic-genmsg
   - ros-melodic-geometry-msgs
   - ros-melodic-image-transport
+  - ros-melodic-joint-state-publisher
+  - ros-melodic-joint-state-publisher-gui
   - ros-melodic-message-runtime
   - ros-melodic-nav-msgs
   - ros-melodic-nodelet
@@ -65,6 +67,8 @@ apt:
   - ros-melodic-roslib
   - ros-melodic-rospy
   - ros-melodic-rosgraph
+  - ros-melodic-robot-state-publisher
+  - ros-melodic-rviz
   - ros-melodic-scout-msgs (>= 0.3.3-5)
   - ros-melodic-sensor-msgs
   - ros-melodic-serial
@@ -79,6 +83,7 @@ apt:
   - udev
   - iproute2
   - ros-melodic-xacro
+  - ros-melodic-xgc2-scout-description (>= 0.4.10-1)
   - libpcap-dev
   - libpcl-dev
   - librealsense2-dev
@@ -96,6 +101,16 @@ usage:
     rospack find scout_base
 
     roslaunch --files scout_bringup scout_minimal.launch
+
+    rospack find scout_description
+
+    test -f "$(rospack find scout_description)/urdf/scout_visual.urdf"
+
+    test ! -d "$(rospack find scout_description)/launch"
+
+    test -f "$(rospack find scout_bringup)/maps/map.yaml"
+
+    roslaunch --files scout_bringup display_scout_mini.launch
 
     rospack find agilex_swarm_ros_bridge
 
@@ -117,6 +132,22 @@ usage:
     message definitions are maintained in xgc2-scout-msgs and consumed as the
 
     external Debian package ros-melodic-scout-msgs.
+
+    The Scout visual model is consumed from the external visual-only package
+
+    ros-melodic-xgc2-scout-description. That package owns only URDF and meshes;
+
+    recovered display launches, maps, navigation parameters, and RViz profiles
+
+    are owned and installed by scout_bringup.
+
+    Core and headless display launch dependencies are closed by this product.
+
+    The recovered navigation, RTAB-Map, Cartographer, and LiDAR workflows remain
+
+    optional: they require their corresponding extension packages, including
+
+    rf2o_laser_odometry, which is not published by this product.
 
     The AgileX swarm bridge package only provides vehicle-specific YAML and
 
@@ -165,8 +196,9 @@ ownership:
   - /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
 release:
   dependency_policy:
+    xgc2-ros-melodic-scout-description: verify
     xgc2-scout-msgs: rebuild
     xgc2-swarm-ros-bridge: verify
   workflow: release.yml
   apt_versions:
-    bionic: 0.1.1-17
+    bionic: 0.1.1-18

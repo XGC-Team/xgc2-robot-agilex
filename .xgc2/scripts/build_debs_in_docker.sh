@@ -6,9 +6,12 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 DOCKER_IMAGE="${DOCKER_IMAGE:-ros:melodic-ros-base-bionic}"
 DOCKER_NETWORK="${DOCKER_NETWORK:-}"
+DOCKER_PLATFORM="${DOCKER_PLATFORM:-}"
 WORK_DIR="${WORK_DIR:-${REPO_ROOT}/.work/docker}"
 OUTPUT_DIR="${OUTPUT_DIR:-${REPO_ROOT}/debs}"
 INSTALL_CHECK="${INSTALL_CHECK:-true}"
+BUILD_PACKAGES=true
+SCOUT_DESCRIPTION_DEB="${SCOUT_DESCRIPTION_DEB:-}"
 XGC2_APT_BASE_URL="${XGC2_APT_BASE_URL:-https://xgc2.apt.xiaokang.ink}"
 XGC2_APT_DISTRIBUTION="${XGC2_APT_DISTRIBUTION:-bionic}"
 
@@ -30,8 +33,21 @@ while [[ $# -gt 0 ]]; do
       OUTPUT_DIR="$2"
       shift 2
       ;;
+    --platform)
+      DOCKER_PLATFORM="$2"
+      shift 2
+      ;;
+    --scout-description-deb)
+      SCOUT_DESCRIPTION_DEB="$2"
+      shift 2
+      ;;
     --skip-install-check)
       INSTALL_CHECK=false
+      shift
+      ;;
+    --install-check-only)
+      BUILD_PACKAGES=false
+      INSTALL_CHECK=true
       shift
       ;;
     *)
@@ -48,14 +64,32 @@ if [[ -n "${DOCKER_NETWORK}" ]]; then
   docker_network_args=(--network "${DOCKER_NETWORK}")
 fi
 
-docker pull "${DOCKER_IMAGE}"
-docker run --rm \
-  -e XGC2_APT_OVERLAY_URL="${XGC2_APT_OVERLAY_URL:-}" \
+docker_platform_args=()
+if [[ -n "${DOCKER_PLATFORM}" ]]; then
+  docker_platform_args=(--platform "${DOCKER_PLATFORM}")
+fi
+
+scout_description_mount_args=()
+if [[ -n "${SCOUT_DESCRIPTION_DEB}" ]]; then
+  if [[ ! -f "${SCOUT_DESCRIPTION_DEB}" ]]; then
+    echo "Scout description deb not found: ${SCOUT_DESCRIPTION_DEB}" >&2
+    exit 1
+  fi
+  SCOUT_DESCRIPTION_DEB="$(realpath "${SCOUT_DESCRIPTION_DEB}")"
+  scout_description_mount_args=(
+    -v "${SCOUT_DESCRIPTION_DEB}:/workspace/deps/scout-description.deb:ro"
+  )
+fi
+
+docker pull "${docker_platform_args[@]}" "${DOCKER_IMAGE}"
+if [[ "${BUILD_PACKAGES}" == "true" ]]; then
+  docker run --rm \
+  "${docker_platform_args[@]}" \
   "${docker_network_args[@]}" \
   -e DEBIAN_FRONTEND=noninteractive \
-  -e INSTALL_CHECK="${INSTALL_CHECK}" \
   -e XGC2_APT_BASE_URL="${XGC2_APT_BASE_URL}" \
   -e XGC2_APT_DISTRIBUTION="${XGC2_APT_DISTRIBUTION}" \
+  -e XGC2_APT_OVERLAY_URL="${XGC2_APT_OVERLAY_URL:-}" \
   -v "${REPO_ROOT}:/workspace/agilex:ro" \
   -v "${WORK_DIR}:/workspace/work" \
   -v "${OUTPUT_DIR}:/workspace/out" \
@@ -71,12 +105,11 @@ docker run --rm \
       -o /etc/apt/keyrings/xgc2-archive-keyring.gpg
     echo "deb [signed-by=/etc/apt/keyrings/xgc2-archive-keyring.gpg] ${XGC2_APT_BASE_URL} ${XGC2_APT_DISTRIBUTION} main" \
       > /etc/apt/sources.list.d/xgc2.list
-
-      if [[ -n "${XGC2_APT_OVERLAY_URL:-}" ]]; then
-        sed "s#${XGC2_APT_BASE_URL:-https://xgc2.apt.xiaokang.ink}#${XGC2_APT_OVERLAY_URL%/}#g" \
-          /etc/apt/sources.list.d/xgc2.list \
-          > /etc/apt/sources.list.d/00-xgc2-release-train.list
-      fi
+    if [[ -n "${XGC2_APT_OVERLAY_URL:-}" ]]; then
+      sed "s#${XGC2_APT_BASE_URL}#${XGC2_APT_OVERLAY_URL%/}#g" \
+        /etc/apt/sources.list.d/xgc2.list \
+        > /etc/apt/sources.list.d/00-xgc2-release-train.list
+    fi
     curl -fsSL https://librealsense.realsenseai.com/Debian/librealsenseai.asc \
       | gpg --dearmor > /etc/apt/keyrings/librealsenseai.gpg
     echo "deb [signed-by=/etc/apt/keyrings/librealsenseai.gpg] https://librealsense.realsenseai.com/Debian/apt-repo bionic main" \
@@ -141,12 +174,60 @@ docker run --rm \
     /workspace/agilex/.xgc2/scripts/package_debs.sh \
       --install-root /workspace/work/install-root \
       --output-dir /workspace/out
+    '
+fi
 
-    if [[ "${INSTALL_CHECK}" == "true" ]]; then
-      apt-get install -y /workspace/out/*.deb
+if [[ "${INSTALL_CHECK}" == "true" ]]; then
+  docker run --rm \
+    "${docker_platform_args[@]}" \
+    "${docker_network_args[@]}" \
+    "${scout_description_mount_args[@]}" \
+    -e DEBIAN_FRONTEND=noninteractive \
+    -e XGC2_APT_BASE_URL="${XGC2_APT_BASE_URL}" \
+    -e XGC2_APT_DISTRIBUTION="${XGC2_APT_DISTRIBUTION}" \
+    -e XGC2_APT_OVERLAY_URL="${XGC2_APT_OVERLAY_URL:-}" \
+    -v "${REPO_ROOT}:/workspace/agilex:ro" \
+    -v "${OUTPUT_DIR}:/workspace/out:ro" \
+    "${DOCKER_IMAGE}" \
+    bash -lc '
+      set -euo pipefail
+
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update
+      apt-get install -y --no-install-recommends ca-certificates curl gnupg
+      mkdir -p /etc/apt/keyrings
+      curl -fsSL "${XGC2_APT_BASE_URL}/xgc2-archive-keyring.gpg" \
+        -o /etc/apt/keyrings/xgc2-archive-keyring.gpg
+      echo "deb [signed-by=/etc/apt/keyrings/xgc2-archive-keyring.gpg] ${XGC2_APT_BASE_URL} ${XGC2_APT_DISTRIBUTION} main" \
+        > /etc/apt/sources.list.d/xgc2.list
+      if [[ -n "${XGC2_APT_OVERLAY_URL:-}" ]]; then
+        sed "s#${XGC2_APT_BASE_URL}#${XGC2_APT_OVERLAY_URL%/}#g" \
+          /etc/apt/sources.list.d/xgc2.list \
+          > /etc/apt/sources.list.d/00-xgc2-release-train.list
+      fi
+      curl -fsSL https://librealsense.realsenseai.com/Debian/librealsenseai.asc \
+        | gpg --dearmor > /etc/apt/keyrings/librealsenseai.gpg
+      echo "deb [signed-by=/etc/apt/keyrings/librealsenseai.gpg] https://librealsense.realsenseai.com/Debian/apt-repo bionic main" \
+        > /etc/apt/sources.list.d/librealsense.list
+      apt-get update
+
+      architecture="$(dpkg --print-architecture)"
+      shopt -s nullglob
+      agilex_debs=(/workspace/out/ros-melodic-xgc2-agilex-*_${architecture}.deb)
+      shopt -u nullglob
+      if [[ "${#agilex_debs[@]}" -ne 10 ]]; then
+        echo "expected 10 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
+        exit 1
+      fi
+
+      install_debs=("${agilex_debs[@]}")
+      if [[ -f /workspace/deps/scout-description.deb ]]; then
+        install_debs=(/workspace/deps/scout-description.deb "${install_debs[@]}")
+      fi
+      apt-get install -y "${install_debs[@]}"
       /workspace/agilex/.xgc2/scripts/check_installed_packages.sh
-    fi
-  '
+    '
+fi
 
 echo "Debian package output:"
 find "${OUTPUT_DIR}" -maxdepth 1 -type f -name "*.deb" -print | sort

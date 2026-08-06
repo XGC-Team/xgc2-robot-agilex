@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="robot_namespace" default="/"/>
+  <arg name="model_file" default="$(find scout_description)/urdf/scout_visual.urdf"/>
+  <!-- The visual-only URDF has no xacro extension hook; retain the old argument
+       so existing invocations do not fail argument validation. -->
+  <arg name="urdf_extras" default=""/>
+
+  <group ns="$(arg robot_namespace)">
+    <param name="robot_description" textfile="$(arg model_file)"/>
+  </group>
+</launch>

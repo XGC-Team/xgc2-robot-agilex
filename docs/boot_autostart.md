@@ -150,10 +150,9 @@ scout_bringup scout_minimal.launch
      -> scout_base_node
 ```
 
-The recovered vehicle also contained a `scout_description` visualization/model
-tree, but the onboard core startup does not need it for chassis experiments. It
-is preserved in `xgc2-scout-description` on branch
-`melodic-agilex-real-description`.
+The core startup remains independent of visualization nodes. Display workflows
+consume the standalone visual-only `scout_description` package, while their
+launch files and recovered integration assets live in `scout_bringup`.
 
 The base driver uses:
 
