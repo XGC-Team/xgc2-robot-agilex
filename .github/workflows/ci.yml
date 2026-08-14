@@ -28,9 +28,7 @@ jobs:
           git diff --check HEAD
           test ! -e .gitmodules
           bash -n .xgc2/scripts/build_debs_in_docker.sh
-          bash -n .xgc2/scripts/build_ros2_subset.sh
           bash -n .xgc2/scripts/check_installed_packages.sh
-          bash -n .xgc2/scripts/check_installed_ros2_packages.sh
           bash -n .xgc2/scripts/package_debs.sh
           bash -n .xgc2/scripts/check_source_workspace_in_docker.sh
 
@@ -74,20 +72,6 @@ jobs:
             arch: amd64
             runner: ubuntu-latest
             image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
-          - name: arm64-noble-jazzy
-            os: ubuntu-24.04
-            ros_distro: jazzy
-            distribution: noble
-            arch: arm64
-            runner: ubuntu-24.04-arm
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-noble-ros-jazzy:1.0.0
-          - name: amd64-noble-jazzy
-            os: ubuntu-24.04
-            ros_distro: jazzy
-            distribution: noble
-            arch: amd64
-            runner: ubuntu-latest
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-noble-ros-jazzy:1.0.0
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4

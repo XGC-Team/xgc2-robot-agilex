@@ -76,31 +76,24 @@ if [[ "${BUILD_PACKAGES}" == "true" ]]; then
     set -euo pipefail
     : "${ROS_DISTRO:?ROS_DISTRO must be set in the image}"
 
-    if [[ "${ROS_DISTRO}" == "jazzy" ]]; then
-      /workspace/agilex/.xgc2/scripts/build_ros2_subset.sh \
-        --source-root /workspace/agilex/onboard/ros1/src \
-        --install-root /workspace/work/install-root \
-        --output-dir /workspace/out
-    else
-      rm -rf /workspace/work/build /workspace/work/devel /workspace/work/install-root /workspace/work/src
-      mkdir -p /workspace/work/src/agilex-onboard
-      rsync -a --delete /workspace/agilex/onboard/ros1/src/ /workspace/work/src/agilex-onboard/
+    rm -rf /workspace/work/build /workspace/work/devel /workspace/work/install-root /workspace/work/src
+    mkdir -p /workspace/work/src/agilex-onboard
+    rsync -a --delete /workspace/agilex/onboard/ros1/src/ /workspace/work/src/agilex-onboard/
 
-      cd /workspace/work
-      set +u
-      source /opt/ros/${ROS_DISTRO}/setup.bash
-      set -u
-      parallel_jobs="$(nproc)"
-      DESTDIR=/workspace/work/install-root catkin_make -j"${parallel_jobs}" -l"${parallel_jobs}" install \
-        -DCMAKE_INSTALL_PREFIX=/opt/ros/${ROS_DISTRO} \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG" \
-        -DCMAKE_C_FLAGS_RELEASE="-O3 -DNDEBUG"
+    cd /workspace/work
+    set +u
+    source /opt/ros/${ROS_DISTRO}/setup.bash
+    set -u
+    parallel_jobs="$(nproc)"
+    DESTDIR=/workspace/work/install-root catkin_make -j"${parallel_jobs}" -l"${parallel_jobs}" install \
+      -DCMAKE_INSTALL_PREFIX=/opt/ros/${ROS_DISTRO} \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG" \
+      -DCMAKE_C_FLAGS_RELEASE="-O3 -DNDEBUG"
 
-      /workspace/agilex/.xgc2/scripts/package_debs.sh \
-        --install-root /workspace/work/install-root \
-        --output-dir /workspace/out
-    fi
+    /workspace/agilex/.xgc2/scripts/package_debs.sh \
+      --install-root /workspace/work/install-root \
+      --output-dir /workspace/out
   '
 fi
 
@@ -118,30 +111,16 @@ if [[ "${INSTALL_CHECK}" == "true" ]]; then
       : "${ROS_DISTRO:?ROS_DISTRO must be set in the image}"
       architecture="$(dpkg --print-architecture)"
       apt-get update
-
-      if [[ "${ROS_DISTRO}" == "jazzy" ]]; then
-        shopt -s nullglob
-        agilex_debs=(/workspace/out/ros-jazzy-xgc2-agilex-*_${architecture}.deb)
-        shopt -u nullglob
-        if [[ "${#agilex_debs[@]}" -ne 3 ]]; then
-          echo "expected 3 AgileX ROS2 debs for ${architecture}, found ${#agilex_debs[@]}" >&2
-          ls -la /workspace/out >&2 || true
-          exit 1
-        fi
-        apt-get install -y "${agilex_debs[@]}"
-        /workspace/agilex/.xgc2/scripts/check_installed_ros2_packages.sh
-      else
-        shopt -s nullglob
-        agilex_debs=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex-*_${architecture}.deb)
-        shopt -u nullglob
-        if [[ "${#agilex_debs[@]}" -ne 8 ]]; then
-          echo "expected 8 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
-          ls -la /workspace/out >&2 || true
-          exit 1
-        fi
-        apt-get install -y "${agilex_debs[@]}"
-        /workspace/agilex/.xgc2/scripts/check_installed_packages.sh
+      shopt -s nullglob
+      agilex_debs=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex-*_${architecture}.deb)
+      shopt -u nullglob
+      if [[ "${#agilex_debs[@]}" -ne 8 ]]; then
+        echo "expected 8 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
+        ls -la /workspace/out >&2 || true
+        exit 1
       fi
+      apt-get install -y "${agilex_debs[@]}"
+      /workspace/agilex/.xgc2/scripts/check_installed_packages.sh
     '
 fi
 

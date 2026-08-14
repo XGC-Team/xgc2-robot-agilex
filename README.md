@@ -53,7 +53,7 @@ sudo systemctl start xgc2-agilex-onboard.target
 
 ## CI
 
-The build matrix covers three Ubuntu/ROS pairs, each on arm64 and amd64:
+The build matrix covers two Ubuntu/ROS 1 pairs, each on arm64 and amd64. Noble/Jazzy is out until the nodes are ported.
 
 | Name | OS | ROS | Arch |
 | --- | --- | --- | --- |
@@ -61,10 +61,6 @@ The build matrix covers three Ubuntu/ROS pairs, each on arm64 and amd64:
 | `amd64-bionic-melodic` | Ubuntu 18.04 | Melodic | amd64 |
 | `arm64-focal-noetic` | Ubuntu 20.04 | Noetic | arm64 |
 | `amd64-focal-noetic` | Ubuntu 20.04 | Noetic | amd64 |
-| `arm64-noble-jazzy` | Ubuntu 24.04 | Jazzy | arm64 |
-| `amd64-noble-jazzy` | Ubuntu 24.04 | Jazzy | amd64 |
-
-Melodic and Noetic package the full ROS 1 runtime. Jazzy is ROS 2, so that row only packages the portable subset (`wrp_io`, `ugv_sdk`, `scout_description`) until the nodes are ported.
 
 ```bash
 .xgc2/scripts/build_debs_in_docker.sh --output-dir debs
