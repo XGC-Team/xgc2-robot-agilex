@@ -49,42 +49,42 @@ jobs:
             distribution: bionic
             arch: arm64
             runner: ubuntu-24.04-arm
-            image: ros:melodic-ros-base-bionic
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
           - name: amd64-bionic-melodic
             os: ubuntu-18.04
             ros_distro: melodic
             distribution: bionic
             arch: amd64
             runner: ubuntu-latest
-            image: ros:melodic-ros-base-bionic
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
           - name: arm64-focal-noetic
             os: ubuntu-20.04
             ros_distro: noetic
             distribution: focal
             arch: arm64
             runner: ubuntu-24.04-arm
-            image: ros:noetic-ros-base-focal
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
           - name: amd64-focal-noetic
             os: ubuntu-20.04
             ros_distro: noetic
             distribution: focal
             arch: amd64
             runner: ubuntu-latest
-            image: ros:noetic-ros-base-focal
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
           - name: arm64-noble-jazzy
             os: ubuntu-24.04
             ros_distro: jazzy
             distribution: noble
             arch: arm64
             runner: ubuntu-24.04-arm
-            image: ros:jazzy-ros-base
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-noble-ros-jazzy:1.0.0
           - name: amd64-noble-jazzy
             os: ubuntu-24.04
             ros_distro: jazzy
             distribution: noble
             arch: amd64
             runner: ubuntu-latest
-            image: ros:jazzy-ros-base
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-noble-ros-jazzy:1.0.0
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4

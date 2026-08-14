@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
-DOCKER_IMAGE="${DOCKER_IMAGE:-ros:melodic-ros-base-bionic}"
+DOCKER_IMAGE="${DOCKER_IMAGE:-ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0}"
 DOCKER_NETWORK="${DOCKER_NETWORK:-}"
 WORK_DIR="${WORK_DIR:-${REPO_ROOT}/.work/source-compliance}"
 
@@ -45,36 +45,11 @@ docker run --rm \
   "${DOCKER_IMAGE}" \
   bash -lc '
     set -euo pipefail
-
-    export DEBIAN_FRONTEND=noninteractive
     : "${ROS_DISTRO:?ROS_DISTRO must be set in the image}"
-    apt-get update
-    apt-get install -y --no-install-recommends \
-      build-essential \
-      ca-certificates \
-      cmake \
-      libzmq3-dev \
-      libzmqpp-dev \
-      rsync \
-      ros-${ROS_DISTRO}-geometry-msgs \
-      ros-${ROS_DISTRO}-joint-state-publisher \
-      ros-${ROS_DISTRO}-message-generation \
-      ros-${ROS_DISTRO}-message-runtime \
-      ros-${ROS_DISTRO}-nav-msgs \
-      ros-${ROS_DISTRO}-robot-state-publisher \
-      ros-${ROS_DISTRO}-roscpp \
-      ros-${ROS_DISTRO}-roslaunch \
-      ros-${ROS_DISTRO}-roslib \
-      ros-${ROS_DISTRO}-rospack \
-      ros-${ROS_DISTRO}-rospy \
-      ros-${ROS_DISTRO}-sensor-msgs \
-      ros-${ROS_DISTRO}-serial \
-      ros-${ROS_DISTRO}-std-msgs \
-      ros-${ROS_DISTRO}-tf \
-      ros-${ROS_DISTRO}-tf2 \
-      ros-${ROS_DISTRO}-tf2-ros \
-      ros-${ROS_DISTRO}-topic-tools \
-      ros-${ROS_DISTRO}-xacro
+
+    find /workspace/agilex/onboard/ros1/src \
+      \( -name package.xml -o -name "*.launch" -o -name "*.xacro" -o -name "*.urdf" \) \
+      -print0 | xargs -0 xmllint --noout
 
     rm -rf /workspace/work/build /workspace/work/devel /workspace/work/src
     mkdir -p /workspace/work/src/agilex-onboard
