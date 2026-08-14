@@ -49,15 +49,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: xavier-bionic-melodic
-            target: xavier
+          - name: arm64-bionic-melodic
             os: ubuntu-18.04
             ros_distro: melodic
             arch: arm64
             runner: ubuntu-24.04-arm
             image: ros:melodic-ros-base-bionic
           - name: amd64-bionic-melodic
-            target: desktop
             os: ubuntu-18.04
             ros_distro: melodic
             arch: amd64
@@ -67,11 +65,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Record vehicle matrix
+      - name: Record build matrix
         run: |
           cat <<EOF
           ci_matrix_name=${{ matrix.name }}
-          vehicle_target=${{ matrix.target }}
           os=${{ matrix.os }}
           ros_distro=${{ matrix.ros_distro }}
           arch=${{ matrix.arch }}

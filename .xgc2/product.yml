@@ -60,8 +60,6 @@ apt:
   - systemd
   - udev
 vehicle:
-  hostname: xavier
-  board: jetson-xavier
   os: ubuntu-18.04
   ros_distro: melodic
   arch: arm64

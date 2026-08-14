@@ -55,8 +55,8 @@ The build matrix includes the vehicle row first:
 
 | Name | Target | OS | ROS | Arch |
 | --- | --- | --- | --- | --- |
-| `xavier-bionic-melodic` | Xavier | Ubuntu 18.04 | Melodic | arm64 |
-| `amd64-bionic-melodic` | desktop | Ubuntu 18.04 | Melodic | amd64 |
+| `arm64-bionic-melodic` | arm64 | Ubuntu 18.04 | Melodic | arm64 |
+| `amd64-bionic-melodic` | amd64 | Ubuntu 18.04 | Melodic | amd64 |
 
 Both rows build inside `ros:melodic-ros-base-bionic`.
 
