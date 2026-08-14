@@ -228,7 +228,7 @@ build_autostart_deb() {
     "${pkg_root}" \
     "${deb_pkg}" \
     "${version}" \
-    "iproute2, systemd, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-std-msgs, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-scout-msgs (>= 0.3.3-10), ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-swarm-ros-bridge, ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= $(deb_version serial_imu)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
+    "iproute2, systemd, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-std-msgs, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-scout-msgs (>= 0.3.3-10), ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-swarm-ros-bridge, ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= $(deb_version serial_imu)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
     "XGC2 AgileX onboard min-boot systemd (IMU, chassis, TF, bridge; no camera/LiDAR)"
   write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}" "${version}"
 

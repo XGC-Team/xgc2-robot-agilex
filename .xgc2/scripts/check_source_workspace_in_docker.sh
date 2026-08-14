@@ -89,7 +89,7 @@ docker run --rm \
     test ! -d "$(rospack find scout_description)/launch"
     test -f "$(rospack find agilex_onboard_autostart)/launch/description.launch"
     test -f "$(rospack find agilex_onboard_autostart)/launch/swarm.launch"
-    test -x /workspace/work/src/agilex-onboard/autostart/agilex_onboard_autostart/scripts/scout_status_to_std
+    test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/scout_status_to_std
 
     roslaunch --files agilex_onboard_autostart imu.launch >/dev/null
     roslaunch --files agilex_onboard_autostart chassis.launch >/dev/null
