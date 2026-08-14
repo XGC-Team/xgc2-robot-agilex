@@ -335,9 +335,7 @@ EOF
   chmod 0644 "${pkg_root}/DEBIAN/control"
   chmod 0644 "${pkg_root}/usr/share/doc/${deb_pkg}/README"
 
-  # Meta package is arch-independent.
-  sed -i "s/^Architecture: ${ARCH}$/Architecture: all/" "${pkg_root}/DEBIAN/control"
-  fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${deb_pkg}_${version}_all.deb" >/dev/null
+  fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${deb_pkg}_${version}_${ARCH}.deb" >/dev/null
 }
 
 build_deb \
