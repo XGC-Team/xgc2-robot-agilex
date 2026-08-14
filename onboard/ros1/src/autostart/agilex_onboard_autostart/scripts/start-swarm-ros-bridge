@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-source /opt/ros/melodic/setup.bash
+ROS_DISTRO="${ROS_DISTRO:-melodic}"
+ROS_PREFIX="/opt/ros/${ROS_DISTRO}"
+# shellcheck disable=SC1091
+source "${ROS_PREFIX}/setup.bash"
 
-/opt/ros/melodic/lib/agilex_onboard_autostart/wait-ros-master --timeout "${ROS_MASTER_WAIT_TIMEOUT:-60}"
-/opt/ros/melodic/lib/agilex_onboard_autostart/wait-ros-topic "${IMU_READY_TOPIC:-/imu/data_raw}" --timeout "${IMU_TOPIC_WAIT_TIMEOUT:-60}"
-/opt/ros/melodic/lib/agilex_onboard_autostart/wait-ros-topic "${SCOUT_STATUS_TOPIC:-/scout_status}" --timeout "${SCOUT_STATUS_WAIT_TIMEOUT:-60}"
+"${ROS_PREFIX}/lib/agilex_onboard_autostart/wait-ros-master" --timeout "${ROS_MASTER_WAIT_TIMEOUT:-60}"
+"${ROS_PREFIX}/lib/agilex_onboard_autostart/wait-ros-topic" "${IMU_READY_TOPIC:-/imu/data_raw}" --timeout "${IMU_TOPIC_WAIT_TIMEOUT:-60}"
+"${ROS_PREFIX}/lib/agilex_onboard_autostart/wait-ros-topic" "${SCOUT_STATUS_TOPIC:-/scout_status}" --timeout "${SCOUT_STATUS_WAIT_TIMEOUT:-60}"
 
 exec roslaunch swarm_ros_bridge test.launch

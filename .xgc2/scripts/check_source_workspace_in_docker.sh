@@ -47,6 +47,7 @@ docker run --rm \
     set -euo pipefail
 
     export DEBIAN_FRONTEND=noninteractive
+    : "${ROS_DISTRO:?ROS_DISTRO must be set in the image}"
     apt-get update
     apt-get install -y --no-install-recommends \
       build-essential \
@@ -55,25 +56,25 @@ docker run --rm \
       libzmq3-dev \
       libzmqpp-dev \
       rsync \
-      ros-melodic-geometry-msgs \
-      ros-melodic-joint-state-publisher \
-      ros-melodic-message-generation \
-      ros-melodic-message-runtime \
-      ros-melodic-nav-msgs \
-      ros-melodic-robot-state-publisher \
-      ros-melodic-roscpp \
-      ros-melodic-roslaunch \
-      ros-melodic-roslib \
-      ros-melodic-rospack \
-      ros-melodic-rospy \
-      ros-melodic-sensor-msgs \
-      ros-melodic-serial \
-      ros-melodic-std-msgs \
-      ros-melodic-tf \
-      ros-melodic-tf2 \
-      ros-melodic-tf2-ros \
-      ros-melodic-topic-tools \
-      ros-melodic-xacro
+      ros-${ROS_DISTRO}-geometry-msgs \
+      ros-${ROS_DISTRO}-joint-state-publisher \
+      ros-${ROS_DISTRO}-message-generation \
+      ros-${ROS_DISTRO}-message-runtime \
+      ros-${ROS_DISTRO}-nav-msgs \
+      ros-${ROS_DISTRO}-robot-state-publisher \
+      ros-${ROS_DISTRO}-roscpp \
+      ros-${ROS_DISTRO}-roslaunch \
+      ros-${ROS_DISTRO}-roslib \
+      ros-${ROS_DISTRO}-rospack \
+      ros-${ROS_DISTRO}-rospy \
+      ros-${ROS_DISTRO}-sensor-msgs \
+      ros-${ROS_DISTRO}-serial \
+      ros-${ROS_DISTRO}-std-msgs \
+      ros-${ROS_DISTRO}-tf \
+      ros-${ROS_DISTRO}-tf2 \
+      ros-${ROS_DISTRO}-tf2-ros \
+      ros-${ROS_DISTRO}-topic-tools \
+      ros-${ROS_DISTRO}-xacro
 
     rm -rf /workspace/work/build /workspace/work/devel /workspace/work/src
     mkdir -p /workspace/work/src/agilex-onboard
@@ -81,10 +82,10 @@ docker run --rm \
 
     cd /workspace/work
     set +u
-    source /opt/ros/melodic/setup.bash
+    source /opt/ros/${ROS_DISTRO}/setup.bash
     set -u
     catkin_make install \
-      -DCMAKE_INSTALL_PREFIX=/opt/ros/melodic \
+      -DCMAKE_INSTALL_PREFIX=/opt/ros/${ROS_DISTRO} \
       -DCMAKE_BUILD_TYPE=Release
     set +u
     source devel/setup.bash

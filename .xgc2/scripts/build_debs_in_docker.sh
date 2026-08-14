@@ -74,56 +74,74 @@ if [[ "${BUILD_PACKAGES}" == "true" ]]; then
   "${DOCKER_IMAGE}" \
   bash -lc '
     set -euo pipefail
-
     export DEBIAN_FRONTEND=noninteractive
+    : "${ROS_DISTRO:?ROS_DISTRO must be set in the image}"
+
     apt-get update
-    apt-get install -y --no-install-recommends \
-      build-essential \
-      ca-certificates \
-      cmake \
-      dpkg-dev \
-      fakeroot \
-      libzmq3-dev \
-      libzmqpp-dev \
-      rsync \
-      ros-melodic-geometry-msgs \
-      ros-melodic-joint-state-publisher \
-      ros-melodic-message-generation \
-      ros-melodic-message-runtime \
-      ros-melodic-nav-msgs \
-      ros-melodic-robot-state-publisher \
-      ros-melodic-roscpp \
-      ros-melodic-roslaunch \
-      ros-melodic-roslib \
-      ros-melodic-rospack \
-      ros-melodic-rospy \
-      ros-melodic-sensor-msgs \
-      ros-melodic-serial \
-      ros-melodic-std-msgs \
-      ros-melodic-tf \
-      ros-melodic-tf2 \
-      ros-melodic-tf2-ros \
-      ros-melodic-topic-tools \
-      ros-melodic-xacro
+    if [[ "${ROS_DISTRO}" == "jazzy" ]]; then
+      apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        cmake \
+        dpkg-dev \
+        fakeroot \
+        python3 \
+        rsync \
+        ros-jazzy-ament-cmake \
+        ros-jazzy-ros-core
+      /workspace/agilex/.xgc2/scripts/build_ros2_subset.sh \
+        --source-root /workspace/agilex/onboard/ros1/src \
+        --install-root /workspace/work/install-root \
+        --output-dir /workspace/out
+    else
+      apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        cmake \
+        dpkg-dev \
+        fakeroot \
+        libzmq3-dev \
+        libzmqpp-dev \
+        rsync \
+        ros-${ROS_DISTRO}-geometry-msgs \
+        ros-${ROS_DISTRO}-joint-state-publisher \
+        ros-${ROS_DISTRO}-message-generation \
+        ros-${ROS_DISTRO}-message-runtime \
+        ros-${ROS_DISTRO}-nav-msgs \
+        ros-${ROS_DISTRO}-robot-state-publisher \
+        ros-${ROS_DISTRO}-roscpp \
+        ros-${ROS_DISTRO}-roslaunch \
+        ros-${ROS_DISTRO}-roslib \
+        ros-${ROS_DISTRO}-rospack \
+        ros-${ROS_DISTRO}-rospy \
+        ros-${ROS_DISTRO}-sensor-msgs \
+        ros-${ROS_DISTRO}-serial \
+        ros-${ROS_DISTRO}-std-msgs \
+        ros-${ROS_DISTRO}-tf \
+        ros-${ROS_DISTRO}-tf2 \
+        ros-${ROS_DISTRO}-tf2-ros \
+        ros-${ROS_DISTRO}-topic-tools \
+        ros-${ROS_DISTRO}-xacro
 
-    rm -rf /workspace/work/build /workspace/work/devel /workspace/work/install-root /workspace/work/src
-    mkdir -p /workspace/work/src/agilex-onboard
-    rsync -a --delete /workspace/agilex/onboard/ros1/src/ /workspace/work/src/agilex-onboard/
+      rm -rf /workspace/work/build /workspace/work/devel /workspace/work/install-root /workspace/work/src
+      mkdir -p /workspace/work/src/agilex-onboard
+      rsync -a --delete /workspace/agilex/onboard/ros1/src/ /workspace/work/src/agilex-onboard/
 
-    cd /workspace/work
-    set +u
-    source /opt/ros/melodic/setup.bash
-    set -u
-    parallel_jobs="$(nproc)"
-    DESTDIR=/workspace/work/install-root catkin_make -j"${parallel_jobs}" -l"${parallel_jobs}" install \
-      -DCMAKE_INSTALL_PREFIX=/opt/ros/melodic \
-      -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG" \
-      -DCMAKE_C_FLAGS_RELEASE="-O3 -DNDEBUG"
+      cd /workspace/work
+      set +u
+      source /opt/ros/${ROS_DISTRO}/setup.bash
+      set -u
+      parallel_jobs="$(nproc)"
+      DESTDIR=/workspace/work/install-root catkin_make -j"${parallel_jobs}" -l"${parallel_jobs}" install \
+        -DCMAKE_INSTALL_PREFIX=/opt/ros/${ROS_DISTRO} \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG" \
+        -DCMAKE_C_FLAGS_RELEASE="-O3 -DNDEBUG"
 
-    /workspace/agilex/.xgc2/scripts/package_debs.sh \
-      --install-root /workspace/work/install-root \
-      --output-dir /workspace/out
+      /workspace/agilex/.xgc2/scripts/package_debs.sh \
+        --install-root /workspace/work/install-root \
+        --output-dir /workspace/out
+    fi
   '
 fi
 
@@ -137,44 +155,57 @@ if [[ "${INSTALL_CHECK}" == "true" ]]; then
     "${DOCKER_IMAGE}" \
     bash -lc '
       set -euo pipefail
-
       export DEBIAN_FRONTEND=noninteractive
-      apt-get update
-      apt-get install -y --no-install-recommends \
-        ca-certificates \
-        libzmq3-dev \
-        libzmqpp-dev \
-        ros-melodic-geometry-msgs \
-        ros-melodic-joint-state-publisher \
-        ros-melodic-message-runtime \
-        ros-melodic-nav-msgs \
-        ros-melodic-robot-state-publisher \
-        ros-melodic-roscpp \
-        ros-melodic-roslaunch \
-        ros-melodic-roslib \
-        ros-melodic-rospack \
-        ros-melodic-rospy \
-        ros-melodic-sensor-msgs \
-        ros-melodic-serial \
-        ros-melodic-std-msgs \
-        ros-melodic-tf \
-        ros-melodic-tf2 \
-        ros-melodic-tf2-ros \
-        ros-melodic-topic-tools \
-        ros-melodic-xacro
-
+      : "${ROS_DISTRO:?ROS_DISTRO must be set in the image}"
       architecture="$(dpkg --print-architecture)"
-      shopt -s nullglob
-      agilex_debs=(/workspace/out/ros-melodic-xgc2-agilex-*_${architecture}.deb)
-      shopt -u nullglob
-      if [[ "${#agilex_debs[@]}" -ne 8 ]]; then
-        echo "expected 8 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
-        ls -la /workspace/out >&2 || true
-        exit 1
-      fi
+      apt-get update
 
-      apt-get install -y "${agilex_debs[@]}"
-      /workspace/agilex/.xgc2/scripts/check_installed_packages.sh
+      if [[ "${ROS_DISTRO}" == "jazzy" ]]; then
+        apt-get install -y --no-install-recommends ca-certificates
+        shopt -s nullglob
+        agilex_debs=(/workspace/out/ros-jazzy-xgc2-agilex-*_${architecture}.deb)
+        shopt -u nullglob
+        if [[ "${#agilex_debs[@]}" -ne 3 ]]; then
+          echo "expected 3 AgileX ROS2 debs for ${architecture}, found ${#agilex_debs[@]}" >&2
+          ls -la /workspace/out >&2 || true
+          exit 1
+        fi
+        apt-get install -y "${agilex_debs[@]}"
+        /workspace/agilex/.xgc2/scripts/check_installed_ros2_packages.sh
+      else
+        apt-get install -y --no-install-recommends \
+          ca-certificates \
+          libzmq3-dev \
+          libzmqpp-dev \
+          ros-${ROS_DISTRO}-geometry-msgs \
+          ros-${ROS_DISTRO}-joint-state-publisher \
+          ros-${ROS_DISTRO}-message-runtime \
+          ros-${ROS_DISTRO}-nav-msgs \
+          ros-${ROS_DISTRO}-robot-state-publisher \
+          ros-${ROS_DISTRO}-roscpp \
+          ros-${ROS_DISTRO}-roslaunch \
+          ros-${ROS_DISTRO}-roslib \
+          ros-${ROS_DISTRO}-rospack \
+          ros-${ROS_DISTRO}-rospy \
+          ros-${ROS_DISTRO}-sensor-msgs \
+          ros-${ROS_DISTRO}-serial \
+          ros-${ROS_DISTRO}-std-msgs \
+          ros-${ROS_DISTRO}-tf \
+          ros-${ROS_DISTRO}-tf2 \
+          ros-${ROS_DISTRO}-tf2-ros \
+          ros-${ROS_DISTRO}-topic-tools \
+          ros-${ROS_DISTRO}-xacro
+        shopt -s nullglob
+        agilex_debs=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex-*_${architecture}.deb)
+        shopt -u nullglob
+        if [[ "${#agilex_debs[@]}" -ne 8 ]]; then
+          echo "expected 8 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
+          ls -la /workspace/out >&2 || true
+          exit 1
+        fi
+        apt-get install -y "${agilex_debs[@]}"
+        /workspace/agilex/.xgc2/scripts/check_installed_packages.sh
+      fi
     '
 fi
 

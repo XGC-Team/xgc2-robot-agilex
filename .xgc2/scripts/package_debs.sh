@@ -215,6 +215,10 @@ build_autostart_deb() {
     "${pkg_root}/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml"
   cp -a "${PREFIX_ROOT}/share/${ros_pkg}/systemd/"* \
     "${pkg_root}/lib/systemd/system/"
+  sed -i \
+    -e "s|/opt/ros/melodic|/opt/ros/${ROS_DISTRO}|g" \
+    -e "s|ROS_DISTRO=melodic|ROS_DISTRO=${ROS_DISTRO}|g" \
+    "${pkg_root}/lib/systemd/system/"*
 
   write_control \
     "${pkg_root}" \

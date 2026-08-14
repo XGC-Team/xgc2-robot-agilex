@@ -7,8 +7,8 @@ the minimum boot graph only: IMU, chassis, TF/model, ground-station bridge, and
 autostart. Camera, LiDAR, YOLO, mapping, and planning stay on the vehicle and
 are not packaged here. There are no nested git submodules.
 
-现场核实（中文活页）：[`docs/onboard-truth.md`](docs/onboard-truth.md)。
-2026-08-14 已授权启动相机/雷达：[`docs/2026-08-14-sensors.md`](docs/2026-08-14-sensors.md)。
+现场核实：[`docs/onboard-truth.md`](docs/onboard-truth.md)。  
+相机 / 雷达 / RViz 启动步骤：[`docs/sensor-rviz-bringup.md`](docs/sensor-rviz-bringup.md)。
 
 ## Vehicle
 
@@ -53,14 +53,18 @@ sudo systemctl start xgc2-agilex-onboard.target
 
 ## CI
 
-The build matrix includes the vehicle row first:
+The build matrix covers three Ubuntu/ROS pairs, each on arm64 and amd64:
 
-| Name | Target | OS | ROS | Arch |
-| --- | --- | --- | --- | --- |
-| `arm64-bionic-melodic` | arm64 | Ubuntu 18.04 | Melodic | arm64 |
-| `amd64-bionic-melodic` | amd64 | Ubuntu 18.04 | Melodic | amd64 |
+| Name | OS | ROS | Arch |
+| --- | --- | --- | --- |
+| `arm64-bionic-melodic` | Ubuntu 18.04 | Melodic | arm64 |
+| `amd64-bionic-melodic` | Ubuntu 18.04 | Melodic | amd64 |
+| `arm64-focal-noetic` | Ubuntu 20.04 | Noetic | arm64 |
+| `amd64-focal-noetic` | Ubuntu 20.04 | Noetic | amd64 |
+| `arm64-noble-jazzy` | Ubuntu 24.04 | Jazzy | arm64 |
+| `amd64-noble-jazzy` | Ubuntu 24.04 | Jazzy | amd64 |
 
-Both rows build inside `ros:melodic-ros-base-bionic`.
+Melodic and Noetic package the full ROS 1 runtime. Jazzy is ROS 2, so that row only packages the portable subset (`wrp_io`, `ugv_sdk`, `scout_description`) until the nodes are ported.
 
 ```bash
 .xgc2/scripts/build_debs_in_docker.sh --output-dir debs

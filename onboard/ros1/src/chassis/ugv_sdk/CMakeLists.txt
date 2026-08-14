@@ -89,7 +89,12 @@ add_library(${PROJECT_NAME}
     # src/bunker_base.cpp
 )
 if(BUILD_WITHOUT_ROS)
-    target_link_libraries(${PROJECT_NAME} wrp_io Threads::Threads)
+    find_package(wrp_io REQUIRED)
+    if(TARGET westonrobot::wrp_io)
+      target_link_libraries(${PROJECT_NAME} westonrobot::wrp_io Threads::Threads)
+    else()
+      target_link_libraries(${PROJECT_NAME} wrp_io Threads::Threads)
+    endif()
 else()
     target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} Threads::Threads)
 endif() 
@@ -110,8 +115,9 @@ if(BUILD_WITHOUT_ROS)
         message(STATUS "Monitor app will not be built due to missing ncurses library, try: sudo apt install libncurses5-dev")
     endif()
 
-    # add app source directory
-    add_subdirectory(apps)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/apps/CMakeLists.txt")
+      add_subdirectory(apps)
+    endif()
 endif()
 
 # Build tests
