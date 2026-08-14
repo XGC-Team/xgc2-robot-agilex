@@ -339,7 +339,7 @@ build_deb \
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge" \
   "swarm_ros_bridge" \
-  "libzmqpp-dev, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-std-msgs" \
+  "libzmqpp-dev, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-std-msgs, ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs (>= $(deb_version scout_msgs))" \
   "Vehicle swarm_ros_bridge binary and topic YAML" \
   "lib/swarm_ros_bridge/bridge_node"
 

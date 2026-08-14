@@ -2,7 +2,7 @@
 # sensor_msgs/Imu
 # geometry_msgs/Twist
 # std_msgs/String
-# (modify/add in ros_sub_pub.hpp if you need more)
+# scout_msgs/ScoutStatus
 ### max number of send_topics supported: 50
 
 ### list all <IPname: IP> here (IPname can be set arbitrarily) ###
@@ -19,6 +19,11 @@ send_topics:
   max_freq: 50 # max sending frequency (Hz) int
   srcIP: self # self IP
   srcPort: 3001 # ports of send_topics should be different
+- topic_name: /scout_status
+  msg_type: scout_msgs/ScoutStatus
+  max_freq: 10
+  srcIP: self
+  srcPort: 3002
 
 ####### receive these ROS messages from remote robots #######
 ## if no recv_topics needed, comment all these out
