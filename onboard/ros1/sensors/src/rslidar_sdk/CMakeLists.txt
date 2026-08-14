@@ -10,7 +10,12 @@ set(COMPILE_METHOD CATKIN)
 #=======================================
 # Custom Point Type (XYZI, XYZIRT)
 #=======================================
-set(POINT_TYPE XYZI)
+# Official rslidar_sdk point types (README §1.2 / CHANGELOG v1.2.0):
+#   XYZI   - x, y, z, intensity
+#   XYZIRT - x, y, z, intensity, ring, timestamp
+# Decoders already call setRing/setTimestamp from the MSOP packet.
+# XYZI compiles those members out; XYZIRT publishes them on /rslidar_points.
+set(POINT_TYPE XYZIRT)
 
 #========================
 # Project details / setup
