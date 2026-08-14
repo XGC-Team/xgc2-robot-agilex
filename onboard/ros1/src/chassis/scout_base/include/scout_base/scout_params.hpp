@@ -21,11 +21,10 @@ namespace westonrobot
         static constexpr double wheelbase = 0.498;    // in meter (front & rear wheel distance)
         static constexpr double wheel_radius = 0.165; // in meter
 
-        // from user manual v1.2.8 P18
-        // max linear velocity: 1.5 m/s
-        // max angular velocity: 0.7853 rad/s
-        static constexpr double max_linear_speed = 1.5;     // in m/s
-        static constexpr double max_angular_speed = 0.7853; // in rad/s
+        // linear stays at the Scout CAN table 1.5 m/s.
+        // angular is 1.0 rad/s from vehicle bag / RC feel, not the 0.5235 table.
+        static constexpr double max_linear_speed = 1.5; // in m/s
+        static constexpr double max_angular_speed = 1.0; // in rad/s
         static constexpr double max_speed_cmd = 10.0;       // in rad/s
     };
 } // namespace westonrobot

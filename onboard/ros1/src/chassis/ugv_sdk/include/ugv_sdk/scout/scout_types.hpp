@@ -69,10 +69,10 @@ struct ScoutMotionCmd {
   double linear_velocity;
   double angular_velocity;
 
-  static constexpr double max_linear_velocity = 1.5;       // 1.5 m/s
-  static constexpr double min_linear_velocity = -1.5;      // -1.5 m/s
-  static constexpr double max_angular_velocity = 0.5235;   // 0.5235 rad/s
-  static constexpr double min_angular_velocity = -0.5235;  // -0.5235 rad/s
+  static constexpr double max_linear_velocity = 1.5;   // 1.5 m/s
+  static constexpr double min_linear_velocity = -1.5;  // -1.5 m/s
+  static constexpr double max_angular_velocity = 1.0;  // 1.0 rad/s
+  static constexpr double min_angular_velocity = -1.0; // -1.0 rad/s
 };
 
 struct ScoutLightCmd {
