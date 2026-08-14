@@ -37,7 +37,7 @@ swarm_ros_bridge/test.launch             -> /imu/data_raw :3001, /scout_status :
 | `ros-melodic-xgc2-agilex-ugv-sdk` | `ugv_sdk` | Scout CAN protocol |
 | `ros-melodic-xgc2-agilex-scout-msgs` | `scout_msgs` | Chassis messages |
 | `ros-melodic-xgc2-agilex-scout-base` | `scout_base` | Chassis node |
-| `ros-melodic-xgc2-agilex-scout-description` | `scout_description` | Submodule of `xgc2-scout-description` (`melodic`): vehicle `scout_v2.xacro` plus the shared visual URDF/meshes |
+| `ros-melodic-xgc2-agilex-scout-description` | `scout_description` | Submodule of `XGC-Team/xgc2-scout-description` (`melodic`): vehicle `scout_v2.xacro` plus the shared visual URDF/meshes |
 | `ros-melodic-xgc2-agilex-swarm-ros-bridge` | `swarm_ros_bridge` | Vehicle bridge binary + YAML |
 | `ros-melodic-xgc2-agilex` | (meta) | Vehicle min-boot: pulls the packages below and enables `xgc2-agilex-onboard.target` |
 | `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | systemd, udev, top-level compose launches |
