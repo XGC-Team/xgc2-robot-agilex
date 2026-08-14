@@ -33,9 +33,15 @@ jobs:
           bash -n .xgc2/scripts/package_debs.sh
           bash -n .xgc2/scripts/package_sensor_debs.sh
           bash -n .xgc2/scripts/check_source_workspace_in_docker.sh
-          find onboard/ros1/sensors/src \
-            \( -name package.xml -o -name '*.launch' \) \
-            -print0 | xargs -0 xmllint --noout
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          root = Path("onboard/ros1/sensors/src")
+          files = list(root.rglob("package.xml")) + list(root.rglob("*.launch"))
+          for path in files:
+              ET.parse(path)
+          print(f"parsed {len(files)} sensor xml files")
+          PY
 
       - name: Build package and run launch compliance
         run: |
