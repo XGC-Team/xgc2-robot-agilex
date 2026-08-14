@@ -1,0 +1,19 @@
+{
+  "sources": [
+    {
+      "id": "color",
+      "rtpListenAddress": "127.0.0.1:5004",
+      "controlSocket": "/tmp/xgc2/media/color.sock"
+    },
+    {
+      "id": "depth-preview",
+      "rtpListenAddress": "127.0.0.1:5006",
+      "controlSocket": "/tmp/xgc2/media/depth.sock"
+    },
+    {
+      "id": "infra1",
+      "rtpListenAddress": "127.0.0.1:5008",
+      "controlSocket": "/tmp/xgc2/media/infra1.sock"
+    }
+  ]
+}

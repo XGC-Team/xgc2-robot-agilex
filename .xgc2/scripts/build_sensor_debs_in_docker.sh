@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-DOCKER_IMAGE="${DOCKER_IMAGE:-ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0}"
+DOCKER_IMAGE="${DOCKER_IMAGE:-ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-full-melodic:1.0.0}"
 WORK_DIR="${WORK_DIR:-${REPO_ROOT}/.work/sensors-docker}"
 OUTPUT_DIR="${OUTPUT_DIR:-${REPO_ROOT}/debs-sensors}"
 
@@ -18,7 +18,7 @@ done
 
 mkdir -p "${WORK_DIR}" "${OUTPUT_DIR}"
 docker pull "${DOCKER_IMAGE}"
-docker run --rm \
+docker run --rm --network none \
   -e DEBIAN_FRONTEND=noninteractive \
   -v "${REPO_ROOT}:/workspace/agilex:ro" \
   -v "${WORK_DIR}:/workspace/work" \
@@ -27,39 +27,25 @@ docker run --rm \
   bash -lc '
     set -euo pipefail
     : "${ROS_DISTRO:?ROS_DISTRO must be set in the image}"
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get update
-    apt-get install -y --no-install-recommends \
-      ca-certificates \
-      gnupg \
-      libpcap-dev \
+    /workspace/agilex/.xgc2/scripts/require_image_ros.sh
+    for pkg in \
+      "ros-${ROS_DISTRO}-cv-bridge" \
+      "ros-${ROS_DISTRO}-image-transport" \
+      "ros-${ROS_DISTRO}-pcl-ros" \
       libpcl-dev \
-      libyaml-cpp-dev \
-      ros-${ROS_DISTRO}-cv-bridge \
-      ros-${ROS_DISTRO}-ddynamic-reconfigure \
-      ros-${ROS_DISTRO}-diagnostic-updater \
-      ros-${ROS_DISTRO}-image-transport \
-      ros-${ROS_DISTRO}-nodelet \
-      ros-${ROS_DISTRO}-pcl-conversions \
-      ros-${ROS_DISTRO}-pcl-ros \
-      ros-${ROS_DISTRO}-tf \
-      rsync || true
-
-    if ! pkg-config --exists realsense2; then
-      apt-get install -y --no-install-recommends software-properties-common || true
-      apt-key adv --keyserver keyserver.ubuntu.com --recv-key \
-        F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || true
-      add-apt-repository -y \
-        "deb https://librealsense.intel.com/Debian/apt-repo $(. /etc/os-release && echo $VERSION_CODENAME) main" || true
-      apt-get update || true
-      apt-get install -y --no-install-recommends librealsense2-dev || true
-    fi
+      libyaml-cpp-dev
+    do
+      if ! dpkg -s "${pkg}" >/dev/null 2>&1; then
+        echo "full image is missing ${pkg}; use xgc2-build-<ubuntu>-full-<distro>" >&2
+        exit 1
+      fi
+    done
 
     rm -rf /workspace/work/build /workspace/work/devel /workspace/work/install-root /workspace/work/src
     mkdir -p /workspace/work/src/agilex-sensors
     rsync -a --delete /workspace/agilex/onboard/ros1/sensors/src/ /workspace/work/src/agilex-sensors/
     if ! pkg-config --exists realsense2; then
-      echo "librealsense2 missing; skipping realsense2_camera compile" >&2
+      echo "librealsense2 missing in image; skipping realsense2_camera compile" >&2
       touch /workspace/work/src/agilex-sensors/realsense2_camera/CATKIN_IGNORE
     fi
 

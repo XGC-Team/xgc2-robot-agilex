@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+  <node pkg="serial_imu" name="HI226" type="serial_imu" />
+</launch>

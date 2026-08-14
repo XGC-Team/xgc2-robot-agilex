@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# AgileX subset of the shared xgc2-utils linux scripts.
+set -euo pipefail
+
+UTILS="${XGC2_LINUX_UTILS:-/usr/lib/xgc2-utils/linux}"
+
+run_util() {
+  local name="$1"
+  shift
+  if [[ -x "${UTILS}/${name}" ]]; then
+    "${UTILS}/${name}" "$@"
+  else
+    echo "skip ${name}: not installed" >&2
+  fi
+}
+
+run_util configure-timezone.sh shanghai
+run_util configure-time-sync.sh
+run_util configure-no-suspend.sh
+run_util configure-display-idle.sh --idle-seconds 1800 ${AGILEX_USER:+--user "${AGILEX_USER}"}
+run_util configure-log-limits.sh --no-restart \
+  --journal-max-use 200M \
+  --journal-keep-free 1G \
+  --journal-retention 7day

@@ -62,27 +62,38 @@ if [[ -n "${DOCKER_PLATFORM}" ]]; then
   docker_platform_args=(--platform "${DOCKER_PLATFORM}")
 fi
 
+DEPS_DIR="${WORK_DIR}/xgc2-product-debs"
+mkdir -p "${DEPS_DIR}"
 docker pull "${docker_platform_args[@]}" "${DOCKER_IMAGE}"
+# Discover ROS_DISTRO from the image, then fetch sibling product debs on the
+# host. The container stays offline and must not apt-get.
+IMAGE_ROS_DISTRO="$(docker run --rm "${docker_platform_args[@]}" "${DOCKER_IMAGE}" bash -lc 'printf %s "${ROS_DISTRO}"')"
+IMAGE_ARCH="$(docker run --rm "${docker_platform_args[@]}" "${DOCKER_IMAGE}" bash -lc 'dpkg --print-architecture')"
+ROS_DISTRO="${IMAGE_ROS_DISTRO}" XGC2_DEB_ARCH="${IMAGE_ARCH}" \
+  "${SCRIPT_DIR}/fetch_xgc2_runtime_debs.sh" "${DEPS_DIR}"
+
 if [[ "${BUILD_PACKAGES}" == "true" ]]; then
-  docker run --rm \
+  docker run --rm --network none \
   "${docker_platform_args[@]}" \
-  "${docker_network_args[@]}" \
   -e DEBIAN_FRONTEND=noninteractive \
-  -e "XGC2_APT_OVERLAY_URL=${XGC2_APT_OVERLAY_URL:-}" \
+  -e XGC2_PRODUCT_DEB_DIR=/workspace/deps \
   -v "${REPO_ROOT}:/workspace/agilex:ro" \
   -v "${WORK_DIR}:/workspace/work" \
   -v "${OUTPUT_DIR}:/workspace/out" \
+  -v "${DEPS_DIR}:/workspace/deps:ro" \
   "${DOCKER_IMAGE}" \
   bash -lc '
     set -euo pipefail
     : "${ROS_DISTRO:?ROS_DISTRO must be set in the image}"
 
-    /workspace/agilex/.xgc2/scripts/install_scout_msgs_dependency.sh
-    /workspace/agilex/.xgc2/scripts/install_scout_description_dependency.sh
+    /workspace/agilex/.xgc2/scripts/require_image_ros.sh
+    /workspace/agilex/.xgc2/scripts/install_local_xgc2_debs.sh
 
     rm -rf /workspace/work/build /workspace/work/devel /workspace/work/install-root /workspace/work/src
-    mkdir -p /workspace/work/src/agilex-onboard
-    rsync -a --delete /workspace/agilex/onboard/ros1/src/ /workspace/work/src/agilex-onboard/
+    mkdir -p /workspace/work/src/agilex-onboard /workspace/work/src/agilex-communication /workspace/work/src/agilex-autostart
+    rsync -a --delete /workspace/agilex/onboard/ros1/base/src/ /workspace/work/src/agilex-onboard/
+    rsync -a --delete /workspace/agilex/onboard/ros1/communication/src/ /workspace/work/src/agilex-communication/
+    rsync -a --delete /workspace/agilex/onboard/ros1/autostart/src/ /workspace/work/src/agilex-autostart/
 
     cd /workspace/work
     set +u
@@ -102,29 +113,27 @@ if [[ "${BUILD_PACKAGES}" == "true" ]]; then
 fi
 
 if [[ "${INSTALL_CHECK}" == "true" ]]; then
-  docker run --rm \
+  docker run --rm --network none \
     "${docker_platform_args[@]}" \
-    "${docker_network_args[@]}" \
     -e DEBIAN_FRONTEND=noninteractive \
-    -e "XGC2_APT_OVERLAY_URL=${XGC2_APT_OVERLAY_URL:-}" \
+    -e XGC2_PRODUCT_DEB_DIR=/workspace/deps \
     -v "${REPO_ROOT}:/workspace/agilex:ro" \
     -v "${OUTPUT_DIR}:/workspace/out:ro" \
+    -v "${DEPS_DIR}:/workspace/deps:ro" \
     "${DOCKER_IMAGE}" \
     bash -lc '
       set -euo pipefail
       export DEBIAN_FRONTEND=noninteractive
       : "${ROS_DISTRO:?ROS_DISTRO must be set in the image}"
       architecture="$(dpkg --print-architecture)"
-      /workspace/agilex/.xgc2/scripts/install_scout_msgs_dependency.sh
-      /workspace/agilex/.xgc2/scripts/install_scout_description_dependency.sh
-      /workspace/agilex/.xgc2/scripts/install_swarm_ros_bridge_dependency.sh
-      apt-get update
+      /workspace/agilex/.xgc2/scripts/require_image_ros.sh
+      /workspace/agilex/.xgc2/scripts/install_local_xgc2_debs.sh
       shopt -s nullglob
       agilex_debs=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex-*_${architecture}.deb)
       agilex_meta=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex_*_${architecture}.deb)
       shopt -u nullglob
-      if [[ "${#agilex_debs[@]}" -ne 5 ]]; then
-        echo "expected 5 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
+      if [[ "${#agilex_debs[@]}" -ne 6 ]]; then
+        echo "expected 6 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
         ls -la /workspace/out >&2 || true
         exit 1
       fi
@@ -133,7 +142,7 @@ if [[ "${INSTALL_CHECK}" == "true" ]]; then
         ls -la /workspace/out >&2 || true
         exit 1
       fi
-      apt-get install -y "${agilex_debs[@]}" "${agilex_meta[@]}"
+      dpkg -i "${agilex_debs[@]}" "${agilex_meta[@]}"
       /workspace/agilex/.xgc2/scripts/check_installed_packages.sh
     '
 fi

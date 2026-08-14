@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>agilex_swarm_ros_bridge</name>
+  <version>0.1.0</version>
+  <description>Vehicle YAML, launch, and ScoutStatus-to-std relay for the official swarm_ros_bridge. systemd lives in agilex_onboard_autostart.</description>
+
+  <maintainer email="apt@example.com">XGC2</maintainer>
+  <license>Proprietary</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>scout_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>roslaunch</exec_depend>
+  <exec_depend>scout_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>swarm_ros_bridge</exec_depend>
+</package>

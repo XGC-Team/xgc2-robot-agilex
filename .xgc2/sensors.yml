@@ -1,7 +1,7 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-sensors
 name: XGC2 AgileX Onboard Sensors
-version: 0.1.0-1
+version: 0.1.0-2
 kind: ros1-apt
 summary: Optional D435i and RoboSense Helios 16 runtime. Not part of the
   minimum boot target.
@@ -16,6 +16,7 @@ ros:
   - realsense2_camera
   - realsense2_description
   - rslidar_sdk
+  - agilex_d435_media
   - agilex_onboard_sensors
 apt:
   distribution: bionic,focal
@@ -25,10 +26,12 @@ apt:
   - ros-melodic-xgc2-agilex-realsense2-camera
   - ros-melodic-xgc2-agilex-realsense2-description
   - ros-melodic-xgc2-agilex-rslidar-sdk
+  - ros-melodic-xgc2-agilex-d435-media
   - ros-melodic-xgc2-agilex-onboard-sensors
   - ros-noetic-xgc2-agilex-realsense2-camera
   - ros-noetic-xgc2-agilex-realsense2-description
   - ros-noetic-xgc2-agilex-rslidar-sdk
+  - ros-noetic-xgc2-agilex-d435-media
   - ros-noetic-xgc2-agilex-onboard-sensors
 vehicle:
   os: ubuntu-18.04
@@ -44,5 +47,5 @@ usage:
 release:
   workflow: ci.yml
   apt_versions:
-    bionic: 0.1.0-1
-    focal: 0.1.0-1
+    bionic: 0.1.0-2
+    focal: 0.1.0-2

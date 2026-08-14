@@ -121,10 +121,20 @@ if [[ -x "${PREFIX_ROOT}/lib/rslidar_sdk/rslidar_sdk_node" ]]; then
   lidar_dep=", ros-${ROS_DISTRO}-xgc2-agilex-rslidar-sdk (>= ${PACKAGE_VERSION})"
 fi
 
+if [[ -d "${PREFIX_ROOT}/share/agilex_d435_media" ]]; then
+  d435_depends="ros-${ROS_DISTRO}-image-transport, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs"
+  build_deb \
+    "ros-${ROS_DISTRO}-xgc2-agilex-d435-media" \
+    "agilex_d435_media" \
+    "${d435_depends}" \
+    "D435 capture owner for ROS images and Media Edge H264/RTP" \
+    "lib/agilex_d435_media/d435_parallel_source"
+fi
+
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-onboard-sensors" \
   "agilex_onboard_sensors" \
   "ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rviz, ros-${ROS_DISTRO}-xgc2-agilex-realsense2-description (>= ${PACKAGE_VERSION})${camera_dep}${lidar_dep}" \
-  "Compose launches and the onboard RViz layout for D435i + Helios 16"
+  "Compose launches and RViz for D435i + Helios 16"
 
 find "${OUTPUT_DIR}" -maxdepth 1 -type f -name "ros-${ROS_DISTRO}-xgc2-agilex-*.deb" -print | sort

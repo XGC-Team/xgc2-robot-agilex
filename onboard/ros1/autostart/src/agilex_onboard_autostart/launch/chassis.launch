@@ -1,0 +1,16 @@
+<launch>
+  <arg name="port_name" default="can0" />
+  <arg name="simulated_robot" default="false" />
+  <arg name="is_scout_mini" default="true" />
+  <arg name="model" default="$(find scout_description)/urdf/scout_visual.urdf" />
+
+  <include file="$(find scout_base)/launch/scout_mini_base.launch">
+    <arg name="port_name" value="$(arg port_name)" />
+    <arg name="simulated_robot" value="$(arg simulated_robot)" />
+    <arg name="is_scout_mini" value="$(arg is_scout_mini)" />
+  </include>
+
+  <include file="$(find agilex_onboard_autostart)/launch/description.launch">
+    <arg name="model" value="$(arg model)" />
+  </include>
+</launch>

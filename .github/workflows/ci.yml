@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - melodic
+      - noetic
   pull_request:
     branches:
       - melodic
+      - noetic
   workflow_dispatch:
 
 defaults:
@@ -15,8 +17,16 @@ defaults:
 
 jobs:
   package-compliance:
-    name: Package compliance
+    name: Package compliance (${{ matrix.name }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: bionic-melodic
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
+          - name: focal-noetic
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,14 +37,22 @@ jobs:
         run: |
           set -euo pipefail
           git diff --check HEAD
-          test ! -e onboard/ros1/src/chassis/scout_description
+          test ! -e onboard/ros1/src
+          test ! -e onboard/ros1/base/src/autostart
+          test ! -e onboard/ros1/base/src/communication
+          test ! -e onboard/ros1/base/src/sensors
+          test ! -e onboard/ros1/base/src/chassis/scout_description
+          test -d onboard/ros1/base/src
+          test -d onboard/ros1/communication/src
+          test -d onboard/ros1/autostart/src
+          test -d onboard/ros1/sensors/src
           test ! -e .gitmodules
           bash -n .xgc2/scripts/build_debs_in_docker.sh
           bash -n .xgc2/scripts/build_sensor_debs_in_docker.sh
           bash -n .xgc2/scripts/check_installed_packages.sh
-          bash -n .xgc2/scripts/install_scout_msgs_dependency.sh
-          bash -n .xgc2/scripts/install_scout_description_dependency.sh
-          bash -n .xgc2/scripts/install_swarm_ros_bridge_dependency.sh
+          bash -n .xgc2/scripts/require_image_ros.sh
+          bash -n .xgc2/scripts/fetch_xgc2_runtime_debs.sh
+          bash -n .xgc2/scripts/install_local_xgc2_debs.sh
           bash -n .xgc2/scripts/package_debs.sh
           bash -n .xgc2/scripts/package_sensor_debs.sh
           bash -n .xgc2/scripts/check_source_workspace_in_docker.sh
@@ -51,8 +69,8 @@ jobs:
       - name: Build package and run launch compliance
         run: |
           .xgc2/scripts/check_source_workspace_in_docker.sh \
-            --image ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0 \
-            --work-dir "$RUNNER_TEMP/agilex-onboard-ros1-compliance"
+            --image "${{ matrix.image }}" \
+            --work-dir "$RUNNER_TEMP/agilex-onboard-ros1-compliance-${{ matrix.name }}"
 
   build-debs:
     name: Build debs (${{ matrix.name }})
@@ -147,12 +165,22 @@ jobs:
             distribution: bionic
             arch: arm64
             runner: ubuntu-24.04-arm
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-full-melodic:1.0.0
           - name: amd64-bionic-melodic
             distribution: bionic
             arch: amd64
             runner: ubuntu-latest
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-full-melodic:1.0.0
+          - name: arm64-focal-noetic
+            distribution: focal
+            arch: arm64
+            runner: ubuntu-24.04-arm
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-full-noetic:1.0.0
+          - name: amd64-focal-noetic
+            distribution: focal
+            arch: amd64
+            runner: ubuntu-latest
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-full-noetic:1.0.0
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4

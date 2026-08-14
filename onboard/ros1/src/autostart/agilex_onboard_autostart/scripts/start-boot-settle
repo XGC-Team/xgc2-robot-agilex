@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-sec="${BOOT_SETTLE_SEC:-10}"
-echo "xgc2 agilex boot settle ${sec}s (USB CAN / IMU)"
-sleep "${sec}"

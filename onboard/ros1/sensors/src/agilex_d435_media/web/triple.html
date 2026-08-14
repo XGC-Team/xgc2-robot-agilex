@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>D435 color / depth / infra1</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 14px/1.4 system-ui, sans-serif;
+      background: #111;
+      color: #ddd;
+    }
+    header {
+      padding: 10px 14px;
+      border-bottom: 1px solid #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    h1 { font-size: 16px; margin: 0; font-weight: 600; }
+    .row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 8px;
+    }
+    @media (max-width: 900px) {
+      .row { grid-template-columns: 1fr; }
+    }
+    .col {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .col h2 {
+      margin: 0;
+      padding: 8px 10px;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      background: #222;
+    }
+    .col h2 span { color: #8ab; font-weight: 400; }
+    video {
+      width: 100%;
+      background: #000;
+      aspect-ratio: 16 / 9;
+      object-fit: contain;
+    }
+    .msg {
+      min-height: 1.4em;
+      padding: 6px 10px 10px;
+      color: #f6b;
+      font-size: 12px;
+    }
+    button {
+      margin-left: 8px;
+      background: #2a3a4a;
+      color: #eee;
+      border: 1px solid #456;
+      border-radius: 4px;
+      padding: 2px 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>D435 三路预览</h1>
+    <div>H264 · WebRTC · color / depth / infra1</div>
+  </header>
+  <div class="row" id="row"></div>
+  <script>
+    const EDGE = location.protocol + '//' + location.hostname + ':18090';
+    const SOURCES = [
+      { id: 'color', title: '彩色' },
+      { id: 'depth-preview', title: '深度（近暗远亮）' },
+      { id: 'infra1', title: '红外 infra1' }
+    ];
+
+    function waitIce(pc) {
+      if (pc.iceGatheringState === 'complete') return Promise.resolve();
+      return new Promise(function (resolve, reject) {
+        var t = setTimeout(function () {
+          pc.removeEventListener('icegatheringstatechange', onChange);
+          reject(new Error('ICE gathering timed out'));
+        }, 15000);
+        function onChange() {
+          if (pc.iceGatheringState !== 'complete') return;
+          clearTimeout(t);
+          pc.removeEventListener('icegatheringstatechange', onChange);
+          resolve();
+        }
+        pc.addEventListener('icegatheringstatechange', onChange);
+      });
+    }
+
+    function mount(source) {
+      var col = document.createElement('section');
+      col.className = 'col';
+      col.innerHTML =
+        '<h2>' + source.title + ' <span data-st>连接中</span>' +
+        '<button type="button" data-re>重连</button></h2>' +
+        '<video autoplay muted playsinline controls></video>' +
+        '<div class="msg" data-msg>协商 WebRTC…</div>';
+      document.getElementById('row').appendChild(col);
+      var video = col.querySelector('video');
+      var st = col.querySelector('[data-st]');
+      var msg = col.querySelector('[data-msg]');
+      var pc = null;
+      var sessionId = '';
+      var gen = 0;
+
+      function close() {
+        gen += 1;
+        if (video.srcObject) video.srcObject = null;
+        if (pc) { pc.close(); pc = null; }
+        if (sessionId) {
+          fetch(EDGE + '/api/v1/sessions/' + encodeURIComponent(sessionId), {
+            method: 'DELETE', keepalive: true
+          });
+          sessionId = '';
+        }
+      }
+
+      async function connect() {
+        close();
+        var my = gen;
+        st.textContent = '连接中';
+        msg.textContent = '协商 WebRTC…';
+        pc = new RTCPeerConnection();
+        pc.addTransceiver('video', { direction: 'recvonly' });
+        pc.addEventListener('track', function (ev) {
+          if (my !== gen) return;
+          video.srcObject = ev.streams[0] || new MediaStream([ev.track]);
+          video.play().catch(function () {});
+          msg.textContent = '';
+        });
+        pc.addEventListener('connectionstatechange', function () {
+          if (my !== gen) return;
+          if (pc.connectionState === 'connected') {
+            st.textContent = '已连接';
+            msg.textContent = '';
+          } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+            st.textContent = '断开';
+            msg.textContent = '连接中断，点重连。';
+          }
+        });
+        try {
+          var offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          await waitIce(pc);
+          if (my !== gen || !pc.localDescription) return;
+          var res = await fetch(
+            EDGE + '/api/v1/sources/' + encodeURIComponent(source.id) + '/sessions',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sdp: pc.localDescription.sdp })
+            }
+          );
+          var body = await res.json();
+          if (!res.ok) throw new Error(body.error || ('HTTP ' + res.status));
+          if (my !== gen) {
+            fetch(EDGE + '/api/v1/sessions/' + encodeURIComponent(body.sessionId), {
+              method: 'DELETE', keepalive: true
+            });
+            return;
+          }
+          sessionId = body.sessionId;
+          await pc.setRemoteDescription({ type: 'answer', sdp: body.sdp });
+        } catch (err) {
+          if (my !== gen) return;
+          close();
+          st.textContent = '错误';
+          msg.textContent = err && err.message ? err.message : String(err);
+        }
+      }
+
+      col.querySelector('[data-re]').addEventListener('click', connect);
+      window.addEventListener('pagehide', close);
+      connect();
+    }
+
+    SOURCES.forEach(mount);
+  </script>
+</body>
+</html>

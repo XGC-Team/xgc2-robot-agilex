@@ -1,0 +1,4 @@
+<launch>
+  <include file="$(find agilex_onboard_autostart)/launch/imu.launch" />
+  <include file="$(find agilex_onboard_autostart)/launch/chassis.launch" />
+</launch>

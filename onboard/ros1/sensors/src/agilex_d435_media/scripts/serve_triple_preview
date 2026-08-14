@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+# Tiny static host for web/triple.html. Signaling stays on Media Edge :18090.
+from __future__ import print_function
+
+import os
+import sys
+
+try:
+    from BaseHTTPServer import HTTPServer
+    from SimpleHTTPServer import SimpleHTTPRequestHandler
+except ImportError:
+    from http.server import HTTPServer, SimpleHTTPRequestHandler
+
+
+def main():
+    here = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.environ.get("PREVIEW_ROOT", ""),
+        os.path.join(here, "web"),
+        os.path.normpath(os.path.join(here, "..", "web")),
+        here,
+    ]
+    web = None
+    for candidate in candidates:
+        if candidate and os.path.isfile(os.path.join(candidate, "triple.html")):
+            web = candidate
+            break
+    if web is None:
+        raise SystemExit("triple.html not found next to serve_triple_preview")
+    os.chdir(web)
+    port = int(os.environ.get("PREVIEW_PORT", "18091"))
+    bind = os.environ.get("PREVIEW_BIND", "0.0.0.0")
+    httpd = HTTPServer((bind, port), SimpleHTTPRequestHandler)
+    print("triple preview http://%s:%d/triple.html (root=%s)" % (bind, port, web))
+    sys.stdout.flush()
+    httpd.serve_forever()
+
+
+if __name__ == "__main__":
+    main()

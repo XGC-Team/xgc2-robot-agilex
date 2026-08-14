@@ -1,5 +1,7 @@
-Optional D435i + RoboSense Helios 16 workspace.
+# AgileX ROS1 sensors workspace
 
-This tree is not part of the minimum IMU/chassis/bridge catkin workspace
-under `onboard/ros1/src`. Do not add these packages to
-`xgc2-agilex-onboard.target`.
+Optional D435i + RoboSense Helios 16 workspace, plus the D435 Media Edge
+capture owner.
+
+This tree is not part of `onboard/ros1/base` or `onboard/ros1/autostart`.
+Camera and lidar systemd units live in `agilex_onboard_autostart`.

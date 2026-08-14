@@ -3,9 +3,10 @@
 Vehicle-true ROS Melodic runtime for the AgileX Scout Mini onboard computer.
 
 Source of truth is the Xavier copy under `/home/agilex`. This repository keeps
-the minimum boot graph only: IMU, chassis, TF/model, ground-station bridge, and
-autostart. Camera, LiDAR, YOLO, mapping, and planning stay on the vehicle and
-are not packaged here. Chassis messages and the Mini visual/TF model come from
+the minimum boot graph only: IMU and chassis in `onboard/ros1/base`,
+the ground-station bridge in `onboard/ros1/communication`, plus
+install-only systemd units in `onboard/ros1/autostart`. Camera and LiDAR
+are a fourth workspace, `onboard/ros1/sensors`. Chassis messages and the Mini visual/TF model come from
 the published `xgc2-scout-msgs` and `xgc2-scout-description` packages.
 
 ## Vehicle
@@ -18,18 +19,28 @@ the published `xgc2-scout-msgs` and `xgc2-scout-description` packages.
 | ROS | Melodic |
 | Arch | arm64 |
 
-Boot chain recovered from `agilex-auto-launch`. Compose launches live only in
-the top-level autostart package:
+All four systemd units live in `agilex_onboard_autostart`.
+`apt install ros-melodic-xgc2-agilex` installs them all. On the vehicle,
+base is enabled for the next boot. Communication, camera, and lidar stay
+install-only until an operator enables them. Camera/lidar still need the
+sensors package before those two units can actually start.
 
 ```text
-can0 @ 500000
-agilex_onboard_autostart/imu.launch      -> serial_imu  /imu/data_raw
-agilex_onboard_autostart/chassis.launch  -> scout_base_node + scout_visual.urdf TF
-agilex_onboard_autostart/swarm.launch    -> official swarm_ros_bridge
-  /imu/data_raw Imu 50 Hz :3001
-  /scout/twist Twist 1 Hz :3002
-  /scout/status_text String 1 Hz :3003
-  /cmd_vel in from qgc
+xgc2-agilex-base.service
+  start-base: settle, wait /dev/imu, wait can0 UP
+  ExecStartPre setup-can0 @ 500000
+  agilex_onboard_autostart/base.launch
+    imu.launch      -> serial_imu  /imu/data
+    chassis.launch  -> scout_base_node + scout_visual.urdf TF
+xgc2-agilex-communication.service
+  start-communication: wait /imu/data and /scout_status
+  agilex_swarm_ros_bridge/swarm.launch
+    /imu/data Imu 30 Hz :3001
+    /scout/twist Twist 1 Hz :3002
+    /scout/status_text String 1 Hz :3003
+    /cmd_vel in from gcs :3001
+xgc2-agilex-camera.service
+xgc2-agilex-lidar.service
 ```
 
 ## Packages
@@ -43,10 +54,11 @@ agilex_onboard_autostart/swarm.launch    -> official swarm_ros_bridge
 | `ros-melodic-xgc2-agilex-scout-base` | `scout_base` | Chassis node |
 | `ros-melodic-xgc2-scout-description` | `scout_description` | Mini visual/TF from `xgc2-scout-description` (not packaged here) |
 | `ros-melodic-swarm-ros-bridge` | `swarm_ros_bridge` | Official XGC2 bridge (APT, not rebuilt here) |
-| `ros-melodic-xgc2-agilex` | (meta) | Vehicle min-boot: pulls the packages below and enables `xgc2-agilex-onboard.target` |
-| `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | systemd, udev, top-level compose launches |
+| `ros-melodic-xgc2-agilex-swarm-ros-bridge` | `agilex_swarm_ros_bridge` | Vehicle YAML+launch for the official bridge |
+| `ros-melodic-xgc2-agilex` | (meta) | Vehicle min-boot: pulls the packages below; does not enable or start them |
+| `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | all four systemd units; enables base at boot |
 
-Camera and LiDAR are a **separate** product (`xgc2-agilex-onboard-sensors`). They are not started by `xgc2-agilex-onboard.target`.
+Camera and LiDAR are a **separate** product (`xgc2-agilex-onboard-sensors`) with two install-only services.
 
 | Debian package | ROS package | Role |
 | --- | --- | --- |
@@ -125,10 +137,12 @@ Vehicle:
 
 ```bash
 sudo apt-get install ros-melodic-xgc2-agilex
-# postinst enables xgc2-agilex-onboard.target and disables the old
-# swarm_ros_bridge.service without deleting it. Reboot to start the min chain.
-# Camera and LiDAR are not part of this target.
-sudo reboot
+# postinst enables xgc2-agilex-base.service for the next boot.
+# It does not start it now, and does not enable communication.
+# sudo systemctl enable --now xgc2-agilex-communication.service
+# sudo apt-get install ros-melodic-xgc2-agilex-onboard-sensors
+# sudo systemctl enable --now xgc2-agilex-camera.service
+# sudo systemctl enable --now xgc2-agilex-lidar.service
 ```
 
 Ground station / new PC that only needs to decode chassis status from `tcp://<vehicle>:3002`:
@@ -137,18 +151,22 @@ Ground station / new PC that only needs to decode chassis status from `tcp://<ve
 sudo apt-get install ros-noetic-scout-msgs
 ```
 
-Chassis still publishes `/scout_status` locally. A 1 Hz relay copies only bag-validated fields onto standard topics the official bridge already carries: `/scout/twist` (`geometry_msgs/Twist`) on port 3002 and `/scout/status_text` (`std_msgs/String`) on 3003. `/imu/data_raw` stays on 3001. Point the station at those ports and keep the vehicle YAML `qgc` address on the same subnet. Do not enable the onboard systemd target on a laptop.
+Chassis still publishes `/scout_status` locally. A 1 Hz relay copies only bag-validated fields onto standard topics the official bridge already carries: `/scout/twist` (`geometry_msgs/Twist`) on port 3002 and `/scout/status_text` (`std_msgs/String`) on 3003. `/imu/data` stays on 3001. `/cmd_vel` comes back from `gcs` on its own port 3001. Point the station at those ports and keep the vehicle YAML `gcs` address on the same subnet. Do not enable the onboard systemd target on a laptop.
 
 ## CI
 
-The build matrix covers two Ubuntu/ROS 1 pairs, each on arm64 and amd64. Noble/Jazzy is out until the nodes are ported.
+Packaging runs inside XGC2 layered images (`base` → `dev` → `ros` → `full`).
+The container is offline and does not `apt-get`. Official ROS/toolchain come
+from the image; sibling XGC2 debs are fetched on the runner and `dpkg -i`.
 
-| Name | OS | ROS | Arch |
-| --- | --- | --- | --- |
-| `arm64-bionic-melodic` | Ubuntu 18.04 | Melodic | arm64 |
-| `amd64-bionic-melodic` | Ubuntu 18.04 | Melodic | amd64 |
-| `arm64-focal-noetic` | Ubuntu 20.04 | Noetic | arm64 |
-| `amd64-focal-noetic` | Ubuntu 20.04 | Noetic | amd64 |
+| Name | OS | ROS | Arch | Image layer |
+| --- | --- | --- | --- | --- |
+| `arm64-bionic-melodic` | Ubuntu 18.04 | Melodic | arm64 | `xgc2-build-bionic-ros-melodic` |
+| `amd64-bionic-melodic` | Ubuntu 18.04 | Melodic | amd64 | `xgc2-build-bionic-ros-melodic` |
+| `arm64-focal-noetic` | Ubuntu 20.04 | Noetic | arm64 | `xgc2-build-focal-ros-noetic` |
+| `amd64-focal-noetic` | Ubuntu 20.04 | Noetic | amd64 | `xgc2-build-focal-ros-noetic` |
+
+Sensor debs use the `full` layer (PCL / OpenCV already in the image).
 
 ```bash
 .xgc2/scripts/build_debs_in_docker.sh --output-dir debs

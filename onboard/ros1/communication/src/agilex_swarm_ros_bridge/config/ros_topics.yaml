@@ -1,0 +1,31 @@
+### Official swarm_ros_bridge types: Imu, Twist, String.
+### Vehicle send ports increment from 3001 (IMU).
+### recv srcPort is the ground-station port and stays 3001.
+
+IP:
+  self: '*'
+  gcs: 192.168.51.150
+  test_local: 127.0.0.1
+
+send_topics:
+- topic_name: /imu/data
+  msg_type: sensor_msgs/Imu
+  max_freq: 30
+  srcIP: self
+  srcPort: 3001
+- topic_name: /scout/twist
+  msg_type: geometry_msgs/Twist
+  max_freq: 1
+  srcIP: self
+  srcPort: 3002
+- topic_name: /scout/status_text
+  msg_type: std_msgs/String
+  max_freq: 1
+  srcIP: self
+  srcPort: 3003
+
+recv_topics:
+- topic_name: /cmd_vel
+  msg_type: geometry_msgs/Twist
+  srcIP: gcs
+  srcPort: 3001
