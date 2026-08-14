@@ -1,0 +1,6 @@
+<launch>
+  <!-- Helios 16; pin config so the installed tree is used, not the compile-time path -->
+  <node pkg="rslidar_sdk" name="rslidar_sdk_node" type="rslidar_sdk_node" output="screen">
+    <param name="config_path" value="$(find rslidar_sdk)/config/config.yaml"/>
+  </node>
+</launch>

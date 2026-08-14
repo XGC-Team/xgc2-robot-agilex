@@ -1,0 +1,4 @@
+<launch>
+  <!-- Vehicle-true D435i: same defaults as catkin_ws rs_camera.launch -->
+  <include file="$(find realsense2_camera)/launch/rs_camera.launch"/>
+</launch>

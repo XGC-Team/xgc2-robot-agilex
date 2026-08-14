@@ -40,6 +40,25 @@ swarm_ros_bridge/test.launch             -> /imu/data_raw :3001, /scout_status :
 | `ros-melodic-xgc2-agilex-swarm-ros-bridge` | `swarm_ros_bridge` | Vehicle bridge binary + YAML |
 | `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | systemd, udev, top-level compose launches |
 
+Camera and LiDAR are a **separate** product (`xgc2-agilex-onboard-sensors`). They are not started by `xgc2-agilex-onboard.target`.
+
+| Debian package | ROS package | Role |
+| --- | --- | --- |
+| `ros-melodic-xgc2-agilex-realsense2-camera` | `realsense2_camera` | D435i, `/camera/color/image_raw`, `/camera/depth/image_rect_raw` |
+| `ros-melodic-xgc2-agilex-realsense2-description` | `realsense2_description` | Camera model |
+| `ros-melodic-xgc2-agilex-rslidar-sdk` | `rslidar_sdk` | Helios 16, `/rslidar_points`, frame `rslidar` |
+| `ros-melodic-xgc2-agilex-onboard-sensors` | `agilex_onboard_sensors` | `camera.launch`, `lidar.launch`, onboard RViz |
+
+```bash
+sudo apt-get install ros-melodic-xgc2-agilex-onboard-sensors
+# do not stop a running catkin_ws driver; these land in /opt/ros/melodic
+roslaunch agilex_onboard_sensors camera.launch
+roslaunch agilex_onboard_sensors lidar.launch
+roslaunch agilex_onboard_sensors rviz.launch
+```
+
+Onboard RViz (`sensors.rviz`) uses fixed frame `rslidar`, `/rslidar_points`, color, and depth. Camera runtime also needs the vehicle `librealsense2` (on Xavier it is `/usr/local/lib`).
+
 ## APT
 
 Packages are published to `http://xgc2.apt.xiaokang.ink`. A new computer only needs the keyring, a `deb` line, and `apt install`. HTTPS works too.

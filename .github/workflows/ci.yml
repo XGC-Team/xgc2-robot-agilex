@@ -28,9 +28,14 @@ jobs:
           git diff --check HEAD
           test ! -e .gitmodules
           bash -n .xgc2/scripts/build_debs_in_docker.sh
+          bash -n .xgc2/scripts/build_sensor_debs_in_docker.sh
           bash -n .xgc2/scripts/check_installed_packages.sh
           bash -n .xgc2/scripts/package_debs.sh
+          bash -n .xgc2/scripts/package_sensor_debs.sh
           bash -n .xgc2/scripts/check_source_workspace_in_docker.sh
+          find onboard/ros1/sensors/src \
+            \( -name package.xml -o -name '*.launch' \) \
+            -print0 | xargs -0 xmllint --noout
 
       - name: Build package and run launch compliance
         run: |
@@ -115,6 +120,58 @@ jobs:
           name: xgc2-agilex-onboard-debs-${{ matrix.name }}
           path: |
             debs/*.deb
+            .ci/build-manifests/*.json
+          retention-days: 14
+          include-hidden-files: true
+
+  build-sensor-debs:
+    name: Build sensor debs (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: arm64-bionic-melodic
+            distribution: bionic
+            arch: arm64
+            runner: ubuntu-24.04-arm
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
+          - name: amd64-bionic-melodic
+            distribution: bionic
+            arch: amd64
+            runner: ubuntu-latest
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build optional camera and lidar debs
+        run: |
+          .xgc2/scripts/build_sensor_debs_in_docker.sh \
+            --image "${{ matrix.image }}" \
+            --work-dir "$RUNNER_TEMP/xgc2-agilex-sensors-${{ matrix.name }}" \
+            --output-dir "$GITHUB_WORKSPACE/debs-sensors"
+
+      - name: Create trusted build manifest
+        run: |
+          product_version="$(awk -F': *' '/^version:/ {print $2; exit}' .xgc2/sensors.yml)"
+          python3 .xgc2/scripts/xgc2_artifact_manifest.py build \
+            --deb-dir debs-sensors \
+            --output-dir .ci/build-manifests \
+            --product xgc2-agilex-onboard-sensors \
+            --product-version "$product_version" \
+            --distribution "${{ matrix.distribution }}" \
+            --architecture "${{ matrix.arch }}" \
+            --source-sha "$GITHUB_SHA" \
+            --ci-run-id "$GITHUB_RUN_ID" \
+            --ci-workflow "$GITHUB_WORKFLOW" \
+            --ci-workflow-ref "$GITHUB_WORKFLOW_REF"
+
+      - name: Upload sensor deb artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: xgc2-agilex-onboard-sensors-debs-${{ matrix.name }}
+          path: |
+            debs-sensors/*.deb
             .ci/build-manifests/*.json
           retention-days: 14
           include-hidden-files: true
