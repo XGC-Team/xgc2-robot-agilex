@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROS_DISTRO="${ROS_DISTRO:-melodic}"
+# shellcheck disable=SC1091
+source "/opt/ros/${ROS_DISTRO}/setup.bash"
+
+export ROS_MASTER_URI="${ROS_MASTER_URI:-http://127.0.0.1:11311}"
+export ROS_IP="${ROS_IP:-127.0.0.1}"
+
+exec roscore

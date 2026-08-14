@@ -7,8 +7,10 @@ catkin_package()
 
 install(PROGRAMS
   scripts/setup-can0
+  scripts/start-boot-settle
   scripts/start-chassis
   scripts/start-imu
+  scripts/start-roscore
   scripts/start-swarm-ros-bridge
   scripts/wait-device
   scripts/wait-ros-master
@@ -22,18 +24,13 @@ install(DIRECTORY launch
 )
 
 install(FILES
+  config/onboard.env
   config/ros_topics.yaml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config
 )
 
-install(FILES
-  systemd/xgc2-agilex-can0.service
-  systemd/xgc2-agilex-chassis.service
-  systemd/xgc2-agilex-imu.service
-  systemd/xgc2-agilex-onboard.target
-  systemd/xgc2-agilex-swarm-ros-bridge.service
-  systemd/xgc2-roscore.service
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/systemd
+install(DIRECTORY systemd
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
 install(FILES

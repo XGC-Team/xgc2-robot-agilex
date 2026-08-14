@@ -5,6 +5,7 @@ ROS_DISTRO="${ROS_DISTRO:-melodic}"
 PREFIX="/opt/ros/${ROS_DISTRO}"
 
 deb_packages=(
+  "ros-${ROS_DISTRO}-xgc2-agilex"
   "ros-${ROS_DISTRO}-xgc2-agilex-serial-imu"
   "ros-${ROS_DISTRO}-xgc2-agilex-wrp-io"
   "ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk"
@@ -55,9 +56,15 @@ test -f "${PREFIX}/share/agilex_onboard_autostart/launch/imu.launch"
 test -f "${PREFIX}/share/agilex_onboard_autostart/launch/chassis.launch"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-imu"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-chassis"
+test -x "${PREFIX}/lib/agilex_onboard_autostart/start-roscore"
+test -x "${PREFIX}/lib/agilex_onboard_autostart/start-boot-settle"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-swarm-ros-bridge"
 test -f /lib/systemd/system/xgc2-agilex-onboard.target
+test -f /lib/systemd/system/xgc2-agilex-boot-settle.service
+test ! -f /lib/systemd/system/xgc2-agilex-camera.service
+test ! -f /lib/systemd/system/xgc2-agilex-lidar.service
 test -f /etc/udev/rules.d/99-xgc2-agilex-imu.rules
+test -f /etc/xgc2/agilex/onboard.env
 test -f /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
 
 roslaunch --files agilex_onboard_autostart imu.launch >/dev/null

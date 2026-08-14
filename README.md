@@ -38,6 +38,7 @@ swarm_ros_bridge/test.launch             -> /imu/data_raw :3001, /scout_status :
 | `ros-melodic-xgc2-agilex-scout-base` | `scout_base` | Chassis node |
 | `ros-melodic-xgc2-agilex-scout-description` | `scout_description` | `scout_v2.xacro` + meshes |
 | `ros-melodic-xgc2-agilex-swarm-ros-bridge` | `swarm_ros_bridge` | Vehicle bridge binary + YAML |
+| `ros-melodic-xgc2-agilex` | (meta) | Vehicle min-boot: pulls the packages below and enables `xgc2-agilex-onboard.target` |
 | `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | systemd, udev, top-level compose launches |
 
 Camera and LiDAR are a **separate** product (`xgc2-agilex-onboard-sensors`). They are not started by `xgc2-agilex-onboard.target`.
@@ -65,7 +66,7 @@ Packages are published to `http://xgc2.apt.xiaokang.ink`. A new computer only ne
 
 | Machine | Ubuntu | ROS | `arch=` | `deb` suite | Install |
 | --- | --- | --- | --- | --- | --- |
-| Vehicle (Xavier) | 18.04 | Melodic | `arm64` | `bionic` | `ros-melodic-xgc2-agilex-onboard-autostart` |
+| Vehicle (Xavier) | 18.04 | Melodic | `arm64` | `bionic` | `ros-melodic-xgc2-agilex` |
 | New workstation / ground station | 20.04 | Noetic | `amd64` | `focal` | `ros-noetic-xgc2-agilex-scout-msgs` (and the bridge if it should talk to the vehicle) |
 
 Fingerprint of `xgc2-archive-keyring.gpg`:
@@ -116,9 +117,11 @@ sudo apt-get update \
 Vehicle:
 
 ```bash
-sudo apt-get install ros-melodic-xgc2-agilex-onboard-autostart
-# postinst enables xgc2-agilex-onboard.target; leave it disabled until you want boot autostart
-sudo systemctl start xgc2-agilex-onboard.target
+sudo apt-get install ros-melodic-xgc2-agilex
+# postinst enables xgc2-agilex-onboard.target and disables the old
+# swarm_ros_bridge.service without deleting it. Reboot to start the min chain.
+# Camera and LiDAR are not part of this target.
+sudo reboot
 ```
 
 Ground station / new PC that only needs to decode chassis status from `tcp://<vehicle>:3002`:

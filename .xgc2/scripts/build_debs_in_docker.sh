@@ -113,13 +113,19 @@ if [[ "${INSTALL_CHECK}" == "true" ]]; then
       apt-get update
       shopt -s nullglob
       agilex_debs=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex-*_${architecture}.deb)
+      agilex_meta=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex_*_all.deb)
       shopt -u nullglob
       if [[ "${#agilex_debs[@]}" -ne 8 ]]; then
         echo "expected 8 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
         ls -la /workspace/out >&2 || true
         exit 1
       fi
-      apt-get install -y "${agilex_debs[@]}"
+      if [[ "${#agilex_meta[@]}" -ne 1 ]]; then
+        echo "expected 1 AgileX meta deb (Architecture: all), found ${#agilex_meta[@]}" >&2
+        ls -la /workspace/out >&2 || true
+        exit 1
+      fi
+      apt-get install -y "${agilex_debs[@]}" "${agilex_meta[@]}"
       /workspace/agilex/.xgc2/scripts/check_installed_packages.sh
     '
 fi

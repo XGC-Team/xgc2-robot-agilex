@@ -6,6 +6,25 @@ ROS_PREFIX="/opt/ros/${ROS_DISTRO}"
 # shellcheck disable=SC1091
 source "${ROS_PREFIX}/setup.bash"
 
+export ROS_MASTER_URI="${ROS_MASTER_URI:-http://127.0.0.1:11311}"
+export ROS_IP="${ROS_IP:-127.0.0.1}"
+
+CAN_IF="${CAN_IF:-can0}"
+TIMEOUT="${CAN_WAIT_TIMEOUT:-90}"
+deadline=$((SECONDS + TIMEOUT))
+
 "${ROS_PREFIX}/lib/agilex_onboard_autostart/wait-ros-master" --timeout "${ROS_MASTER_WAIT_TIMEOUT:-60}"
+
+while [[ ${SECONDS} -lt ${deadline} ]]; do
+  if ip link show "${CAN_IF}" 2>/dev/null | grep -q "UP"; then
+    break
+  fi
+  sleep 0.2
+done
+
+if ! ip link show "${CAN_IF}" 2>/dev/null | grep -q "UP"; then
+  echo "CAN interface not up: ${CAN_IF}" >&2
+  exit 1
+fi
 
 exec roslaunch agilex_onboard_autostart chassis.launch

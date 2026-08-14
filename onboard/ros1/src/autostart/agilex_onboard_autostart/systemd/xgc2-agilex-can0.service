@@ -1,14 +1,20 @@
 [Unit]
 Description=XGC2 AgileX CAN interface setup
-After=network.target
+After=local-fs.target systemd-modules-load.service systemd-udevd.service xgc2-agilex-boot-settle.service
+Wants=xgc2-agilex-boot-settle.service
 PartOf=xgc2-agilex-onboard.target
 
 [Service]
 Type=oneshot
+EnvironmentFile=-/etc/xgc2/agilex/onboard.env
 Environment=CAN_IF=can0
 Environment=CAN_BITRATE=500000
-RemainAfterExit=yes
+Environment=CAN_WAIT_TIMEOUT=90
 ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/setup-can0
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=120
 
 [Install]
 WantedBy=xgc2-agilex-onboard.target

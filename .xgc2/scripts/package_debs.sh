@@ -206,6 +206,7 @@ build_autostart_deb() {
 
   mkdir -p \
     "${pkg_root}/etc/udev/rules.d" \
+    "${pkg_root}/etc/xgc2/agilex" \
     "${pkg_root}/etc/xgc2/agilex/swarm_ros_bridge" \
     "${pkg_root}/lib/systemd/system"
 
@@ -213,23 +214,27 @@ build_autostart_deb() {
     "${pkg_root}/etc/udev/rules.d/99-xgc2-agilex-imu.rules"
   cp -a "${PREFIX_ROOT}/share/${ros_pkg}/config/ros_topics.yaml" \
     "${pkg_root}/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml"
+  cp -a "${PREFIX_ROOT}/share/${ros_pkg}/config/onboard.env" \
+    "${pkg_root}/etc/xgc2/agilex/onboard.env"
   cp -a "${PREFIX_ROOT}/share/${ros_pkg}/systemd/"* \
     "${pkg_root}/lib/systemd/system/"
   sed -i \
     -e "s|/opt/ros/melodic|/opt/ros/${ROS_DISTRO}|g" \
     -e "s|ROS_DISTRO=melodic|ROS_DISTRO=${ROS_DISTRO}|g" \
-    "${pkg_root}/lib/systemd/system/"*
+    "${pkg_root}/lib/systemd/system/"* \
+    "${pkg_root}/etc/xgc2/agilex/onboard.env"
 
   write_control \
     "${pkg_root}" \
     "${deb_pkg}" \
     "${version}" \
-    "iproute2, systemd, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xacro, ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= $(deb_version serial_imu)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base)), ros-${ROS_DISTRO}-xgc2-agilex-scout-description (>= $(deb_version scout_description)), ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version swarm_ros_bridge))" \
-    "XGC2 AgileX onboard systemd autostart configuration"
+    "iproute2, systemd, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xacro, ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= $(deb_version serial_imu)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs (>= $(deb_version scout_msgs)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base)), ros-${ROS_DISTRO}-xgc2-agilex-scout-description (>= $(deb_version scout_description)), ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version swarm_ros_bridge))" \
+    "XGC2 AgileX onboard min-boot systemd (IMU, chassis, TF, bridge; no camera/LiDAR)"
   write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}" "${version}"
 
   cat > "${pkg_root}/DEBIAN/conffiles" <<EOF
 /etc/udev/rules.d/99-xgc2-agilex-imu.rules
+/etc/xgc2/agilex/onboard.env
 /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
 EOF
 
@@ -243,9 +248,19 @@ if [ "$1" = "configure" ]; then
     udevadm trigger --subsystem-match=tty >/dev/null 2>&1 || true
   fi
 
+  if id agilex >/dev/null 2>&1; then
+    usermod -aG dialout agilex >/dev/null 2>&1 || true
+  fi
+
   if command -v systemctl >/dev/null 2>&1; then
     systemctl daemon-reload >/dev/null 2>&1 || true
-    systemctl enable xgc2-agilex-onboard.target >/dev/null 2>&1 || true
+    # Keep old unit files on disk; only stop them from racing the new target.
+    systemctl disable swarm_ros_bridge.service >/dev/null 2>&1 || true
+    systemctl disable handsfree_imu.service >/dev/null 2>&1 || true
+    systemctl disable turn_on_wheeltec_robot.service >/dev/null 2>&1 || true
+    if id agilex >/dev/null 2>&1; then
+      systemctl enable xgc2-agilex-onboard.target >/dev/null 2>&1 || true
+    fi
   fi
 fi
 
@@ -283,9 +298,46 @@ EOF
   chmod 0644 "${pkg_root}/usr/share/doc/${deb_pkg}/README"
   find "${pkg_root}/lib/systemd/system" -type f -exec chmod 0644 {} +
   chmod 0644 "${pkg_root}/etc/udev/rules.d/99-xgc2-agilex-imu.rules"
+  chmod 0644 "${pkg_root}/etc/xgc2/agilex/onboard.env"
   chmod 0644 "${pkg_root}/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml"
 
   fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${deb_pkg}_${version}_${ARCH}.deb" >/dev/null
+}
+
+build_meta_deb() {
+  local deb_pkg="ros-${ROS_DISTRO}-xgc2-agilex"
+  local version="${PACKAGE_VERSION}"
+  local pkg_root="${BUILD_DIR}/${deb_pkg}"
+
+  mkdir -p "${pkg_root}/usr/share/doc/${deb_pkg}"
+  write_control \
+    "${pkg_root}" \
+    "${deb_pkg}" \
+    "${version}" \
+    "ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart (>= ${version})" \
+    "XGC2 AgileX vehicle min-boot meta package (no camera/LiDAR)"
+
+  cat > "${pkg_root}/usr/share/doc/${deb_pkg}/README" <<EOF
+${deb_pkg}
+
+Install this meta package on the vehicle. It pulls the onboard autostart
+unit plus IMU, chassis, TF/model, and the ground-station bridge, and the
+autostart postinst enables xgc2-agilex-onboard.target.
+
+Camera and LiDAR are a separate product and are not started at boot.
+
+  sudo apt-get install ${deb_pkg}
+  sudo reboot
+EOF
+
+  find "${pkg_root}" -type d -exec chmod 0755 {} +
+  chmod 0755 "${pkg_root}/DEBIAN"
+  chmod 0644 "${pkg_root}/DEBIAN/control"
+  chmod 0644 "${pkg_root}/usr/share/doc/${deb_pkg}/README"
+
+  # Meta package is arch-independent.
+  sed -i "s/^Architecture: ${ARCH}$/Architecture: all/" "${pkg_root}/DEBIAN/control"
+  fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${deb_pkg}_${version}_all.deb" >/dev/null
 }
 
 build_deb \
@@ -344,5 +396,6 @@ build_deb \
   "lib/swarm_ros_bridge/bridge_node"
 
 build_autostart_deb
+build_meta_deb
 
-find "${OUTPUT_DIR}" -maxdepth 1 -type f -name "ros-${ROS_DISTRO}-xgc2-agilex-*.deb" -print | sort
+find "${OUTPUT_DIR}" -maxdepth 1 -type f -name "ros-${ROS_DISTRO}-xgc2-agilex*.deb" -print | sort
