@@ -1,7 +1,7 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-ros1
 name: XGC2 AgileX Onboard ROS1
-version: 0.2.0-5
+version: 0.2.0-6
 kind: ros1-apt
 summary: Vehicle-true AgileX Scout Mini minimum runtime (IMU, chassis, and
   ground-station bridge) for Melodic and Noetic.
@@ -84,5 +84,5 @@ usage:
 release:
   workflow: release.yml
   apt_versions:
-    bionic: 0.2.0-5
-    focal: 0.2.0-5
+    bionic: 0.2.0-6
+    focal: 0.2.0-6

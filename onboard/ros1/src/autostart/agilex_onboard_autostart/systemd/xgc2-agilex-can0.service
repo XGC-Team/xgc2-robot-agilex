@@ -12,9 +12,8 @@ Environment=CAN_BITRATE=500000
 Environment=CAN_WAIT_TIMEOUT=90
 ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/setup-can0
 RemainAfterExit=yes
-Restart=on-failure
-RestartSec=5
 TimeoutStartSec=120
+# systemd 237 (Bionic) rejects Restart= on Type=oneshot + RemainAfterExit=yes.
 
 [Install]
 WantedBy=xgc2-agilex-onboard.target
