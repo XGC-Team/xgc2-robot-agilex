@@ -78,6 +78,7 @@ if [[ "${BUILD_PACKAGES}" == "true" ]]; then
     : "${ROS_DISTRO:?ROS_DISTRO must be set in the image}"
 
     /workspace/agilex/.xgc2/scripts/install_scout_msgs_dependency.sh
+    /workspace/agilex/.xgc2/scripts/install_scout_description_dependency.sh
 
     rm -rf /workspace/work/build /workspace/work/devel /workspace/work/install-root /workspace/work/src
     mkdir -p /workspace/work/src/agilex-onboard
@@ -115,14 +116,15 @@ if [[ "${INSTALL_CHECK}" == "true" ]]; then
       : "${ROS_DISTRO:?ROS_DISTRO must be set in the image}"
       architecture="$(dpkg --print-architecture)"
       /workspace/agilex/.xgc2/scripts/install_scout_msgs_dependency.sh
+      /workspace/agilex/.xgc2/scripts/install_scout_description_dependency.sh
       /workspace/agilex/.xgc2/scripts/install_swarm_ros_bridge_dependency.sh
       apt-get update
       shopt -s nullglob
       agilex_debs=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex-*_${architecture}.deb)
       agilex_meta=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex_*_${architecture}.deb)
       shopt -u nullglob
-      if [[ "${#agilex_debs[@]}" -ne 6 ]]; then
-        echo "expected 6 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
+      if [[ "${#agilex_debs[@]}" -ne 5 ]]; then
+        echo "expected 5 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
         ls -la /workspace/out >&2 || true
         exit 1
       fi

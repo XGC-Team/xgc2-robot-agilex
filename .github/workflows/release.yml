@@ -11,6 +11,34 @@ on:
         description: Expected source commit SHA
         required: true
         type: string
+      prepare_action:
+        description: Release-train action
+        required: false
+        default: release
+        type: choice
+        options:
+          - release
+          - compatibility-verify
+      apt_overlay_url:
+        description: Optional release-scoped staging APT base URL
+        required: false
+        default: ""
+        type: string
+      dependency_set_digest:
+        description: SHA256 of the resolved release-train dependency set
+        required: false
+        default: ""
+        type: string
+      run_cpp_quality:
+        description: Legacy compatibility input
+        required: false
+        default: false
+        type: boolean
+      run_source_tests:
+        description: Legacy compatibility input
+        required: false
+        default: false
+        type: boolean
 
 defaults:
   run:
@@ -18,6 +46,10 @@ defaults:
 
 permissions:
   contents: read
+
+env:
+  XGC2_APT_OVERLAY_URL: ${{ inputs.apt_overlay_url }}
+  XGC2_DEPENDENCY_SET_DIGEST: ${{ inputs.dependency_set_digest }}
 
 jobs:
   validate-release-inputs:

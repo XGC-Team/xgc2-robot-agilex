@@ -1,4 +1,0 @@
-[submodule "onboard/ros1/src/chassis/scout_description"]
-	path = onboard/ros1/src/chassis/scout_description
-	url = https://github.com/XGC-Team/xgc2-scout-description.git
-	branch = melodic

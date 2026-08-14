@@ -5,8 +5,8 @@ Vehicle-true ROS Melodic runtime for the AgileX Scout Mini onboard computer.
 Source of truth is the Xavier copy under `/home/agilex`. This repository keeps
 the minimum boot graph only: IMU, chassis, TF/model, ground-station bridge, and
 autostart. Camera, LiDAR, YOLO, mapping, and planning stay on the vehicle and
-are not packaged here. Nested git submodules are allowed here because the
-onboard tree is an integration of sub-products; `scout_description` is one.
+are not packaged here. Chassis messages and the Mini visual/TF model come from
+the published `xgc2-scout-msgs` and `xgc2-scout-description` packages.
 
 ## Vehicle
 
@@ -24,7 +24,7 @@ the top-level autostart package:
 ```text
 can0 @ 500000
 agilex_onboard_autostart/imu.launch      -> serial_imu  /imu/data_raw
-agilex_onboard_autostart/chassis.launch  -> scout_base_node + scout_v2.xacro TF
+agilex_onboard_autostart/chassis.launch  -> scout_base_node + scout_visual.urdf TF
 agilex_onboard_autostart/swarm.launch    -> official swarm_ros_bridge
   /imu/data_raw Imu 50 Hz :3001
   /scout/twist Twist 1 Hz :3002
@@ -41,7 +41,7 @@ agilex_onboard_autostart/swarm.launch    -> official swarm_ros_bridge
 | `ros-melodic-xgc2-agilex-ugv-sdk` | `ugv_sdk` | Scout CAN protocol |
 | `ros-melodic-scout-msgs` | `scout_msgs` | Chassis messages from `xgc2-scout-msgs` (not packaged here) |
 | `ros-melodic-xgc2-agilex-scout-base` | `scout_base` | Chassis node |
-| `ros-melodic-xgc2-agilex-scout-description` | `scout_description` | Submodule of `XGC-Team/xgc2-scout-description` (`melodic`): vehicle `scout_v2.xacro` plus the shared visual URDF/meshes |
+| `ros-melodic-xgc2-scout-description` | `scout_description` | Mini visual/TF from `xgc2-scout-description` (not packaged here) |
 | `ros-melodic-swarm-ros-bridge` | `swarm_ros_bridge` | Official XGC2 bridge (APT, not rebuilt here) |
 | `ros-melodic-xgc2-agilex` | (meta) | Vehicle min-boot: pulls the packages below and enables `xgc2-agilex-onboard.target` |
 | `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | systemd, udev, top-level compose launches |
