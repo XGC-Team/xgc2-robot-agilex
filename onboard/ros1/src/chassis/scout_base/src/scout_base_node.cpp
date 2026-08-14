@@ -1,9 +1,7 @@
 #include <memory>
 
 #include <ros/ros.h>
-#include <nav_msgs/Odometry.h>
 #include <sensor_msgs/JointState.h>
-#include <tf/transform_broadcaster.h>
 
 #include "ugv_sdk/scout/scout_base.hpp"
 #include "scout_base/scout_messenger.hpp"
@@ -36,15 +34,9 @@ int main(int argc, char **argv) {
   // fetch parameters before connecting to robot
   std::string port_name;
   private_node.param<std::string>("port_name", port_name, std::string("can0"));
-  private_node.param<std::string>("odom_frame", messenger.odom_frame_,
-                                  std::string("odom"));
-  private_node.param<std::string>("base_frame", messenger.base_frame_,
-                                  std::string("base_link"));
   private_node.param<bool>("simulated_robot", messenger.simulated_robot_,
                            false);
   private_node.param<int>("control_rate", messenger.sim_control_rate_, 50);
-  private_node.param<std::string>("odom_topic_name", messenger.odom_topic_name_,
-                                  std::string("odom"));
 
   if (!messenger.simulated_robot_) {
     // connect to robot and setup ROS subscription
