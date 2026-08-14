@@ -10,6 +10,7 @@ install(PROGRAMS
   scripts/start-boot-settle
   scripts/start-chassis
   scripts/start-imu
+  scripts/scout_status_to_std
   scripts/start-roscore
   scripts/start-swarm-ros-bridge
   scripts/wait-device

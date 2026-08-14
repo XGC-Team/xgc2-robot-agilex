@@ -18,10 +18,10 @@ Environment=HOME=/home/agilex
 Environment=ROS_HOME=/home/agilex/.ros
 Environment=SWARM_ROS_BRIDGE_CONFIG=/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
 Environment=IMU_READY_TOPIC=/imu/data_raw
-Environment=SCOUT_STATUS_TOPIC=/scout_status
+Environment=SCOUT_TWIST_TOPIC=/scout/twist
 Environment=ROS_MASTER_WAIT_TIMEOUT=60
 Environment=IMU_TOPIC_WAIT_TIMEOUT=90
-Environment=SCOUT_STATUS_WAIT_TIMEOUT=90
+Environment=SCOUT_TWIST_WAIT_TIMEOUT=90
 Environment=XGC2_ROBOT_NAMESPACE=/
 ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/start-swarm-ros-bridge
 Restart=always

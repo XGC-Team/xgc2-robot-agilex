@@ -2,7 +2,7 @@
   <arg name="port_name" default="can0" />
   <arg name="simulated_robot" default="false" />
   <arg name="is_scout_mini" default="true" />
-  <arg name="model_xacro" default="$(find scout_description)/urdf/scout_v2.xacro" />
+  <arg name="model" default="$(find scout_description)/urdf/scout_visual.urdf" />
 
   <include file="$(find scout_base)/launch/scout_mini_base.launch">
     <arg name="port_name" value="$(arg port_name)" />
@@ -11,6 +11,12 @@
   </include>
 
   <include file="$(find agilex_onboard_autostart)/launch/description.launch">
-    <arg name="model_xacro" value="$(arg model_xacro)" />
+    <arg name="model" value="$(arg model)" />
   </include>
+
+  <node pkg="agilex_onboard_autostart" type="scout_status_to_std" name="scout_status_to_std">
+    <param name="rate" value="1.0" />
+    <param name="twist_topic" value="/scout/twist" />
+    <param name="text_topic" value="/scout/status_text" />
+  </node>
 </launch>

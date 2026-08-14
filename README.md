@@ -25,7 +25,11 @@ the top-level autostart package:
 can0 @ 500000
 agilex_onboard_autostart/imu.launch      -> serial_imu  /imu/data_raw
 agilex_onboard_autostart/chassis.launch  -> scout_base_node + scout_v2.xacro TF
-swarm_ros_bridge/test.launch             -> /imu/data_raw :3001, /scout_status :3002, /cmd_vel in
+agilex_onboard_autostart/swarm.launch    -> official swarm_ros_bridge
+  /imu/data_raw Imu 50 Hz :3001
+  /scout/twist Twist 1 Hz :3002
+  /scout/status_text String 1 Hz :3003
+  /cmd_vel in from qgc
 ```
 
 ## Packages
@@ -35,10 +39,10 @@ swarm_ros_bridge/test.launch             -> /imu/data_raw :3001, /scout_status :
 | `ros-melodic-xgc2-agilex-serial-imu` | `serial_imu` | Serial IMU driver, `/dev/imu` |
 | `ros-melodic-xgc2-agilex-wrp-io` | `wrp_io` | CAN/serial IO |
 | `ros-melodic-xgc2-agilex-ugv-sdk` | `ugv_sdk` | Scout CAN protocol |
-| `ros-melodic-xgc2-agilex-scout-msgs` | `scout_msgs` | Chassis messages |
+| `ros-melodic-scout-msgs` | `scout_msgs` | Chassis messages from `xgc2-scout-msgs` (not packaged here) |
 | `ros-melodic-xgc2-agilex-scout-base` | `scout_base` | Chassis node |
 | `ros-melodic-xgc2-agilex-scout-description` | `scout_description` | Submodule of `XGC-Team/xgc2-scout-description` (`melodic`): vehicle `scout_v2.xacro` plus the shared visual URDF/meshes |
-| `ros-melodic-xgc2-agilex-swarm-ros-bridge` | `swarm_ros_bridge` | Vehicle bridge binary + YAML |
+| `ros-melodic-swarm-ros-bridge` | `swarm_ros_bridge` | Official XGC2 bridge (APT, not rebuilt here) |
 | `ros-melodic-xgc2-agilex` | (meta) | Vehicle min-boot: pulls the packages below and enables `xgc2-agilex-onboard.target` |
 | `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | systemd, udev, top-level compose launches |
 
@@ -70,7 +74,7 @@ Packages are published to `http://xgc2.apt.xiaokang.ink`. A new computer only ne
 | Machine | Ubuntu | ROS | `arch=` | `deb` suite | Install |
 | --- | --- | --- | --- | --- | --- |
 | Vehicle (Xavier) | 18.04 | Melodic | `arm64` | `bionic` | `ros-melodic-xgc2-agilex` |
-| New workstation / ground station | 20.04 | Noetic | `amd64` | `focal` | `ros-noetic-xgc2-agilex-scout-msgs` (and the bridge if it should talk to the vehicle) |
+| New workstation / ground station | 20.04 | Noetic | `amd64` | `focal` | `ros-noetic-scout-msgs` (and the bridge if it should talk to the vehicle) |
 
 Fingerprint of `xgc2-archive-keyring.gpg`:
 
@@ -130,10 +134,10 @@ sudo reboot
 Ground station / new PC that only needs to decode chassis status from `tcp://<vehicle>:3002`:
 
 ```bash
-sudo apt-get install ros-noetic-xgc2-agilex-scout-msgs
+sudo apt-get install ros-noetic-scout-msgs
 ```
 
-`/scout_status` is `scout_msgs/ScoutStatus` at 10 Hz on port 3002. `/imu/data_raw` stays on 3001. Point the station at `tcp://<vehicle>:3002` and keep the vehicle YAML `qgc` address on the same subnet. Do not enable the onboard systemd target on a laptop.
+Chassis still publishes `/scout_status` locally. A 1 Hz relay copies only bag-validated fields onto standard topics the official bridge already carries: `/scout/twist` (`geometry_msgs/Twist`) on port 3002 and `/scout/status_text` (`std_msgs/String`) on 3003. `/imu/data_raw` stays on 3001. Point the station at those ports and keep the vehicle YAML `qgc` address on the same subnet. Do not enable the onboard systemd target on a laptop.
 
 ## CI
 

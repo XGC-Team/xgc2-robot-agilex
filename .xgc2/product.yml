@@ -1,7 +1,7 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-ros1
 name: XGC2 AgileX Onboard ROS1
-version: 0.2.0-7
+version: 0.2.0-9
 kind: ros1-apt
 summary: Vehicle-true AgileX Scout Mini minimum runtime (IMU, chassis, and
   ground-station bridge) for Melodic and Noetic.
@@ -16,10 +16,7 @@ ros:
   - serial_imu
   - wrp_io
   - ugv_sdk
-  - scout_msgs
   - scout_base
-  - scout_description
-  - swarm_ros_bridge
   - agilex_onboard_autostart
 apt:
   distribution: bionic,focal
@@ -30,21 +27,21 @@ apt:
   - ros-melodic-xgc2-agilex-serial-imu
   - ros-melodic-xgc2-agilex-wrp-io
   - ros-melodic-xgc2-agilex-ugv-sdk
-  - ros-melodic-xgc2-agilex-scout-msgs
   - ros-melodic-xgc2-agilex-scout-base
-  - ros-melodic-xgc2-agilex-scout-description
-  - ros-melodic-xgc2-agilex-swarm-ros-bridge
   - ros-melodic-xgc2-agilex-onboard-autostart
   - ros-noetic-xgc2-agilex
   - ros-noetic-xgc2-agilex-serial-imu
   - ros-noetic-xgc2-agilex-wrp-io
   - ros-noetic-xgc2-agilex-ugv-sdk
-  - ros-noetic-xgc2-agilex-scout-msgs
   - ros-noetic-xgc2-agilex-scout-base
-  - ros-noetic-xgc2-agilex-scout-description
-  - ros-noetic-xgc2-agilex-swarm-ros-bridge
   - ros-noetic-xgc2-agilex-onboard-autostart
   depends:
+  - ros-melodic-scout-msgs
+  - ros-noetic-scout-msgs
+  - ros-melodic-xgc2-scout-description
+  - ros-noetic-xgc2-scout-description
+  - ros-melodic-swarm-ros-bridge
+  - ros-noetic-swarm-ros-bridge
   - ros-melodic-geometry-msgs
   - ros-melodic-joint-state-publisher
   - ros-melodic-message-runtime
@@ -60,7 +57,6 @@ apt:
   - ros-melodic-tf2
   - ros-melodic-tf2-ros
   - ros-melodic-topic-tools
-  - ros-melodic-xacro
   - libzmqpp-dev
   - iproute2
   - systemd
@@ -75,14 +71,20 @@ usage:
     sudo apt install ros-melodic-xgc2-agilex
   smoke_test: |
     rospack find serial_imu
+    rospack find scout_msgs
     rospack find scout_base
     roslaunch --files agilex_onboard_autostart imu.launch
     roslaunch --files agilex_onboard_autostart chassis.launch
-    test -f "$(rospack find scout_description)/urdf/scout_v2.xacro"
+    test -f "$(rospack find scout_description)/urdf/scout_visual.urdf"
     rospack find swarm_ros_bridge
-    roslaunch --files swarm_ros_bridge test.launch
+    roslaunch --files agilex_onboard_autostart swarm.launch
 release:
   workflow: release.yml
+  dependency_policy:
+    xgc2-scout-msgs: rebuild
+    xgc2-scout-description: verify
+    xgc2-ros-melodic-scout-description: verify
+    xgc2-swarm-ros-bridge: verify
   apt_versions:
-    bionic: 0.2.0-7
-    focal: 0.2.0-7
+    bionic: 0.2.0-9
+    focal: 0.2.0-9

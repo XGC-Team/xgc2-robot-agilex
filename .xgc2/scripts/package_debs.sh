@@ -228,7 +228,7 @@ build_autostart_deb() {
     "${pkg_root}" \
     "${deb_pkg}" \
     "${version}" \
-    "iproute2, systemd, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xacro, ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= $(deb_version serial_imu)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs (>= $(deb_version scout_msgs)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base)), ros-${ROS_DISTRO}-xgc2-agilex-scout-description (>= $(deb_version scout_description)), ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version swarm_ros_bridge))" \
+    "iproute2, systemd, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-std-msgs, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-scout-msgs (>= 0.3.3-10), ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-swarm-ros-bridge, ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= $(deb_version serial_imu)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
     "XGC2 AgileX onboard min-boot systemd (IMU, chassis, TF, bridge; no camera/LiDAR)"
   write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}" "${version}"
 
@@ -364,13 +364,7 @@ build_deb \
   "AgileX UGV SDK from the vehicle tree" \
   "lib/libugv_sdk.*"
 
-build_deb \
-  "ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs" \
-  "scout_msgs" \
-  "ros-${ROS_DISTRO}-message-runtime, ros-${ROS_DISTRO}-std-msgs" \
-  "Scout status and light message definitions from the vehicle tree"
-
-scout_msgs_dep="ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs (>= $(deb_version scout_msgs))"
+scout_msgs_dep="ros-${ROS_DISTRO}-scout-msgs (>= 0.3.3-10)"
 ugv_sdk_dep="ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk))"
 
 build_deb \
@@ -379,19 +373,6 @@ build_deb \
   "ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-nav-msgs, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-tf, ros-${ROS_DISTRO}-tf2, ros-${ROS_DISTRO}-tf2-ros, ros-${ROS_DISTRO}-topic-tools, ${scout_msgs_dep}, ${ugv_sdk_dep}" \
   "Scout Mini chassis driver from the vehicle tree" \
   "lib/libscout_messenger.*"
-
-build_deb \
-  "ros-${ROS_DISTRO}-xgc2-agilex-scout-description" \
-  "scout_description" \
-  "ros-${ROS_DISTRO}-urdf, ros-${ROS_DISTRO}-xacro" \
-  "Scout visual/TF model used by the vehicle scout_minimal launch"
-
-build_deb \
-  "ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge" \
-  "swarm_ros_bridge" \
-  "libzmqpp-dev, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-std-msgs, ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs (>= $(deb_version scout_msgs))" \
-  "Vehicle swarm_ros_bridge binary and topic YAML" \
-  "lib/swarm_ros_bridge/bridge_node"
 
 build_autostart_deb
 build_meta_deb

@@ -5,15 +5,15 @@ ROS_DISTRO="${ROS_DISTRO:-melodic}"
 PREFIX="/opt/ros/${ROS_DISTRO}"
 
 deb_packages=(
+  "ros-${ROS_DISTRO}-scout-msgs"
   "ros-${ROS_DISTRO}-xgc2-agilex"
   "ros-${ROS_DISTRO}-xgc2-agilex-serial-imu"
   "ros-${ROS_DISTRO}-xgc2-agilex-wrp-io"
   "ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk"
-  "ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs"
   "ros-${ROS_DISTRO}-xgc2-agilex-scout-base"
-  "ros-${ROS_DISTRO}-xgc2-agilex-scout-description"
-  "ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge"
   "ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart"
+  "ros-${ROS_DISTRO}-xgc2-scout-description"
+  "ros-${ROS_DISTRO}-swarm-ros-bridge"
 )
 
 ros_packages=(
@@ -31,6 +31,15 @@ for package in "${deb_packages[@]}"; do
   dpkg -s "${package}" >/dev/null
 done
 
+if dpkg -s "ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs" >/dev/null 2>&1; then
+  echo "retired fork ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs must not be installed" >&2
+  exit 1
+fi
+if dpkg -s "ros-${ROS_DISTRO}-xgc2-agilex-scout-description" >/dev/null 2>&1; then
+  echo "retired fork ros-${ROS_DISTRO}-xgc2-agilex-scout-description must not be installed" >&2
+  exit 1
+fi
+
 set +u
 source "${PREFIX}/setup.bash"
 set -u
@@ -45,7 +54,6 @@ test -f "${PREFIX}/include/wrp_io/async_can.hpp"
 test -f "${PREFIX}/lib/libwrp_io.so"
 test -f "${PREFIX}/lib/libugv_sdk.so"
 test -x "${PREFIX}/lib/scout_base/scout_base_node"
-test -f "${PREFIX}/share/scout_description/urdf/scout_v2.xacro"
 test -f "${PREFIX}/share/scout_description/urdf/scout_visual.urdf"
 test ! -d "${PREFIX}/share/scout_description/launch"
 test ! -d "${PREFIX}/share/scout_description/maps"
@@ -61,6 +69,8 @@ test -x "${PREFIX}/lib/agilex_onboard_autostart/start-chassis"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-roscore"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-boot-settle"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-swarm-ros-bridge"
+test -x "${PREFIX}/lib/agilex_onboard_autostart/scout_status_to_std"
+test -f "${PREFIX}/share/agilex_onboard_autostart/launch/swarm.launch"
 test -f /lib/systemd/system/xgc2-agilex-onboard.target
 test -f /lib/systemd/system/xgc2-agilex-boot-settle.service
 test ! -f /lib/systemd/system/xgc2-agilex-camera.service
@@ -71,6 +81,6 @@ test -f /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
 
 roslaunch --files agilex_onboard_autostart imu.launch >/dev/null
 roslaunch --files agilex_onboard_autostart chassis.launch >/dev/null
-roslaunch --files swarm_ros_bridge test.launch >/dev/null
+roslaunch --files agilex_onboard_autostart swarm.launch >/dev/null
 
 echo "Installed AgileX onboard ROS1 package checks passed"
