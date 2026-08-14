@@ -21,12 +21,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
+          submodules: recursive
 
       - name: Check package metadata
         run: |
           set -euo pipefail
           git diff --check HEAD
-          test ! -e .gitmodules
+          test -f .gitmodules
+          test -f onboard/ros1/src/chassis/scout_description/urdf/scout_v2.xacro
           bash -n .xgc2/scripts/build_debs_in_docker.sh
           bash -n .xgc2/scripts/build_sensor_debs_in_docker.sh
           bash -n .xgc2/scripts/check_installed_packages.sh
@@ -86,6 +88,8 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Record build matrix
         run: |
@@ -149,6 +153,8 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Build optional camera and lidar debs
         run: |

@@ -5,7 +5,8 @@ Vehicle-true ROS Melodic runtime for the AgileX Scout Mini onboard computer.
 Source of truth is the Xavier copy under `/home/agilex`. This repository keeps
 the minimum boot graph only: IMU, chassis, TF/model, ground-station bridge, and
 autostart. Camera, LiDAR, YOLO, mapping, and planning stay on the vehicle and
-are not packaged here. There are no nested git submodules.
+are not packaged here. Nested git submodules are allowed here because the
+onboard tree is an integration of sub-products; `scout_description` is one.
 
 ## Vehicle
 
@@ -36,7 +37,7 @@ swarm_ros_bridge/test.launch             -> /imu/data_raw :3001, /scout_status :
 | `ros-melodic-xgc2-agilex-ugv-sdk` | `ugv_sdk` | Scout CAN protocol |
 | `ros-melodic-xgc2-agilex-scout-msgs` | `scout_msgs` | Chassis messages |
 | `ros-melodic-xgc2-agilex-scout-base` | `scout_base` | Chassis node |
-| `ros-melodic-xgc2-agilex-scout-description` | `scout_description` | `scout_v2.xacro` + meshes |
+| `ros-melodic-xgc2-agilex-scout-description` | `scout_description` | Submodule of `xgc2-scout-description` (`melodic`): vehicle `scout_v2.xacro` plus the shared visual URDF/meshes |
 | `ros-melodic-xgc2-agilex-swarm-ros-bridge` | `swarm_ros_bridge` | Vehicle bridge binary + YAML |
 | `ros-melodic-xgc2-agilex` | (meta) | Vehicle min-boot: pulls the packages below and enables `xgc2-agilex-onboard.target` |
 | `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | systemd, udev, top-level compose launches |
@@ -58,7 +59,9 @@ roslaunch agilex_onboard_sensors lidar.launch
 roslaunch agilex_onboard_sensors rviz.launch
 ```
 
-Onboard RViz (`sensors.rviz`) uses fixed frame `rslidar`, `/rslidar_points`, color, and depth. Camera runtime also needs the vehicle `librealsense2` (on Xavier it is `/usr/local/lib`).
+Onboard RViz is `agilex_onboard_sensors/rviz/sensors.rviz` (fixed frame `rslidar`, `/rslidar_points`, color, depth). Camera runtime also needs the vehicle `librealsense2` (on Xavier it is `/usr/local/lib`).
+
+`docs/` in this product only keeps the vendor manual PDF. Field notes live in the main repo `docs/field/agilex/`.
 
 ## APT
 

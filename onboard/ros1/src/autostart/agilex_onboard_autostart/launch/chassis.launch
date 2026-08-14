@@ -10,7 +10,7 @@
     <arg name="is_scout_mini" value="$(arg is_scout_mini)" />
   </include>
 
-  <include file="$(find scout_description)/launch/description.launch">
+  <include file="$(find agilex_onboard_autostart)/launch/description.launch">
     <arg name="model_xacro" value="$(arg model_xacro)" />
   </include>
 </launch>
