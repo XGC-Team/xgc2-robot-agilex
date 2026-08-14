@@ -4,8 +4,7 @@ project(agilex_onboard_sensors)
 find_package(catkin REQUIRED)
 catkin_package()
 
-catkin_install_python(PROGRAMS
-  scripts/start-native-rtp
+install(PROGRAMS scripts/start-native-rtp
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

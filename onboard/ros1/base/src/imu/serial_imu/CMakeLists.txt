@@ -153,7 +153,7 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 add_executable(serial_imu src/serial_imu.cpp src/imu_data_decode.c src/packet.c)
-add_definitions(-std=c99)
+set_source_files_properties(src/imu_data_decode.c src/packet.c PROPERTIES COMPILE_FLAGS "-std=c99")
 target_link_libraries(serial_imu ${catkin_LIBRARIES})
 
 install(TARGETS serial_imu

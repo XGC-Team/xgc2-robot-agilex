@@ -48,7 +48,8 @@ int main(int argc, char **argv) {
   serial::Serial sp;
   sp.setPort(IMU_SERIAL);
   sp.setBaudrate(BAUD);
-  sp.setTimeout(serial::Timeout::simpleTimeout(20));
+  serial::Timeout timeout = serial::Timeout::simpleTimeout(20);
+  sp.setTimeout(timeout);
 
   imu_data_decode_init();
 
