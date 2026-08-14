@@ -1,4 +1,7 @@
 <launch>
+  <!-- LAST RESORT: ROS Image subscribe + re-encode.
+       Use only when realsense2_camera (or another process) already owns the
+       device. Preferred: webrtc_native.launch / xgc_native_v4l2_rtp. -->
   <arg name="image_topic" default="/camera/color/image_raw"/>
   <arg name="source_id" default="color"/>
   <arg name="width" default="640"/>
