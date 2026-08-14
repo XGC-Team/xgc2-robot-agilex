@@ -167,8 +167,8 @@ if [[ "${INSTALL_CHECK}" == "true" ]]; then
       shopt -s nullglob
       agilex_debs=(/workspace/out/ros-melodic-xgc2-agilex-*_${architecture}.deb)
       shopt -u nullglob
-      if [[ "${#agilex_debs[@]}" -ne 10 ]]; then
-        echo "expected 10 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
+      if [[ "${#agilex_debs[@]}" -ne 8 ]]; then
+        echo "expected 8 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
         ls -la /workspace/out >&2 || true
         exit 1
       fi

@@ -220,7 +220,7 @@ build_autostart_deb() {
     "${pkg_root}" \
     "${deb_pkg}" \
     "${version}" \
-    "iproute2, systemd, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-xgc2-agilex-imu-launch (>= $(deb_version imu_launch)), ros-${ROS_DISTRO}-xgc2-agilex-scout-bringup (>= $(deb_version scout_bringup)), ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version swarm_ros_bridge))" \
+    "iproute2, systemd, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xacro, ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= $(deb_version serial_imu)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base)), ros-${ROS_DISTRO}-xgc2-agilex-scout-description (>= $(deb_version scout_description)), ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version swarm_ros_bridge))" \
     "XGC2 AgileX onboard systemd autostart configuration"
   write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}" "${version}"
 
@@ -292,14 +292,6 @@ build_deb \
   "lib/serial_imu/serial_imu" \
   "lib/serial_imu/imu_subscriber"
 
-serial_imu_dep="ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= $(deb_version serial_imu))"
-
-build_deb \
-  "ros-${ROS_DISTRO}-xgc2-agilex-imu-launch" \
-  "imu_launch" \
-  "ros-${ROS_DISTRO}-roslaunch, ${serial_imu_dep}" \
-  "Vehicle IMU launch wrapper (imu_launch/imu_msg.launch)"
-
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-wrp-io" \
   "wrp_io" \
@@ -339,15 +331,6 @@ build_deb \
   "scout_description" \
   "ros-${ROS_DISTRO}-urdf, ros-${ROS_DISTRO}-xacro" \
   "Scout visual/TF model used by the vehicle scout_minimal launch"
-
-scout_base_dep="ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))"
-scout_description_dep="ros-${ROS_DISTRO}-xgc2-agilex-scout-description (>= $(deb_version scout_description))"
-
-build_deb \
-  "ros-${ROS_DISTRO}-xgc2-agilex-scout-bringup" \
-  "scout_bringup" \
-  "ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-xacro, ${scout_base_dep}, ${scout_description_dep}" \
-  "Vehicle scout_minimal bringup"
 
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge" \

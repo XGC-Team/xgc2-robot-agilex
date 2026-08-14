@@ -1,7 +1,7 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-ros1
 name: XGC2 AgileX Onboard ROS1
-version: 0.2.0-1
+version: 0.2.0-2
 kind: ros1-apt
 summary: Vehicle-true ROS Melodic minimum runtime for the AgileX Scout Mini
   (IMU, chassis, and ground-station bridge).
@@ -14,13 +14,11 @@ ros:
   workspace: onboard/ros1
   packages:
   - serial_imu
-  - imu_launch
   - wrp_io
   - ugv_sdk
   - scout_msgs
   - scout_base
   - scout_description
-  - scout_bringup
   - swarm_ros_bridge
   - agilex_onboard_autostart
 apt:
@@ -29,13 +27,11 @@ apt:
   - ros-melodic-xgc2-agilex-onboard-autostart
   packages:
   - ros-melodic-xgc2-agilex-serial-imu
-  - ros-melodic-xgc2-agilex-imu-launch
   - ros-melodic-xgc2-agilex-wrp-io
   - ros-melodic-xgc2-agilex-ugv-sdk
   - ros-melodic-xgc2-agilex-scout-msgs
   - ros-melodic-xgc2-agilex-scout-base
   - ros-melodic-xgc2-agilex-scout-description
-  - ros-melodic-xgc2-agilex-scout-bringup
   - ros-melodic-xgc2-agilex-swarm-ros-bridge
   - ros-melodic-xgc2-agilex-onboard-autostart
   depends:
@@ -69,14 +65,13 @@ usage:
     sudo apt install ros-melodic-xgc2-agilex-onboard-autostart
   smoke_test: |
     rospack find serial_imu
-    rospack find imu_launch
-    roslaunch --files imu_launch imu_msg.launch
     rospack find scout_base
-    roslaunch --files scout_bringup scout_minimal.launch
+    roslaunch --files agilex_onboard_autostart imu.launch
+    roslaunch --files agilex_onboard_autostart chassis.launch
     test -f "$(rospack find scout_description)/urdf/scout_v2.xacro"
     rospack find swarm_ros_bridge
     roslaunch --files swarm_ros_bridge test.launch
 release:
   workflow: release.yml
   apt_versions:
-    bionic: 0.2.0-1
+    bionic: 0.2.0-2

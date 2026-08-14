@@ -6,4 +6,4 @@ source /opt/ros/melodic/setup.bash
 /opt/ros/melodic/lib/agilex_onboard_autostart/wait-ros-master --timeout "${ROS_MASTER_WAIT_TIMEOUT:-60}"
 /opt/ros/melodic/lib/agilex_onboard_autostart/wait-device "${IMU_DEVICE:-/dev/imu}" --timeout "${IMU_DEVICE_WAIT_TIMEOUT:-60}"
 
-exec roslaunch imu_launch imu_msg.launch
+exec roslaunch agilex_onboard_autostart imu.launch

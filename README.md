@@ -7,6 +7,9 @@ the minimum boot graph only: IMU, chassis, TF/model, ground-station bridge, and
 autostart. Camera, LiDAR, YOLO, mapping, and planning stay on the vehicle and
 are not packaged here. There are no nested git submodules.
 
+现场核实（中文活页）：[`docs/onboard-truth.md`](docs/onboard-truth.md)。
+2026-08-14 已授权启动相机/雷达：[`docs/2026-08-14-sensors.md`](docs/2026-08-14-sensors.md)。
+
 ## Vehicle
 
 | Item | Value |
@@ -17,13 +20,14 @@ are not packaged here. There are no nested git submodules.
 | ROS | Melodic |
 | Arch | arm64 |
 
-Boot chain recovered from `agilex-auto-launch`:
+Boot chain recovered from `agilex-auto-launch`. Compose launches live only in
+the top-level autostart package:
 
 ```text
 can0 @ 500000
-imu_launch/imu_msg.launch          -> serial_imu  /imu/data_raw
-scout_bringup/scout_minimal.launch -> scout_base_node + scout_v2.xacro TF
-swarm_ros_bridge/test.launch       -> /imu/data_raw out, /cmd_vel in
+agilex_onboard_autostart/imu.launch      -> serial_imu  /imu/data_raw
+agilex_onboard_autostart/chassis.launch  -> scout_base_node + scout_v2.xacro TF
+swarm_ros_bridge/test.launch             -> /imu/data_raw out, /cmd_vel in
 ```
 
 ## Packages
@@ -31,15 +35,13 @@ swarm_ros_bridge/test.launch       -> /imu/data_raw out, /cmd_vel in
 | Debian package | ROS package | Role |
 | --- | --- | --- |
 | `ros-melodic-xgc2-agilex-serial-imu` | `serial_imu` | Serial IMU driver, `/dev/imu` |
-| `ros-melodic-xgc2-agilex-imu-launch` | `imu_launch` | Vehicle IMU launch |
 | `ros-melodic-xgc2-agilex-wrp-io` | `wrp_io` | CAN/serial IO |
 | `ros-melodic-xgc2-agilex-ugv-sdk` | `ugv_sdk` | Scout CAN protocol |
 | `ros-melodic-xgc2-agilex-scout-msgs` | `scout_msgs` | Chassis messages |
 | `ros-melodic-xgc2-agilex-scout-base` | `scout_base` | Chassis node |
 | `ros-melodic-xgc2-agilex-scout-description` | `scout_description` | `scout_v2.xacro` + meshes |
-| `ros-melodic-xgc2-agilex-scout-bringup` | `scout_bringup` | `scout_minimal.launch` |
 | `ros-melodic-xgc2-agilex-swarm-ros-bridge` | `swarm_ros_bridge` | Vehicle bridge binary + YAML |
-| `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | systemd + udev |
+| `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | systemd, udev, top-level compose launches |
 
 Install on the vehicle:
 

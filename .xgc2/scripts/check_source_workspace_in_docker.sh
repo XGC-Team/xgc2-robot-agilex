@@ -91,24 +91,21 @@ docker run --rm \
     set -u
 
     test "$(rospack find serial_imu)" = "/workspace/work/src/agilex-onboard/imu/serial_imu"
-    test "$(rospack find imu_launch)" = "/workspace/work/src/agilex-onboard/imu/imu_launch"
     test "$(rospack find wrp_io)" = "/workspace/work/src/agilex-onboard/chassis/wrp_io"
     test "$(rospack find ugv_sdk)" = "/workspace/work/src/agilex-onboard/chassis/ugv_sdk"
     test "$(rospack find scout_msgs)" = "/workspace/work/src/agilex-onboard/chassis/scout_msgs"
     test "$(rospack find scout_base)" = "/workspace/work/src/agilex-onboard/chassis/scout_base"
     test "$(rospack find scout_description)" = "/workspace/work/src/agilex-onboard/chassis/scout_description"
-    test "$(rospack find scout_bringup)" = "/workspace/work/src/agilex-onboard/chassis/scout_bringup"
     test "$(rospack find swarm_ros_bridge)" = "/workspace/work/src/agilex-onboard/communication/swarm_ros_bridge"
     test "$(rospack find agilex_onboard_autostart)" = "/workspace/work/src/agilex-onboard/autostart/agilex_onboard_autostart"
+    test ! -d /workspace/work/src/agilex-onboard/imu/imu_launch
+    test ! -d /workspace/work/src/agilex-onboard/chassis/scout_bringup
 
     test -f "$(rospack find scout_description)/urdf/scout_v2.xacro"
     test -f "$(rospack find scout_description)/launch/description.launch"
-    test ! -e "$(rospack find scout_bringup)/launch/gmapping.launch"
-    test ! -e "$(rospack find scout_bringup)/launch/open_rslidar.launch"
 
-    roslaunch --files imu_launch imu_msg.launch >/dev/null
+    roslaunch --files agilex_onboard_autostart imu.launch >/dev/null
+    roslaunch --files agilex_onboard_autostart chassis.launch >/dev/null
     roslaunch --files scout_base scout_mini_base.launch >/dev/null
-    roslaunch --files scout_bringup scout_minimal.launch >/dev/null
-    roslaunch --files scout_description description.launch >/dev/null
     roslaunch --files swarm_ros_bridge test.launch >/dev/null
   '
