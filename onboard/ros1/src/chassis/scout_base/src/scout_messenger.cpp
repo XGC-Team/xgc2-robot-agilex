@@ -26,13 +26,13 @@ namespace westonrobot
     // odometry publisher
     odom_publisher_ = nh_->advertise<nav_msgs::Odometry>(odom_topic_name_, 50);
     status_publisher_ =
-        nh_->advertise<scout_msgs::ScoutStatus>("scout_status", 10);
+        nh_->advertise<scout_msgs::ScoutStatus>("/scout_status", 10);
 
     // cmd subscriber
     motion_cmd_subscriber_ = nh_->subscribe<geometry_msgs::Twist>(
-        "cmd_vel", 5, &ScoutROSMessenger::TwistCmdCallback, this);
+        "/cmd_vel", 5, &ScoutROSMessenger::TwistCmdCallback, this);
     light_cmd_subscriber_ = nh_->subscribe<scout_msgs::ScoutLightCmd>(
-        "scout_light_control", 5, &ScoutROSMessenger::LightCmdCallback, this);
+        "/scout_light_control", 5, &ScoutROSMessenger::LightCmdCallback, this);
   }
 
   void ScoutROSMessenger::TwistCmdCallback(

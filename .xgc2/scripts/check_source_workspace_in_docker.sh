@@ -7,9 +7,6 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 DOCKER_IMAGE="${DOCKER_IMAGE:-ros:melodic-ros-base-bionic}"
 DOCKER_NETWORK="${DOCKER_NETWORK:-}"
 WORK_DIR="${WORK_DIR:-${REPO_ROOT}/.work/source-compliance}"
-SCOUT_DESCRIPTION_DEB="${SCOUT_DESCRIPTION_DEB:-}"
-XGC2_APT_BASE_URL="${XGC2_APT_BASE_URL:-https://xgc2.apt.xiaokang.ink}"
-XGC2_APT_DISTRIBUTION="${XGC2_APT_DISTRIBUTION:-bionic}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -23,10 +20,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     --work-dir)
       WORK_DIR="$2"
-      shift 2
-      ;;
-    --scout-description-deb)
-      SCOUT_DESCRIPTION_DEB="$2"
       shift 2
       ;;
     *)
@@ -43,26 +36,10 @@ if [[ -n "${DOCKER_NETWORK}" ]]; then
   docker_network_args=(--network "${DOCKER_NETWORK}")
 fi
 
-scout_description_mount_args=()
-if [[ -n "${SCOUT_DESCRIPTION_DEB}" ]]; then
-  if [[ ! -f "${SCOUT_DESCRIPTION_DEB}" ]]; then
-    echo "Scout description deb not found: ${SCOUT_DESCRIPTION_DEB}" >&2
-    exit 1
-  fi
-  SCOUT_DESCRIPTION_DEB="$(realpath "${SCOUT_DESCRIPTION_DEB}")"
-  scout_description_mount_args=(
-    -v "${SCOUT_DESCRIPTION_DEB}:/workspace/deps/scout-description.deb:ro"
-  )
-fi
-
 docker pull "${DOCKER_IMAGE}"
 docker run --rm \
-  -e XGC2_APT_OVERLAY_URL="${XGC2_APT_OVERLAY_URL:-}" \
   "${docker_network_args[@]}" \
-  "${scout_description_mount_args[@]}" \
   -e DEBIAN_FRONTEND=noninteractive \
-  -e XGC2_APT_BASE_URL="${XGC2_APT_BASE_URL}" \
-  -e XGC2_APT_DISTRIBUTION="${XGC2_APT_DISTRIBUTION}" \
   -v "${REPO_ROOT}:/workspace/agilex:ro" \
   -v "${WORK_DIR}:/workspace/work" \
   "${DOCKER_IMAGE}" \
@@ -71,122 +48,67 @@ docker run --rm \
 
     export DEBIAN_FRONTEND=noninteractive
     apt-get update
-    apt-get install -y --no-install-recommends ca-certificates curl gnupg
-    mkdir -p /etc/apt/keyrings
-    curl -fsSL "${XGC2_APT_BASE_URL}/xgc2-archive-keyring.gpg" \
-      -o /etc/apt/keyrings/xgc2-archive-keyring.gpg
-    echo "deb [signed-by=/etc/apt/keyrings/xgc2-archive-keyring.gpg] ${XGC2_APT_BASE_URL} ${XGC2_APT_DISTRIBUTION} main" \
-      > /etc/apt/sources.list.d/xgc2.list
-
-      if [[ -n "${XGC2_APT_OVERLAY_URL:-}" ]]; then
-        sed "s#${XGC2_APT_BASE_URL:-https://xgc2.apt.xiaokang.ink}#${XGC2_APT_OVERLAY_URL%/}#g" \
-          /etc/apt/sources.list.d/xgc2.list \
-          > /etc/apt/sources.list.d/00-xgc2-release-train.list
-      fi
-    curl -fsSL https://librealsense.realsenseai.com/Debian/librealsenseai.asc \
-      | gpg --dearmor > /etc/apt/keyrings/librealsenseai.gpg
-    echo "deb [signed-by=/etc/apt/keyrings/librealsenseai.gpg] https://librealsense.realsenseai.com/Debian/apt-repo bionic main" \
-      > /etc/apt/sources.list.d/librealsense.list
-    apt-get update
     apt-get install -y --no-install-recommends \
       build-essential \
       ca-certificates \
       cmake \
-      git \
-      libpcap-dev \
-      libpcl-dev \
-      librealsense2-dev \
-      libyaml-cpp-dev \
+      libzmq3-dev \
+      libzmqpp-dev \
       rsync \
-      ros-melodic-controller-manager \
-      ros-melodic-cv-bridge \
-      ros-melodic-ddynamic-reconfigure \
-      ros-melodic-diagnostic-updater \
-      ros-melodic-genmsg \
       ros-melodic-geometry-msgs \
-      ros-melodic-image-transport \
       ros-melodic-joint-state-publisher \
-      ros-melodic-joint-state-publisher-gui \
       ros-melodic-message-generation \
       ros-melodic-message-runtime \
       ros-melodic-nav-msgs \
-      ros-melodic-nodelet \
-      ros-melodic-pcl-conversions \
-      ros-melodic-pcl-ros \
+      ros-melodic-robot-state-publisher \
       ros-melodic-roscpp \
       ros-melodic-roslaunch \
       ros-melodic-roslib \
       ros-melodic-rospack \
-      ros-melodic-robot-state-publisher \
-      ros-melodic-rviz \
-      ros-melodic-scout-msgs \
+      ros-melodic-rospy \
       ros-melodic-sensor-msgs \
       ros-melodic-serial \
       ros-melodic-std-msgs \
-      ros-melodic-std-srvs \
-      ros-melodic-swarm-ros-bridge \
       ros-melodic-tf \
       ros-melodic-tf2 \
       ros-melodic-tf2-ros \
       ros-melodic-topic-tools \
       ros-melodic-xacro
 
-    if [[ -f /workspace/deps/scout-description.deb ]]; then
-      apt-get install -y /workspace/deps/scout-description.deb
-    else
-      apt-get install -y ros-melodic-xgc2-scout-description
-    fi
-
-    rm -rf /workspace/work/build /workspace/work/devel /workspace/work/install-root /workspace/work/src
+    rm -rf /workspace/work/build /workspace/work/devel /workspace/work/src
     mkdir -p /workspace/work/src/agilex-onboard
-    rsync -a --delete --exclude extend/ /workspace/agilex/onboard/ros1/src/ /workspace/work/src/agilex-onboard/
+    rsync -a --delete /workspace/agilex/onboard/ros1/src/ /workspace/work/src/agilex-onboard/
 
     cd /workspace/work
     set +u
     source /opt/ros/melodic/setup.bash
     set -u
-    DESTDIR=/workspace/work/install-root catkin_make install \
+    catkin_make install \
       -DCMAKE_INSTALL_PREFIX=/opt/ros/melodic \
       -DCMAKE_BUILD_TYPE=Release
     set +u
     source devel/setup.bash
     set -u
-    test "$(rospack find agilex_onboard_imu)" = "/workspace/work/src/agilex-onboard/sensors/agilex_onboard_imu"
+
+    test "$(rospack find serial_imu)" = "/workspace/work/src/agilex-onboard/imu/serial_imu"
+    test "$(rospack find imu_launch)" = "/workspace/work/src/agilex-onboard/imu/imu_launch"
     test "$(rospack find wrp_io)" = "/workspace/work/src/agilex-onboard/chassis/wrp_io"
     test "$(rospack find ugv_sdk)" = "/workspace/work/src/agilex-onboard/chassis/ugv_sdk"
-    test "$(rospack find scout_msgs)" = "/opt/ros/melodic/share/scout_msgs"
-    test "$(rospack find swarm_ros_bridge)" = "/opt/ros/melodic/share/swarm_ros_bridge"
+    test "$(rospack find scout_msgs)" = "/workspace/work/src/agilex-onboard/chassis/scout_msgs"
     test "$(rospack find scout_base)" = "/workspace/work/src/agilex-onboard/chassis/scout_base"
-    test "$(rospack find scout_bringup)" = "/workspace/work/src/agilex-onboard/scout_bringup"
-    test "$(rospack find scout_description)" = "/opt/ros/melodic/share/scout_description"
-    test "$(rospack find agilex_swarm_ros_bridge)" = "/workspace/work/src/agilex-onboard/communication/agilex_swarm_ros_bridge"
-    test "$(rospack find realsense2_camera)" = "/workspace/work/src/agilex-onboard/sensors/realsense2_camera"
-    test "$(rospack find realsense2_description)" = "/workspace/work/src/agilex-onboard/sensors/realsense2_description"
-    test "$(rospack find rslidar_sdk)" = "/workspace/work/src/agilex-onboard/sensors/rslidar_sdk"
+    test "$(rospack find scout_description)" = "/workspace/work/src/agilex-onboard/chassis/scout_description"
+    test "$(rospack find scout_bringup)" = "/workspace/work/src/agilex-onboard/chassis/scout_bringup"
+    test "$(rospack find swarm_ros_bridge)" = "/workspace/work/src/agilex-onboard/communication/swarm_ros_bridge"
     test "$(rospack find agilex_onboard_autostart)" = "/workspace/work/src/agilex-onboard/autostart/agilex_onboard_autostart"
-    roslaunch --files agilex_onboard_imu imu_msg.launch >/tmp/xgc2-agilex-onboard-imu-files.txt
-    roslaunch --files scout_base scout_mini_base.launch >/tmp/xgc2-agilex-scout-base-files.txt
-    roslaunch --files scout_bringup scout_minimal.launch >/tmp/xgc2-agilex-scout-bringup-files.txt
-    for launch_file in \
-      description.launch \
-      display_model.launch \
-      display_mini_models.launch \
-      display_scout_mini.launch \
-      scout_mini_stock.launch
-    do
-      roslaunch --files scout_bringup "${launch_file}" >/dev/null
-    done
-    test -f "$(rospack find scout_description)/urdf/scout_visual.urdf"
-    test ! -d "$(rospack find scout_description)/launch"
-    test -f "$(rospack find scout_bringup)/maps/map.yaml"
-    test -f "$(rospack find scout_bringup)/rviz/model_display.rviz"
-    test -x /opt/ros/melodic/lib/joint_state_publisher/joint_state_publisher
-    test -x /opt/ros/melodic/lib/joint_state_publisher_gui/joint_state_publisher_gui
-    test -x /opt/ros/melodic/lib/robot_state_publisher/robot_state_publisher
-    test -x /opt/ros/melodic/lib/rviz/rviz
-    roslaunch --files agilex_swarm_ros_bridge agilex_swarm_ros_bridge.launch >/tmp/xgc2-agilex-swarm-ros-bridge-files.txt
-    roslaunch --files realsense2_camera rs_camera.launch >/tmp/xgc2-agilex-realsense2-camera-files.txt
-    roslaunch --files rslidar_sdk start.launch >/tmp/xgc2-agilex-rslidar-sdk-files.txt
-  '
 
-echo "Source workspace compliance check passed"
+    test -f "$(rospack find scout_description)/urdf/scout_v2.xacro"
+    test -f "$(rospack find scout_description)/launch/description.launch"
+    test ! -e "$(rospack find scout_bringup)/launch/gmapping.launch"
+    test ! -e "$(rospack find scout_bringup)/launch/open_rslidar.launch"
+
+    roslaunch --files imu_launch imu_msg.launch >/dev/null
+    roslaunch --files scout_base scout_mini_base.launch >/dev/null
+    roslaunch --files scout_bringup scout_minimal.launch >/dev/null
+    roslaunch --files scout_description description.launch >/dev/null
+    roslaunch --files swarm_ros_bridge test.launch >/dev/null
+  '

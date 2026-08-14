@@ -1,58 +1,67 @@
 # XGC2 Robot AgileX
 
-This repository stores real-vehicle resources for the AgileX UGV platform used
-by XGC2.
+Vehicle-true ROS Melodic runtime for the AgileX Scout Mini onboard computer.
 
-## Package
+Source of truth is the Xavier copy under `/home/agilex`. This repository keeps
+the minimum boot graph only: IMU, chassis, TF/model, ground-station bridge, and
+autostart. Camera, LiDAR, YOLO, mapping, and planning stay on the vehicle and
+are not packaged here. There are no nested git submodules.
 
-- Product family: `xgc2-agilex`
-- Active product id: `xgc2-agilex-onboard-ros1`
-- Debian packages:
-  - `ros-melodic-xgc2-agilex-onboard-imu`
-  - `ros-melodic-xgc2-agilex-wrp-io`
-  - `ros-melodic-xgc2-agilex-ugv-sdk`
-  - `ros-melodic-xgc2-agilex-scout-base`
-  - `ros-melodic-xgc2-agilex-scout-bringup`
-  - `ros-melodic-xgc2-agilex-swarm-ros-bridge`
-  - `ros-melodic-xgc2-agilex-realsense2-camera`
-  - `ros-melodic-xgc2-agilex-realsense2-description`
-  - `ros-melodic-xgc2-agilex-rslidar-sdk`
-- Source path: `products/robotics/agilex`
-- Release branch: `melodic`
-- ROS distribution: Melodic
+## Vehicle
 
-The ROS Debian packages are versioned per ROS package from each package's
-`package.xml`, with internal `>=` dependency constraints between split packages.
-The compatible `scout_msgs` package is consumed from the standalone
-`ros-melodic-scout-msgs` product. The visual-only `scout_description` package
-is likewise consumed externally as `ros-melodic-xgc2-scout-description`
-`>= 0.4.10-1`; it owns only `urdf/` and `meshes/`. Recovered maps, navigation
-parameters, RViz profiles, and display launch files are installed by
-`scout_bringup`, keeping the ROS package name unchanged while separating model
-assets from onboard integration.
+| Item | Value |
+| --- | --- |
+| Host | `xavier` |
+| Board | NVIDIA Jetson Xavier |
+| OS | Ubuntu 18.04 (Bionic) |
+| ROS | Melodic |
+| Arch | arm64 |
 
-The generic `swarm_ros_bridge` binary is consumed from the standalone
-`ros-melodic-swarm-ros-bridge` communication product. This repository only owns
-the AgileX-specific bridge YAML and launch wrapper.
+Boot chain recovered from `agilex-auto-launch`:
 
-Base onboard sensor drivers are grouped under `onboard/ros1/src/sensors`.
-Non-core recovered navigation, vision, and voice extension packages are carried
-by the separate `xgc2-robot-agilex-extend` repository mounted at
-`onboard/ros1/src/extend`.
+```text
+can0 @ 500000
+imu_launch/imu_msg.launch          -> serial_imu  /imu/data_raw
+scout_bringup/scout_minimal.launch -> scout_base_node + scout_v2.xacro TF
+swarm_ros_bridge/test.launch       -> /imu/data_raw out, /cmd_vel in
+```
 
-## Repository Boundary
+## Packages
 
-This repository owns real AgileX onboard-computer runtime notes, startup
-services, hardware communication configuration, and vehicle-specific integration
-resources.
+| Debian package | ROS package | Role |
+| --- | --- | --- |
+| `ros-melodic-xgc2-agilex-serial-imu` | `serial_imu` | Serial IMU driver, `/dev/imu` |
+| `ros-melodic-xgc2-agilex-imu-launch` | `imu_launch` | Vehicle IMU launch |
+| `ros-melodic-xgc2-agilex-wrp-io` | `wrp_io` | CAN/serial IO |
+| `ros-melodic-xgc2-agilex-ugv-sdk` | `ugv_sdk` | Scout CAN protocol |
+| `ros-melodic-xgc2-agilex-scout-msgs` | `scout_msgs` | Chassis messages |
+| `ros-melodic-xgc2-agilex-scout-base` | `scout_base` | Chassis node |
+| `ros-melodic-xgc2-agilex-scout-description` | `scout_description` | `scout_v2.xacro` + meshes |
+| `ros-melodic-xgc2-agilex-scout-bringup` | `scout_bringup` | `scout_minimal.launch` |
+| `ros-melodic-xgc2-agilex-swarm-ros-bridge` | `swarm_ros_bridge` | Vehicle bridge binary + YAML |
+| `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | systemd + udev |
 
-This repository does not own generated logs, rosbags, or unrelated simulator
-assets.
+Install on the vehicle:
 
-## Runtime Notes
+```bash
+sudo apt update
+sudo apt install ros-melodic-xgc2-agilex-onboard-autostart
+sudo systemctl start xgc2-agilex-onboard.target
+```
 
-- `docs/boot_autostart.md`: recovered boot-time systemd service chain.
-- `docs/chassis_control.md`: real Scout chassis command and feedback path.
-- `docs/imu_autostart.md`: onboard serial IMU startup and ROS topic path.
-- `docs/simulation_topic_compatibility.md`: real-vehicle and Gazebo Scout topic
-  compatibility notes.
+## CI
+
+The build matrix includes the vehicle row first:
+
+| Name | Target | OS | ROS | Arch |
+| --- | --- | --- | --- | --- |
+| `xavier-bionic-melodic` | Xavier | Ubuntu 18.04 | Melodic | arm64 |
+| `amd64-bionic-melodic` | desktop | Ubuntu 18.04 | Melodic | amd64 |
+
+Both rows build inside `ros:melodic-ros-base-bionic`.
+
+```bash
+.xgc2/scripts/build_debs_in_docker.sh --output-dir debs
+```
+
+Release branch: `melodic`.

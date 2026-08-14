@@ -3,18 +3,8 @@ set -euo pipefail
 
 source /opt/ros/melodic/setup.bash
 
-CONFIG_FILE="${SWARM_ROS_BRIDGE_CONFIG:-/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml}"
-ROBOT_NAMESPACE="${XGC2_ROBOT_NAMESPACE:-/}"
-if [[ "${ROBOT_NAMESPACE}" == "/" ]]; then
-  DEFAULT_SCOUT_STATUS_TOPIC="/scout_status"
-else
-  DEFAULT_SCOUT_STATUS_TOPIC="${ROBOT_NAMESPACE%/}/scout_status"
-fi
-
 /opt/ros/melodic/lib/agilex_onboard_autostart/wait-ros-master --timeout "${ROS_MASTER_WAIT_TIMEOUT:-60}"
 /opt/ros/melodic/lib/agilex_onboard_autostart/wait-ros-topic "${IMU_READY_TOPIC:-/imu/data_raw}" --timeout "${IMU_TOPIC_WAIT_TIMEOUT:-60}"
-/opt/ros/melodic/lib/agilex_onboard_autostart/wait-ros-topic "${SCOUT_STATUS_TOPIC:-${DEFAULT_SCOUT_STATUS_TOPIC}}" --timeout "${SCOUT_STATUS_WAIT_TIMEOUT:-60}"
+/opt/ros/melodic/lib/agilex_onboard_autostart/wait-ros-topic "${SCOUT_STATUS_TOPIC:-/scout_status}" --timeout "${SCOUT_STATUS_WAIT_TIMEOUT:-60}"
 
-exec roslaunch agilex_swarm_ros_bridge agilex_swarm_ros_bridge.launch \
-  config_file:="${CONFIG_FILE}" \
-  robot_namespace:="${ROBOT_NAMESPACE}"
+exec roslaunch swarm_ros_bridge test.launch

@@ -126,11 +126,10 @@ Version: ${version}
 Section: misc
 Priority: optional
 Architecture: ${ARCH}
-Maintainer: XGC2 <apt@example.com>
+Maintainer: XGC Team <apt@example.com>
 Depends: ${depends}
 Description: ${description}
- XGC2 AgileX ROS ${ROS_DISTRO} package generated from the recovered onboard
- source tree and split by ROS package for independent installation.
+ XGC2 AgileX ROS ${ROS_DISTRO} package taken from the vehicle onboard tree.
 EOF
 }
 
@@ -221,7 +220,7 @@ build_autostart_deb() {
     "${pkg_root}" \
     "${deb_pkg}" \
     "${version}" \
-    "iproute2, systemd, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-xgc2-agilex-onboard-imu (>= $(deb_version agilex_onboard_imu)), ros-${ROS_DISTRO}-xgc2-agilex-scout-bringup (>= $(deb_version scout_bringup)), ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version agilex_swarm_ros_bridge))" \
+    "iproute2, systemd, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-xgc2-agilex-imu-launch (>= $(deb_version imu_launch)), ros-${ROS_DISTRO}-xgc2-agilex-scout-bringup (>= $(deb_version scout_bringup)), ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version swarm_ros_bridge))" \
     "XGC2 AgileX onboard systemd autostart configuration"
   write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}" "${version}"
 
@@ -286,72 +285,76 @@ EOF
 }
 
 build_deb \
-  "ros-${ROS_DISTRO}-xgc2-agilex-onboard-imu" \
-  "agilex_onboard_imu" \
-  "ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-serial" \
-  "XGC2 AgileX onboard serial IMU driver" \
-  "lib/agilex_onboard_imu/agilex_onboard_imu_node"
+  "ros-${ROS_DISTRO}-xgc2-agilex-serial-imu" \
+  "serial_imu" \
+  "ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-serial, ros-${ROS_DISTRO}-std-msgs" \
+  "AgileX onboard serial IMU driver from the vehicle tree" \
+  "lib/serial_imu/serial_imu" \
+  "lib/serial_imu/imu_subscriber"
+
+serial_imu_dep="ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= $(deb_version serial_imu))"
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-imu-launch" \
+  "imu_launch" \
+  "ros-${ROS_DISTRO}-roslaunch, ${serial_imu_dep}" \
+  "Vehicle IMU launch wrapper (imu_launch/imu_msg.launch)"
 
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-wrp-io" \
   "wrp_io" \
   "ros-${ROS_DISTRO}-catkin" \
-  "XGC2 AgileX Weston Robot Platform IO library" \
+  "Weston Robot Platform IO library from the vehicle tree" \
   "lib/libwrp_io.*" \
   "include/asio" \
   "include/asio.hpp"
 
 wrp_io_dep="ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io))"
-ugv_sdk_dep="ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk))"
-scout_msgs_dep="ros-${ROS_DISTRO}-scout-msgs (>= 0.3.3-5)"
-scout_description_dep="ros-${ROS_DISTRO}-xgc2-scout-description (>= 0.4.10-1)"
-swarm_ros_bridge_dep="ros-${ROS_DISTRO}-swarm-ros-bridge (>= 1.1.0-3)"
-scout_base_dep="ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))"
-realsense2_description_dep="ros-${ROS_DISTRO}-xgc2-agilex-realsense2-description (>= $(deb_version realsense2_description))"
 
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk" \
   "ugv_sdk" \
   "ros-${ROS_DISTRO}-catkin, ${wrp_io_dep}" \
-  "XGC2 AgileX UGV SDK" \
+  "AgileX UGV SDK from the vehicle tree" \
   "lib/libugv_sdk.*"
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs" \
+  "scout_msgs" \
+  "ros-${ROS_DISTRO}-message-runtime, ros-${ROS_DISTRO}-std-msgs" \
+  "Scout status and light message definitions from the vehicle tree"
+
+scout_msgs_dep="ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs (>= $(deb_version scout_msgs))"
+ugv_sdk_dep="ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk))"
 
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-scout-base" \
   "scout_base" \
-  "ros-${ROS_DISTRO}-controller-manager, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-nav-msgs, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-tf, ros-${ROS_DISTRO}-tf2, ros-${ROS_DISTRO}-tf2-ros, ros-${ROS_DISTRO}-topic-tools, ${scout_msgs_dep}, ${ugv_sdk_dep}" \
-  "XGC2 AgileX Scout base driver" \
+  "ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-nav-msgs, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-tf, ros-${ROS_DISTRO}-tf2, ros-${ROS_DISTRO}-tf2-ros, ros-${ROS_DISTRO}-topic-tools, ${scout_msgs_dep}, ${ugv_sdk_dep}" \
+  "Scout Mini chassis driver from the vehicle tree" \
   "lib/libscout_messenger.*"
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-scout-description" \
+  "scout_description" \
+  "ros-${ROS_DISTRO}-urdf, ros-${ROS_DISTRO}-xacro" \
+  "Scout visual/TF model used by the vehicle scout_minimal launch"
+
+scout_base_dep="ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))"
+scout_description_dep="ros-${ROS_DISTRO}-xgc2-agilex-scout-description (>= $(deb_version scout_description))"
 
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-scout-bringup" \
   "scout_bringup" \
-  "ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-joint-state-publisher-gui, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rviz, ${scout_base_dep}, ${scout_description_dep}" \
-  "XGC2 AgileX Scout bringup, display, and recovered navigation assets"
+  "ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-xacro, ${scout_base_dep}, ${scout_description_dep}" \
+  "Vehicle scout_minimal bringup"
 
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge" \
-  "agilex_swarm_ros_bridge" \
-  "ros-${ROS_DISTRO}-roslaunch, ${swarm_ros_bridge_dep}" \
-  "XGC2 AgileX swarm bridge configuration"
-
-build_deb \
-  "ros-${ROS_DISTRO}-xgc2-agilex-realsense2-description" \
-  "realsense2_description" \
-  "ros-${ROS_DISTRO}-xacro" \
-  "XGC2 AgileX RealSense description assets"
-
-build_deb \
-  "ros-${ROS_DISTRO}-xgc2-agilex-realsense2-camera" \
-  "realsense2_camera" \
-  "librealsense2-dev, ros-${ROS_DISTRO}-cv-bridge, ros-${ROS_DISTRO}-ddynamic-reconfigure, ros-${ROS_DISTRO}-diagnostic-updater, ros-${ROS_DISTRO}-image-transport, ros-${ROS_DISTRO}-message-runtime, ros-${ROS_DISTRO}-nav-msgs, ros-${ROS_DISTRO}-nodelet, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-std-msgs, ros-${ROS_DISTRO}-std-srvs, ros-${ROS_DISTRO}-tf, ${realsense2_description_dep}" \
-  "XGC2 AgileX RealSense camera driver"
-
-build_deb \
-  "ros-${ROS_DISTRO}-xgc2-agilex-rslidar-sdk" \
-  "rslidar_sdk" \
-  "libpcap-dev, libpcl-dev, libyaml-cpp-dev, ros-${ROS_DISTRO}-pcl-conversions, ros-${ROS_DISTRO}-pcl-ros, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-roslib, ros-${ROS_DISTRO}-sensor-msgs" \
-  "XGC2 AgileX RoboSense LiDAR SDK driver"
+  "swarm_ros_bridge" \
+  "libzmqpp-dev, ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-std-msgs" \
+  "Vehicle swarm_ros_bridge binary and topic YAML" \
+  "lib/swarm_ros_bridge/bridge_node"
 
 build_autostart_deb
 

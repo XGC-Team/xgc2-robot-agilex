@@ -31,12 +31,12 @@ jobs:
         run: |
           set -euo pipefail
           git diff --check HEAD
+          test ! -e .gitmodules
           bash -n .xgc2/scripts/build_debs_in_docker.sh
           bash -n .xgc2/scripts/check_installed_packages.sh
           bash -n .xgc2/scripts/package_debs.sh
           bash -n .xgc2/scripts/check_source_workspace_in_docker.sh
           find onboard/ros1/src \
-            -path onboard/ros1/src/extend -prune -o \
             \( -name package.xml -o -name '*.launch' -o -name '*.xacro' -o -name '*.urdf' \) \
             -print0 | xargs -0 xmllint --noout
 
@@ -44,24 +44,46 @@ jobs:
         run: .xgc2/scripts/check_source_workspace_in_docker.sh --work-dir "$RUNNER_TEMP/agilex-onboard-ros1-compliance"
 
   build-debs:
+    name: Build debs (${{ matrix.name }})
     strategy:
       fail-fast: false
       matrix:
         include:
-          - arch: amd64
-            runner: ubuntu-latest
-          - arch: arm64
+          - name: xavier-bionic-melodic
+            target: xavier
+            os: ubuntu-18.04
+            ros_distro: melodic
+            arch: arm64
             runner: ubuntu-24.04-arm
+            image: ros:melodic-ros-base-bionic
+          - name: amd64-bionic-melodic
+            target: desktop
+            os: ubuntu-18.04
+            ros_distro: melodic
+            arch: amd64
+            runner: ubuntu-latest
+            image: ros:melodic-ros-base-bionic
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
 
+      - name: Record vehicle matrix
+        run: |
+          cat <<EOF
+          ci_matrix_name=${{ matrix.name }}
+          vehicle_target=${{ matrix.target }}
+          os=${{ matrix.os }}
+          ros_distro=${{ matrix.ros_distro }}
+          arch=${{ matrix.arch }}
+          image=${{ matrix.image }}
+          EOF
+
       - name: Build and install-check deb package
         run: |
           .xgc2/scripts/build_debs_in_docker.sh \
+            --image "${{ matrix.image }}" \
             --work-dir "$RUNNER_TEMP/xgc2-agilex-onboard-ros1-${{ matrix.arch }}" \
-            --output-dir "$GITHUB_WORKSPACE/debs" \
-            --skip-install-check
+            --output-dir "$GITHUB_WORKSPACE/debs"
 
       - name: Create trusted build manifest
         run: |
@@ -81,7 +103,7 @@ jobs:
       - name: Upload deb artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: xgc2-agilex-onboard-ros1-debs-${{ matrix.arch }}
+          name: xgc2-agilex-onboard-ros1-debs-${{ matrix.name }}
           path: |
             debs/*.deb
             .ci/build-manifests/*.json

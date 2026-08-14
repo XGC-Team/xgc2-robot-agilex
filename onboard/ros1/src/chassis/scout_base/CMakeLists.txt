@@ -8,10 +8,8 @@ find_package(catkin REQUIRED COMPONENTS
     roslaunch 
     roscpp 
     sensor_msgs
-    nav_msgs
     std_msgs
     geometry_msgs
-    tf
     tf2 
     tf2_ros
     ugv_sdk
@@ -27,7 +25,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES scout_messenger
-  CATKIN_DEPENDS geometry_msgs nav_msgs roscpp sensor_msgs scout_msgs tf tf2 tf2_ros ugv_sdk
+  CATKIN_DEPENDS ugv_sdk scout_msgs
 #   DEPENDS Boost
 )
 

@@ -1,10 +1,10 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-ros1
 name: XGC2 AgileX Onboard ROS1
-version: 0.1.1-18
+version: 0.2.0-1
 kind: ros1-apt
-summary: ROS Melodic onboard IMU, Scout chassis, communication, and sensor packages
-  for the AgileX onboard computer.
+summary: Vehicle-true ROS Melodic minimum runtime for the AgileX Scout Mini
+  (IMU, chassis, and ground-station bridge).
 groups:
 - robotics
 - agilex
@@ -13,192 +13,72 @@ ros:
   distro: melodic
   workspace: onboard/ros1
   packages:
-  - agilex_onboard_imu
+  - serial_imu
+  - imu_launch
   - wrp_io
   - ugv_sdk
+  - scout_msgs
   - scout_base
+  - scout_description
   - scout_bringup
-  - agilex_swarm_ros_bridge
-  - realsense2_camera
-  - realsense2_description
-  - rslidar_sdk
+  - swarm_ros_bridge
   - agilex_onboard_autostart
 apt:
   distribution: bionic
   install:
-  - ros-melodic-xgc2-agilex-onboard-imu
-  - ros-melodic-xgc2-agilex-wrp-io
-  - ros-melodic-xgc2-agilex-ugv-sdk
-  - ros-melodic-xgc2-agilex-scout-base
-  - ros-melodic-xgc2-agilex-scout-bringup
-  - ros-melodic-xgc2-agilex-swarm-ros-bridge
-  - ros-melodic-xgc2-agilex-realsense2-camera
-  - ros-melodic-xgc2-agilex-realsense2-description
-  - ros-melodic-xgc2-agilex-rslidar-sdk
   - ros-melodic-xgc2-agilex-onboard-autostart
   packages:
-  - ros-melodic-xgc2-agilex-onboard-imu
+  - ros-melodic-xgc2-agilex-serial-imu
+  - ros-melodic-xgc2-agilex-imu-launch
   - ros-melodic-xgc2-agilex-wrp-io
   - ros-melodic-xgc2-agilex-ugv-sdk
+  - ros-melodic-xgc2-agilex-scout-msgs
   - ros-melodic-xgc2-agilex-scout-base
+  - ros-melodic-xgc2-agilex-scout-description
   - ros-melodic-xgc2-agilex-scout-bringup
   - ros-melodic-xgc2-agilex-swarm-ros-bridge
-  - ros-melodic-xgc2-agilex-realsense2-camera
-  - ros-melodic-xgc2-agilex-realsense2-description
-  - ros-melodic-xgc2-agilex-rslidar-sdk
   - ros-melodic-xgc2-agilex-onboard-autostart
   depends:
-  - ros-melodic-controller-manager
-  - ros-melodic-cv-bridge
-  - ros-melodic-ddynamic-reconfigure
-  - ros-melodic-diagnostic-updater
-  - ros-melodic-genmsg
   - ros-melodic-geometry-msgs
-  - ros-melodic-image-transport
   - ros-melodic-joint-state-publisher
-  - ros-melodic-joint-state-publisher-gui
   - ros-melodic-message-runtime
   - ros-melodic-nav-msgs
-  - ros-melodic-nodelet
-  - ros-melodic-pcl-conversions
-  - ros-melodic-pcl-ros
+  - ros-melodic-robot-state-publisher
   - ros-melodic-roscpp
   - ros-melodic-roslaunch
-  - ros-melodic-roslib
   - ros-melodic-rospy
-  - ros-melodic-rosgraph
-  - ros-melodic-robot-state-publisher
-  - ros-melodic-rviz
-  - ros-melodic-scout-msgs (>= 0.3.3-5)
   - ros-melodic-sensor-msgs
   - ros-melodic-serial
   - ros-melodic-std-msgs
-  - ros-melodic-std-srvs
-  - ros-melodic-swarm-ros-bridge (>= 1.1.0-3)
   - ros-melodic-tf
   - ros-melodic-tf2
   - ros-melodic-tf2-ros
   - ros-melodic-topic-tools
+  - ros-melodic-xacro
+  - libzmqpp-dev
+  - iproute2
   - systemd
   - udev
-  - iproute2
-  - ros-melodic-xacro
-  - ros-melodic-xgc2-scout-description (>= 0.4.10-1)
-  - libpcap-dev
-  - libpcl-dev
-  - librealsense2-dev
-  - libyaml-cpp-dev
+vehicle:
+  hostname: xavier
+  board: jetson-xavier
+  os: ubuntu-18.04
+  ros_distro: melodic
+  arch: arm64
 usage:
-  install: 'sudo apt update
-
+  install: |
+    sudo apt update
     sudo apt install ros-melodic-xgc2-agilex-onboard-autostart
-
-    '
-  smoke_test: 'rospack find agilex_onboard_imu
-
-    roslaunch --files agilex_onboard_imu imu_msg.launch
-
+  smoke_test: |
+    rospack find serial_imu
+    rospack find imu_launch
+    roslaunch --files imu_launch imu_msg.launch
     rospack find scout_base
-
     roslaunch --files scout_bringup scout_minimal.launch
-
-    rospack find scout_description
-
-    test -f "$(rospack find scout_description)/urdf/scout_visual.urdf"
-
-    test ! -d "$(rospack find scout_description)/launch"
-
-    test -f "$(rospack find scout_bringup)/maps/map.yaml"
-
-    roslaunch --files scout_bringup display_scout_mini.launch
-
-    rospack find agilex_swarm_ros_bridge
-
-    roslaunch --files agilex_swarm_ros_bridge agilex_swarm_ros_bridge.launch
-
-    '
-  notes: 'The launch defaults match the recovered vehicle startup chain:
-
-    port=/dev/imu, baud=115200, topic=/imu/data_raw, frame_id=imu_link.
-
-    The IMU deb also installs a one-time udev setup script for /dev/imu:
-
-    /opt/ros/melodic/share/agilex_onboard_imu/scripts/install_imu_udev_rule.sh.
-
-    The Scout chassis packages are split by ROS package so SDK, messages,
-
-    driver, and bringup can be installed independently. The compatible Scout
-
-    message definitions are maintained in xgc2-scout-msgs and consumed as the
-
-    external Debian package ros-melodic-scout-msgs.
-
-    The Scout visual model is consumed from the external visual-only package
-
-    ros-melodic-xgc2-scout-description. That package owns only URDF and meshes;
-
-    recovered display launches, maps, navigation parameters, and RViz profiles
-
-    are owned and installed by scout_bringup.
-
-    Core and headless display launch dependencies are closed by this product.
-
-    The recovered navigation, RTAB-Map, Cartographer, and LiDAR workflows remain
-
-    optional: they require their corresponding extension packages, including
-
-    rf2o_laser_odometry, which is not published by this product.
-
-    The AgileX swarm bridge package only provides vehicle-specific YAML and
-
-    launch files. It consumes the external generic package
-
-    ros-melodic-swarm-ros-bridge.
-
-    The onboard sensor packages are grouped under onboard/ros1/src/sensors and
-
-    split into independent Debian packages for RealSense camera, RealSense
-
-    description assets, and RoboSense LiDAR.
-
-    The optional autostart package installs systemd units, the IMU udev rule,
-
-    lightweight ROS readiness probes, and default swarm bridge configuration.
-
-    It enables xgc2-agilex-onboard.target but does not start the target during
-
-    installation.
-
-    Internal Debian dependencies include >= version constraints so driver and
-
-    bringup packages do not silently bind to older SDK/driver packages.
-
-    '
-ownership:
-  paths:
-  - /opt/ros/melodic/share/agilex_onboard_imu
-  - /opt/ros/melodic/lib/agilex_onboard_imu/agilex_onboard_imu_node
-  - /opt/ros/melodic/share/agilex_onboard_imu/scripts/install_imu_udev_rule.sh
-  - /opt/ros/melodic/share/wrp_io
-  - /opt/ros/melodic/share/ugv_sdk
-  - /opt/ros/melodic/share/scout_base
-  - /opt/ros/melodic/share/scout_bringup
-  - /opt/ros/melodic/share/agilex_swarm_ros_bridge
-  - /opt/ros/melodic/lib/scout_base/scout_base_node
-  - /opt/ros/melodic/share/realsense2_camera
-  - /opt/ros/melodic/share/realsense2_description
-  - /opt/ros/melodic/share/rslidar_sdk
-  - /opt/ros/melodic/lib/rslidar_sdk/rslidar_sdk_node
-  - /opt/ros/melodic/share/agilex_onboard_autostart
-  - /opt/ros/melodic/lib/agilex_onboard_autostart/start-imu
-  - /lib/systemd/system/xgc2-agilex-onboard.target
-  - /etc/udev/rules.d/99-xgc2-agilex-imu.rules
-  - /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
+    test -f "$(rospack find scout_description)/urdf/scout_v2.xacro"
+    rospack find swarm_ros_bridge
+    roslaunch --files swarm_ros_bridge test.launch
 release:
-  dependency_policy:
-    xgc2-ros-melodic-scout-description: verify
-    xgc2-scout-msgs: rebuild
-    xgc2-swarm-ros-bridge: verify
   workflow: release.yml
   apt_versions:
-    bionic: 0.1.1-18
+    bionic: 0.2.0-1

@@ -1,8 +1,8 @@
-# AgileX ROS1 Source Layout
+# AgileX ROS1 source layout
 
-This workspace groups ROS packages by onboard function while keeping normal
-catkin package discovery.
+Packages keep the ROS names used on the vehicle.
 
-- `chassis/`: Scout chassis SDK and driver packages.
-- `communication/`: Vehicle-specific communication launch/config packages.
-- `sensors/`: Base onboard sensor drivers such as IMU, RealSense, and RoboSense LiDAR.
+- `imu/`: `serial_imu` and `imu_launch`
+- `chassis/`: Scout SDK, driver, messages, model, and `scout_minimal`
+- `communication/`: vehicle `swarm_ros_bridge`
+- `autostart/`: packaged systemd units

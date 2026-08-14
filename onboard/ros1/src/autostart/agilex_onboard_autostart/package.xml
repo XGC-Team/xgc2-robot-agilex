@@ -9,9 +9,10 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <exec_depend>agilex_onboard_imu</exec_depend>
-  <exec_depend>agilex_swarm_ros_bridge</exec_depend>
+  <exec_depend>imu_launch</exec_depend>
   <exec_depend>roslaunch</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>scout_bringup</exec_depend>
+  <exec_depend>serial_imu</exec_depend>
+  <exec_depend>swarm_ros_bridge</exec_depend>
 </package>
