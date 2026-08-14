@@ -78,10 +78,13 @@ docker run --rm \
     test ! -d /workspace/work/src/agilex-onboard/chassis/scout_bringup
 
     test -f "$(rospack find scout_description)/urdf/scout_v2.xacro"
-    test -f "$(rospack find scout_description)/launch/description.launch"
+    test -f "$(rospack find scout_description)/urdf/scout_visual.urdf"
+    test ! -d "$(rospack find scout_description)/launch"
+    test -f "$(rospack find agilex_onboard_autostart)/launch/description.launch"
 
     roslaunch --files agilex_onboard_autostart imu.launch >/dev/null
     roslaunch --files agilex_onboard_autostart chassis.launch >/dev/null
+    roslaunch --files agilex_onboard_autostart description.launch >/dev/null
     roslaunch --files scout_base scout_mini_base.launch >/dev/null
     roslaunch --files swarm_ros_bridge test.launch >/dev/null
   '
