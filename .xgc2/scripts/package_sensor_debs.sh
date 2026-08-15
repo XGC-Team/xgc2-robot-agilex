@@ -165,11 +165,6 @@ if [[ -x "${PREFIX_ROOT}/lib/rslidar_sdk/rslidar_sdk_node" ]]; then
     "lib/rslidar_sdk/rslidar_sdk_node"
 fi
 
-lidar_dep=""
-if [[ -x "${PREFIX_ROOT}/lib/rslidar_sdk/rslidar_sdk_node" ]]; then
-  lidar_dep=", ros-${ROS_DISTRO}-xgc2-agilex-rslidar-sdk (>= ${PACKAGE_VERSION})"
-fi
-
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-onboard-rviz" \
   "agilex_onboard_rviz" \
