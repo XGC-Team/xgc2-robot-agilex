@@ -64,6 +64,7 @@ apt:
   - iproute2
   - systemd
   - udev
+  - xgc2-utils-linux-timezone
   - xgc2-utils-linux-performance-mode
 vehicle:
   os: ubuntu-18.04

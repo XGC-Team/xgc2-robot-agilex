@@ -134,6 +134,7 @@ sudo apt-get update \
 Vehicle:
 
 ```bash
+sudo apt-get install xgc2-utils-linux-timezone
 sudo apt-get install ros-melodic-xgc2-agilex
 # postinst enables xgc2-agilex-base.service for the next boot.
 # It does not start it now, and does not enable communication.
