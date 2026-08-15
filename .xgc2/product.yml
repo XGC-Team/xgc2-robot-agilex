@@ -106,7 +106,6 @@ release:
     xgc2-scout-msgs: rebuild
     xgc2-scout-description: verify
     xgc2-swarm-ros-bridge: verify
-    xgc2-linux-utils: verify
     xgc2-vrpn-relay: verify
     xgc2-estimator-rigid-state: verify
     xgc2-ugv-controller: verify
