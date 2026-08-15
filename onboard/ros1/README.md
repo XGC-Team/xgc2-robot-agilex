@@ -15,11 +15,10 @@ autostart/src/           agilex_onboard_autostart
                          base systemd, udev, compose launches (install only)
 
 sensors/src/             xgc2-agilex-onboard-sensors
-  realsense2_camera
-  realsense2_description
   rslidar_sdk
   agilex_d435_media
   agilex_onboard_sensors
+                         (D435 ROS driver is XGC-Team/xgc2-camera-d435)
 ```
 
 All four units are owned by `autostart`. Min-boot apt installs them all

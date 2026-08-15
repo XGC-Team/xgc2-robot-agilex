@@ -88,21 +88,6 @@ build_deb() {
   fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${deb_pkg}_${PACKAGE_VERSION}_${ARCH}.deb" >/dev/null
 }
 
-if [[ -d "${PREFIX_ROOT}/share/realsense2_camera" ]]; then
-  build_deb \
-    "ros-${ROS_DISTRO}-xgc2-agilex-realsense2-camera" \
-    "realsense2_camera" \
-    "ros-${ROS_DISTRO}-cv-bridge, ros-${ROS_DISTRO}-ddynamic-reconfigure, ros-${ROS_DISTRO}-image-transport, ros-${ROS_DISTRO}-nodelet, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-tf" \
-    "Vehicle-true RealSense D435i ROS wrapper" \
-    "lib/librealsense2_camera.so"
-fi
-
-build_deb \
-  "ros-${ROS_DISTRO}-xgc2-agilex-realsense2-description" \
-  "realsense2_description" \
-  "ros-${ROS_DISTRO}-xacro" \
-  "RealSense URDF/meshes from the vehicle tree"
-
 if [[ -x "${PREFIX_ROOT}/lib/rslidar_sdk/rslidar_sdk_node" ]]; then
   build_deb \
     "ros-${ROS_DISTRO}-xgc2-agilex-rslidar-sdk" \
@@ -112,10 +97,6 @@ if [[ -x "${PREFIX_ROOT}/lib/rslidar_sdk/rslidar_sdk_node" ]]; then
     "lib/rslidar_sdk/rslidar_sdk_node"
 fi
 
-camera_dep=""
-if [[ -d "${PREFIX_ROOT}/share/realsense2_camera" ]]; then
-  camera_dep=", ros-${ROS_DISTRO}-xgc2-agilex-realsense2-camera (>= ${PACKAGE_VERSION})"
-fi
 lidar_dep=""
 if [[ -x "${PREFIX_ROOT}/lib/rslidar_sdk/rslidar_sdk_node" ]]; then
   lidar_dep=", ros-${ROS_DISTRO}-xgc2-agilex-rslidar-sdk (>= ${PACKAGE_VERSION})"
@@ -134,7 +115,7 @@ fi
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-onboard-sensors" \
   "agilex_onboard_sensors" \
-  "ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rviz, ros-${ROS_DISTRO}-xgc2-agilex-realsense2-description (>= ${PACKAGE_VERSION})${camera_dep}${lidar_dep}" \
-  "Compose launches and RViz for D435i + Helios 16"
+  "ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rviz${lidar_dep}" \
+  "Compose launches and RViz for D435i + Helios 16. D435 capture comes from xgc2-camera-d435."
 
 find "${OUTPUT_DIR}" -maxdepth 1 -type f -name "ros-${ROS_DISTRO}-xgc2-agilex-*.deb" -print | sort

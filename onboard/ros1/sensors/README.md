@@ -16,9 +16,10 @@ last resort  another process already holds the camera
              (ROS Image subscribe + re-encode)
 ```
 
-`camera.launch` still starts `realsense2_camera` for ROS algorithms. That
-process owns USB. While it is running, WebRTC must use
-`fallback_webrtc*.launch`. To use the native path, stop RealSense first:
+`camera.launch` includes the shared `xgc_camera_d435` product, which
+starts `realsense2_camera`. That process owns USB. While it is running,
+WebRTC must use `fallback_webrtc*.launch`. To use the native path, stop
+RealSense first:
 
 ```bash
 roslaunch agilex_onboard_sensors webrtc.launch

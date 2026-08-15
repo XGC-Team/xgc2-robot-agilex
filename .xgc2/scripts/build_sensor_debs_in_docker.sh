@@ -44,10 +44,6 @@ docker run --rm --network none \
     rm -rf /workspace/work/build /workspace/work/devel /workspace/work/install-root /workspace/work/src
     mkdir -p /workspace/work/src/agilex-sensors
     rsync -a --delete /workspace/agilex/onboard/ros1/sensors/src/ /workspace/work/src/agilex-sensors/
-    if ! pkg-config --exists realsense2; then
-      echo "librealsense2 missing in image; skipping realsense2_camera compile" >&2
-      touch /workspace/work/src/agilex-sensors/realsense2_camera/CATKIN_IGNORE
-    fi
 
     cd /workspace/work
     set +u

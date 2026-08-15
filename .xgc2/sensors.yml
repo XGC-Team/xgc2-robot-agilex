@@ -13,8 +13,6 @@ ros:
   distro: melodic,noetic
   workspace: onboard/ros1/sensors
   packages:
-  - realsense2_camera
-  - realsense2_description
   - rslidar_sdk
   - agilex_d435_media
   - agilex_onboard_sensors
@@ -23,13 +21,9 @@ apt:
   install:
   - ros-melodic-xgc2-agilex-onboard-sensors
   packages:
-  - ros-melodic-xgc2-agilex-realsense2-camera
-  - ros-melodic-xgc2-agilex-realsense2-description
   - ros-melodic-xgc2-agilex-rslidar-sdk
   - ros-melodic-xgc2-agilex-d435-media
   - ros-melodic-xgc2-agilex-onboard-sensors
-  - ros-noetic-xgc2-agilex-realsense2-camera
-  - ros-noetic-xgc2-agilex-realsense2-description
   - ros-noetic-xgc2-agilex-rslidar-sdk
   - ros-noetic-xgc2-agilex-d435-media
   - ros-noetic-xgc2-agilex-onboard-sensors
