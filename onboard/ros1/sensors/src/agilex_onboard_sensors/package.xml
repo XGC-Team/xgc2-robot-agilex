@@ -6,6 +6,7 @@
   <maintainer email="apt@example.com">XGC2</maintainer>
   <license>Proprietary</license>
   <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>xgc_camera_d435</exec_depend>
   <exec_depend>realsense2_camera</exec_depend>
   <exec_depend>realsense2_description</exec_depend>
   <exec_depend>rslidar_sdk</exec_depend>
