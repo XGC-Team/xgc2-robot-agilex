@@ -92,8 +92,8 @@ release:
   dependency_policy:
     xgc2-scout-msgs: rebuild
     xgc2-scout-description: verify
-    xgc2-ros-melodic-scout-description: verify
     xgc2-swarm-ros-bridge: verify
+    xgc2-linux-utils: verify
   apt_versions:
     bionic: 0.2.0-13
     focal: 0.2.0-13
