@@ -13,7 +13,7 @@ Environment=ROS_MASTER_URI=http://127.0.0.1:11311
 Environment=ROS_IP=127.0.0.1
 Environment=HOME=/home/agilex
 Environment=ROS_HOME=/home/agilex/.ros
-Environment=MOCAP_RIGID_BODY=Scout1
+Environment=MOCAP_RIGID_BODY=pose_0
 ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/start-mocap
 Restart=on-failure
 RestartSec=3s

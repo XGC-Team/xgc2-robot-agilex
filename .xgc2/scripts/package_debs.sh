@@ -238,7 +238,7 @@ build_autostart_deb() {
     "${version}" \
     "iproute2, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version agilex_swarm_ros_bridge)), ros-${ROS_DISTRO}-xgc2-agilex-mocap (>= $(deb_version agilex_mocap)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
     "Unified AgileX systemd manager (enables base at boot; other units install-only)" \
-    "ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= $(deb_version serial_imu))"
+    "$( [[ -e "${PREFIX_ROOT}/share/serial_imu/package.xml" ]] && printf 'ros-%s-xgc2-agilex-serial-imu (>= %s)' "${ROS_DISTRO}" "$(deb_version serial_imu)" )"
   write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}" "${version}"
 
   cat > "${pkg_root}/DEBIAN/conffiles" <<EOF
@@ -343,7 +343,7 @@ build_meta_deb() {
     "${pkg_root}" \
     "${deb_pkg}" \
     "${version}" \
-    "ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart (>= ${version}), ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= ${version})" \
+    "ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart (>= ${version}), ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= ${version}), ros-${ROS_DISTRO}-xgc2-estimator-rigid-state, ros-${ROS_DISTRO}-xgc2-ugv-controller, xgc2-vrpn-relay" \
     "XGC2 AgileX vehicle min-boot meta package (no camera/LiDAR)"
 
   cat > "${pkg_root}/usr/share/doc/${deb_pkg}/README" <<EOF
@@ -364,12 +364,16 @@ EOF
   fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${deb_pkg}_${version}_${ARCH}.deb" >/dev/null
 }
 
-build_deb \
-  "ros-${ROS_DISTRO}-xgc2-agilex-serial-imu" \
-  "serial_imu" \
-  "ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-serial, ros-${ROS_DISTRO}-std-msgs" \
-  "AgileX onboard serial IMU driver from the vehicle tree" \
-  "lib/serial_imu/serial_imu"
+if [[ -e "${PREFIX_ROOT}/share/serial_imu/package.xml" ]]; then
+  build_deb \
+    "ros-${ROS_DISTRO}-xgc2-agilex-serial-imu" \
+    "serial_imu" \
+    "ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-serial, ros-${ROS_DISTRO}-std-msgs" \
+    "AgileX onboard serial IMU driver from the vehicle tree" \
+    "lib/serial_imu/serial_imu"
+else
+  echo "skip serial_imu: not installed in ${PREFIX_ROOT}"
+fi
 
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-wrp-io" \
@@ -454,8 +458,8 @@ EOF
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-mocap" \
   "agilex_mocap" \
-  "ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy" \
-  "AgileX assembly of shared xgc2-vrpn-relay (Scout1, no PX4 vision_pose)"
+  "ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy, xgc2-vrpn-relay" \
+  "AgileX assembly of shared xgc2-vrpn-relay (pose_0, no PX4 vision_pose)"
 
 build_chassis_deb() {
   local deb_pkg="ros-${ROS_DISTRO}-xgc2-agilex-chassis"

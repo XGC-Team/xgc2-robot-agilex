@@ -22,7 +22,7 @@ fi
 
 SERVER="${VRPN_SERVER:-127.0.0.1}"
 PORT="${VRPN_PORT:-3883}"
-TRACKER="${MOCAP_RIGID_BODY:-Scout1}"
+TRACKER="${MOCAP_RIGID_BODY:-pose_0}"
 
 echo "xgc2 agilex mocap: ${TRACKER}@${SERVER}:${PORT} (no vision_pose)"
 exec roslaunch agilex_mocap mocap.launch \
