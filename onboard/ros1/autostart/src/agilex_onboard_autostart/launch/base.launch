@@ -1,4 +1,8 @@
 <launch>
-  <include file="$(find agilex_onboard_autostart)/launch/imu.launch" />
+  <arg name="enable_imu" default="true" />
+
+  <group if="$(arg enable_imu)">
+    <include file="$(find agilex_onboard_autostart)/launch/imu.launch" />
+  </group>
   <include file="$(find agilex_onboard_autostart)/launch/chassis.launch" />
 </launch>

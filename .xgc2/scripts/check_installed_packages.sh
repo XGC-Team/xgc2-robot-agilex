@@ -11,6 +11,7 @@ deb_packages=(
   "ros-${ROS_DISTRO}-xgc2-agilex-wrp-io"
   "ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk"
   "ros-${ROS_DISTRO}-xgc2-agilex-scout-base"
+  "ros-${ROS_DISTRO}-xgc2-agilex-chassis"
   "ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge"
   "ros-${ROS_DISTRO}-xgc2-agilex-mocap"
   "ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart"
@@ -123,6 +124,7 @@ test -f /etc/xgc2/agilex/onboard.env
 test -f /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
 
 roslaunch --files agilex_onboard_autostart base.launch >/dev/null
+roslaunch --files agilex_onboard_autostart base.launch enable_imu:=false >/dev/null
 roslaunch --files agilex_onboard_autostart imu.launch >/dev/null
 roslaunch --files agilex_onboard_autostart chassis.launch >/dev/null
 roslaunch --files agilex_swarm_ros_bridge swarm.launch >/dev/null

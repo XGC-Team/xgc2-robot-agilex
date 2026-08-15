@@ -132,13 +132,22 @@ if [[ "${INSTALL_CHECK}" == "true" ]]; then
       agilex_debs=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex-*_${architecture}.deb)
       agilex_meta=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex_*_${architecture}.deb)
       shopt -u nullglob
-      if [[ "${#agilex_debs[@]}" -ne 7 ]]; then
-        echo "expected 7 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
+      if [[ "${#agilex_debs[@]}" -ne 8 ]]; then
+        echo "expected 8 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
         ls -la /workspace/out >&2 || true
         exit 1
       fi
       if [[ "${#agilex_meta[@]}" -ne 1 ]]; then
         echo "expected 1 AgileX meta deb, found ${#agilex_meta[@]}" >&2
+        ls -la /workspace/out >&2 || true
+        exit 1
+      fi
+      shopt -s nullglob
+      chassis_debs=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex-chassis_*_${architecture}.deb)
+      scout_base_debs=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex-scout-base_*_${architecture}.deb)
+      shopt -u nullglob
+      if [[ "${#chassis_debs[@]}" -ne 1 || "${#scout_base_debs[@]}" -ne 1 ]]; then
+        echo "chassis/scout-base debs missing for ROS ${ROS_DISTRO} ${architecture}" >&2
         ls -la /workspace/out >&2 || true
         exit 1
       fi

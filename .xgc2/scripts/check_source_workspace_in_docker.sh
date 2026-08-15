@@ -143,6 +143,7 @@ docker run --rm --network none \
     test ! -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-roscore.service"
 
     roslaunch --files agilex_onboard_autostart base.launch >/dev/null
+    roslaunch --files agilex_onboard_autostart base.launch enable_imu:=false >/dev/null
     roslaunch --files agilex_onboard_autostart imu.launch >/dev/null
     roslaunch --files agilex_onboard_autostart chassis.launch >/dev/null
     roslaunch --files agilex_onboard_autostart description.launch >/dev/null

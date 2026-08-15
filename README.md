@@ -83,7 +83,8 @@ Packages are published to `http://xgc2.apt.xiaokang.ink`. A new computer only ne
 
 | Machine | Ubuntu | ROS | `arch=` | `deb` suite | Install |
 | --- | --- | --- | --- | --- | --- |
-| Vehicle (Xavier) | 18.04 | Melodic | `arm64` | `bionic` | `ros-melodic-xgc2-agilex` |
+| Vehicle (Xavier, with IMU) | 18.04 | Melodic | `arm64` | `bionic` | `ros-melodic-xgc2-agilex` |
+| Vehicle (Orin / Noetic, chassis only) | 20.04 | Noetic | `arm64` | `focal` | `ros-noetic-xgc2-agilex-chassis` |
 | New workstation / ground station | 20.04 | Noetic | `amd64` | `focal` | `ros-noetic-scout-msgs` (and the bridge if it should talk to the vehicle) |
 
 Fingerprint of `xgc2-archive-keyring.gpg`:
@@ -131,7 +132,7 @@ sudo apt-get update \
   -o APT::Get::List-Cleanup="0"
 ```
 
-Vehicle:
+Vehicle with IMU (Xavier / Melodic):
 
 ```bash
 sudo apt-get install xgc2-utils-linux-timezone
@@ -142,6 +143,15 @@ sudo apt-get install ros-melodic-xgc2-agilex
 # sudo apt-get install ros-melodic-xgc2-agilex-onboard-sensors
 # sudo systemctl enable --now xgc2-agilex-camera.service
 # sudo systemctl enable --now xgc2-agilex-lidar.service
+```
+
+Vehicle without IMU (Orin NX / Noetic chassis only):
+
+```bash
+sudo apt-get install ros-noetic-xgc2-agilex-chassis
+sudo apt-get install ros-noetic-xgc2-agilex-onboard-autostart
+# then set IMU_REQUIRED=0 in /etc/xgc2/agilex/onboard.env
+# sudo systemctl enable xgc2-agilex-base.service
 ```
 
 Ground station / new PC that only needs to decode chassis status from `tcp://<vehicle>:3002`:

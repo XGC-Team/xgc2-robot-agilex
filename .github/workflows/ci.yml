@@ -17,93 +17,13 @@ defaults:
 
 jobs:
   package-compliance:
-    name: Package compliance (${{ matrix.name }})
+    name: Package compliance
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: bionic-melodic
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
-          - name: focal-noetic
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
           submodules: recursive
-  build-debs:
-    name: Build debs (${{ matrix.name }})
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: arm64-bionic-melodic
-            os: ubuntu-18.04
-            ros_distro: melodic
-            distribution: bionic
-            arch: arm64
-            runner: ubuntu-24.04-arm
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
-          - name: amd64-bionic-melodic
-            os: ubuntu-18.04
-            ros_distro: melodic
-            distribution: bionic
-            arch: amd64
-            runner: ubuntu-latest
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
-          - name: arm64-focal-noetic
-            os: ubuntu-20.04
-            ros_distro: noetic
-            distribution: focal
-            arch: arm64
-            runner: ubuntu-24.04-arm
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
-          - name: amd64-focal-noetic
-            os: ubuntu-20.04
-            ros_distro: noetic
-            distribution: focal
-            arch: amd64
-            runner: ubuntu-latest
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-  build-sensor-debs:
-    name: Build sensor debs (${{ matrix.name }})
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: arm64-bionic-melodic
-            distribution: bionic
-            arch: arm64
-            runner: ubuntu-24.04-arm
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-full-melodic:1.0.0
-          - name: amd64-bionic-melodic
-            distribution: bionic
-            arch: amd64
-            runner: ubuntu-latest
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-full-melodic:1.0.0
-          - name: arm64-focal-noetic
-            distribution: focal
-            arch: arm64
-            runner: ubuntu-24.04-arm
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-full-noetic:1.0.0
-          - name: amd64-focal-noetic
-            distribution: focal
-            arch: amd64
-            runner: ubuntu-latest
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-full-noetic:1.0.0
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-
       - name: Check package metadata
         run: |
           set -euo pipefail
@@ -130,20 +50,61 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import xml.etree.ElementTree as ET
-          root = Path("onboard/ros1/sensors/src")
-          files = list(root.rglob("package.xml")) + list(root.rglob("*.launch"))
+          roots = [
+              Path("onboard/ros1/base/src"),
+              Path("onboard/ros1/communication/src"),
+              Path("onboard/ros1/autostart/src"),
+              Path("onboard/ros1/sensors/src"),
+          ]
+          files = []
+          for root in roots:
+              files.extend(root.rglob("package.xml"))
+              files.extend(root.rglob("*.launch"))
           for path in files:
               ET.parse(path)
-          print(f"parsed {len(files)} sensor xml files")
+          print(f"parsed {len(files)} xml files")
           PY
 
-      - name: Build package and run launch compliance
-        run: |
-          .xgc2/scripts/check_source_workspace_in_docker.sh \
-            --image "${{ matrix.image }}" \
-            --work-dir "$RUNNER_TEMP/agilex-onboard-ros1-compliance-${{ matrix.name }}"
-
-
+  build-debs:
+    name: Build chassis debs (${{ matrix.name }})
+    needs: package-compliance
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: arm64-bionic-melodic
+            os: ubuntu-18.04
+            ros_distro: melodic
+            distribution: bionic
+            arch: arm64
+            runner: ubuntu-24.04-arm
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
+          - name: amd64-bionic-melodic
+            os: ubuntu-18.04
+            ros_distro: melodic
+            distribution: bionic
+            arch: amd64
+            runner: ubuntu-latest
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
+          - name: arm64-focal-noetic
+            os: ubuntu-20.04
+            ros_distro: noetic
+            distribution: focal
+            arch: arm64
+            runner: ubuntu-24.04-arm
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
+          - name: amd64-focal-noetic
+            os: ubuntu-20.04
+            ros_distro: noetic
+            distribution: focal
+            arch: amd64
+            runner: ubuntu-latest
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Record build matrix
         run: |
           cat <<EOF
@@ -154,14 +115,17 @@ jobs:
           arch=${{ matrix.arch }}
           image=${{ matrix.image }}
           EOF
-
-      - name: Build and install-check deb package
+      - name: Compile workspace and check launches
+        run: |
+          .xgc2/scripts/check_source_workspace_in_docker.sh \
+            --image "${{ matrix.image }}" \
+            --work-dir "$RUNNER_TEMP/agilex-onboard-ros1-compliance-${{ matrix.name }}"
+      - name: Build and install-check chassis debs
         run: |
           .xgc2/scripts/build_debs_in_docker.sh \
             --image "${{ matrix.image }}" \
             --work-dir "$RUNNER_TEMP/xgc2-agilex-onboard-${{ matrix.name }}" \
             --output-dir "$GITHUB_WORKSPACE/debs"
-
       - name: Create trusted build manifest
         run: |
           product_version="$(awk -F': *' '/^version:/ {print $2; exit}' .xgc2/product.yml)"
@@ -176,8 +140,7 @@ jobs:
             --ci-run-id "$GITHUB_RUN_ID" \
             --ci-workflow "$GITHUB_WORKFLOW" \
             --ci-workflow-ref "$GITHUB_WORKFLOW_REF"
-
-      - name: Upload deb artifacts
+      - name: Upload chassis deb artifacts
         uses: actions/upload-artifact@v4
         with:
           name: xgc2-agilex-onboard-debs-${{ matrix.name }}
@@ -187,14 +150,44 @@ jobs:
           retention-days: 14
           include-hidden-files: true
 
-
-      - name: Build optional camera and lidar debs
+  build-sensor-debs:
+    name: Build sensor debs (${{ matrix.name }})
+    needs: package-compliance
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: arm64-bionic-melodic
+            distribution: bionic
+            arch: arm64
+            runner: ubuntu-24.04-arm
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-full-melodic:1.0.0
+          - name: amd64-bionic-melodic
+            distribution: bionic
+            arch: amd64
+            runner: ubuntu-latest
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-full-melodic:1.0.0
+          - name: arm64-focal-noetic
+            distribution: focal
+            arch: arm64
+            runner: ubuntu-24.04-arm
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-full-noetic:1.0.0
+          - name: amd64-focal-noetic
+            distribution: focal
+            arch: amd64
+            runner: ubuntu-latest
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-full-noetic:1.0.0
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build camera and lidar debs
         run: |
           .xgc2/scripts/build_sensor_debs_in_docker.sh \
             --image "${{ matrix.image }}" \
             --work-dir "$RUNNER_TEMP/xgc2-agilex-sensors-${{ matrix.name }}" \
             --output-dir "$GITHUB_WORKSPACE/debs-sensors"
-
       - name: Create trusted build manifest
         run: |
           product_version="$(awk -F': *' '/^version:/ {print $2; exit}' .xgc2/sensors.yml)"
@@ -209,7 +202,6 @@ jobs:
             --ci-run-id "$GITHUB_RUN_ID" \
             --ci-workflow "$GITHUB_WORKFLOW" \
             --ci-workflow-ref "$GITHUB_WORKFLOW_REF"
-
       - name: Upload sensor deb artifacts
         uses: actions/upload-artifact@v4
         with:

@@ -121,9 +121,11 @@ write_control() {
   local version="$3"
   local depends="$4"
   local description="$5"
+  local recommends="${6:-}"
 
   mkdir -p "${pkg_root}/DEBIAN"
-  cat > "${pkg_root}/DEBIAN/control" <<EOF
+  {
+    cat <<EOF
 Package: ${deb_pkg}
 Version: ${version}
 Section: misc
@@ -131,9 +133,15 @@ Priority: optional
 Architecture: ${ARCH}
 Maintainer: XGC Team <apt@example.com>
 Depends: ${depends}
+EOF
+    if [[ -n "${recommends}" ]]; then
+      printf 'Recommends: %s\n' "${recommends}"
+    fi
+    cat <<EOF
 Description: ${description}
  XGC2 AgileX ROS ${ROS_DISTRO} package taken from the vehicle onboard tree.
 EOF
+  } > "${pkg_root}/DEBIAN/control"
 }
 
 write_readme() {
@@ -228,8 +236,9 @@ build_autostart_deb() {
     "${pkg_root}" \
     "${deb_pkg}" \
     "${version}" \
-    "iproute2, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version agilex_swarm_ros_bridge)), ros-${ROS_DISTRO}-xgc2-agilex-mocap (>= $(deb_version agilex_mocap)), ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= $(deb_version serial_imu)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
-    "Unified AgileX systemd manager (enables base at boot; other units install-only)"
+    "iproute2, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version agilex_swarm_ros_bridge)), ros-${ROS_DISTRO}-xgc2-agilex-mocap (>= $(deb_version agilex_mocap)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
+    "Unified AgileX systemd manager (enables base at boot; other units install-only)" \
+    "ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= $(deb_version serial_imu))"
   write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}" "${version}"
 
   cat > "${pkg_root}/DEBIAN/conffiles" <<EOF
@@ -334,7 +343,7 @@ build_meta_deb() {
     "${pkg_root}" \
     "${deb_pkg}" \
     "${version}" \
-    "ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart (>= ${version})" \
+    "ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart (>= ${version}), ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= ${version})" \
     "XGC2 AgileX vehicle min-boot meta package (no camera/LiDAR)"
 
   cat > "${pkg_root}/usr/share/doc/${deb_pkg}/README" <<EOF
@@ -448,8 +457,40 @@ build_deb \
   "ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy" \
   "AgileX assembly of shared xgc2-vrpn-relay (Scout1, no PX4 vision_pose)"
 
+build_chassis_deb() {
+  local deb_pkg="ros-${ROS_DISTRO}-xgc2-agilex-chassis"
+  local version="${PACKAGE_VERSION}"
+  local pkg_root="${BUILD_DIR}/${deb_pkg}"
+
+  mkdir -p "${pkg_root}/usr/share/doc/${deb_pkg}"
+  write_control \
+    "${pkg_root}" \
+    "${deb_pkg}" \
+    "${version}" \
+    "ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base)), ros-${ROS_DISTRO}-xgc2-scout-description" \
+    "XGC2 AgileX chassis-only meta (no IMU, camera, or LiDAR)"
+
+  cat > "${pkg_root}/usr/share/doc/${deb_pkg}/README" <<EOF
+${deb_pkg}
+
+Chassis stack for hosts without an IMU. Does not pull serial_imu.
+
+  sudo apt-get install ${deb_pkg}
+  sudo apt-get install ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart
+  # then set IMU_REQUIRED=0 in /etc/xgc2/agilex/onboard.env
+EOF
+
+  find "${pkg_root}" -type d -exec chmod 0755 {} +
+  chmod 0755 "${pkg_root}/DEBIAN"
+  chmod 0644 "${pkg_root}/DEBIAN/control"
+  chmod 0644 "${pkg_root}/usr/share/doc/${deb_pkg}/README"
+
+  fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${deb_pkg}_${version}_${ARCH}.deb" >/dev/null
+}
+
 build_communication_deb
 build_autostart_deb
+build_chassis_deb
 build_meta_deb
 
 find "${OUTPUT_DIR}" -maxdepth 1 -type f -name "ros-${ROS_DISTRO}-xgc2-agilex*.deb" -print | sort
