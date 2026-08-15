@@ -1,4 +1,4 @@
 <launch>
   <!-- Scout D435 / D435i: assemble the shared XGC2 camera product. -->
-  <include file="$(find xgc_camera_d435)/launch/d435i.launch"/>
+  <include file="$(find xgc2_camera_d435)/launch/d435i.launch"/>
 </launch>

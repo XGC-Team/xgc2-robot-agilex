@@ -58,7 +58,7 @@ xgc2-agilex-lidar.service
 | `ros-melodic-xgc2-agilex` | (meta) | Vehicle min-boot: pulls the packages below; does not enable or start them |
 | `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | all four systemd units; enables base at boot |
 
-D435 / D435i capture lives in the shared [`xgc2-camera-d435`](https://github.com/XGC-Team/xgc2-camera-d435) product (`realsense2_camera`, `realsense2_description`, `xgc_camera_d435`). This vehicle only includes `camera.launch`. Other robots clone that repository into their workspace and run `roslaunch xgc_camera_d435 d435.launch`. Camera and LiDAR compose on Scout is a **separate** product (`xgc2-agilex-onboard-sensors`) with two install-only services.
+D435 / D435i capture lives in the shared [`xgc2-camera-d435`](https://github.com/XGC-Team/xgc2-camera-d435) product (`realsense2_camera`, `realsense2_description`, `xgc2_camera_d435`). This vehicle only includes `camera.launch`. Other robots clone that repository into their workspace and run `roslaunch xgc2_camera_d435 d435.launch`. Camera and LiDAR compose on Scout is a **separate** product (`xgc2-agilex-onboard-sensors`) with two install-only services.
 
 | Debian package | ROS package | Role |
 | --- | --- | --- |

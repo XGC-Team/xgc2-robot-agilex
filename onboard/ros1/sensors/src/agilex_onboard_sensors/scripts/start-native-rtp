@@ -3,7 +3,7 @@ set -euo pipefail
 HERE="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
 for c in \
   "$(command -v xgc_native_v4l2_rtp || true)" \
-  "/opt/ros/${ROS_DISTRO:-melodic}/lib/xgc_camera_driver/xgc_native_v4l2_rtp" \
+  "/opt/ros/${ROS_DISTRO:-melodic}/lib/xgc2_camera_driver/xgc_native_v4l2_rtp" \
   "${HERE}/../../xgc_camera_media/xgc_native_v4l2_rtp"
 do
   if [[ -n "${c}" && -x "${c}" ]]; then

@@ -16,7 +16,7 @@ last resort  another process already holds the camera
              (ROS Image subscribe + re-encode)
 ```
 
-`camera.launch` includes the shared `xgc_camera_d435` product, which
+`camera.launch` includes the shared `xgc2_camera_d435` product, which
 starts `realsense2_camera`. That process owns USB. While it is running,
 WebRTC must use `fallback_webrtc*.launch`. To use the native path, stop
 RealSense first:
