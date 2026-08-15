@@ -133,10 +133,7 @@ jobs:
             --source-sha "${{ inputs.expected_source_sha }}" \
             --ci-run-id "$GITHUB_RUN_ID" \
             --ci-workflow "$GITHUB_WORKFLOW" \
-            --ci-workflow-ref "$GITHUB_WORKFLOW_REF" \
-            --prepare-action "${{ inputs.prepare_action }}" \
-            --dependency-set-digest "${{ inputs.dependency_set_digest }}" \
-            --dependency-mode locked-source
+            --ci-workflow-ref "$GITHUB_WORKFLOW_REF"
 
       - name: Upload deb artifacts
         uses: actions/upload-artifact@v4
@@ -217,10 +214,7 @@ jobs:
             --source-sha "${{ inputs.expected_source_sha }}" \
             --ci-run-id "$GITHUB_RUN_ID" \
             --ci-workflow "$GITHUB_WORKFLOW" \
-            --ci-workflow-ref "$GITHUB_WORKFLOW_REF" \
-            --prepare-action "${{ inputs.prepare_action }}" \
-            --dependency-set-digest "${{ inputs.dependency_set_digest }}" \
-            --dependency-mode locked-source
+            --ci-workflow-ref "$GITHUB_WORKFLOW_REF"
       - name: Upload sensor deb artifacts
         uses: actions/upload-artifact@v4
         with:

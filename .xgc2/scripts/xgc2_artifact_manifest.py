@@ -14,10 +14,7 @@ from pathlib import Path
 from typing import Any
 
 
-BUILD_SCHEMA = "xgc2.build-artifact.v2"
-EMPTY_DEPENDENCY_SET_DIGEST = hashlib.sha256(b"[]").hexdigest()
-PREPARE_ACTIONS = {"ci", "release", "compatibility-verify"}
-DEPENDENCY_MODES = {"locked-source", "staging-apt"}
+BUILD_SCHEMA = "xgc2.build-artifact.v1"
 
 
 def utc_now() -> str:
@@ -112,17 +109,6 @@ def create_build(args: argparse.Namespace) -> None:
                 "size": meta["size_bytes"],
             }
         )
-    prepare_action = str(args.prepare_action)
-    if prepare_action not in PREPARE_ACTIONS:
-        raise ValueError(f"unsupported prepare action: {prepare_action}")
-    dependency_mode = str(args.dependency_mode)
-    if dependency_mode not in DEPENDENCY_MODES:
-        raise ValueError(f"unsupported dependency mode: {dependency_mode}")
-    digest = str(args.dependency_set_digest or EMPTY_DEPENDENCY_SET_DIGEST)
-    if re.fullmatch(r"[0-9a-f]{64}", digest) is None:
-        raise ValueError("dependency set digest must be 64 lowercase hex characters")
-    if prepare_action == "ci" and dependency_mode != "locked-source":
-        raise ValueError("CI dependencyMode must be locked-source")
     payload = {
         "schema": BUILD_SCHEMA,
         "product": args.product,
@@ -130,10 +116,7 @@ def create_build(args: argparse.Namespace) -> None:
         "version": args.product_version,
         "distribution": args.distribution,
         "architecture": args.architecture,
-        "prepareAction": prepare_action,
-        "dependencySetDigest": digest,
-        "dependencyMode": dependency_mode,
-        "dependencies": [],
+        "created_at": utc_now(),
         "ci": {
             "run_id": str(args.ci_run_id),
             "workflow": args.ci_workflow,
@@ -207,9 +190,6 @@ def parser() -> argparse.ArgumentParser:
     build.add_argument("--ci-run-id", required=True)
     build.add_argument("--ci-workflow", required=True)
     build.add_argument("--ci-workflow-ref", required=True)
-    build.add_argument("--prepare-action", default="ci")
-    build.add_argument("--dependency-set-digest", default="")
-    build.add_argument("--dependency-mode", default="locked-source")
     build.set_defaults(func=create_build)
 
     verify = sub.add_parser("verify-build")
