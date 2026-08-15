@@ -228,7 +228,7 @@ build_autostart_deb() {
     "${pkg_root}" \
     "${deb_pkg}" \
     "${version}" \
-    "iproute2, systemd, udev, xgc2-utils-linux-performance-mode, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version agilex_swarm_ros_bridge)), ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= $(deb_version serial_imu)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
+    "iproute2, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version agilex_swarm_ros_bridge)), ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= $(deb_version serial_imu)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
     "Unified AgileX systemd manager (enables base at boot; other units install-only)"
   write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}" "${version}"
 
@@ -412,11 +412,19 @@ build_communication_deb() {
   cp -a "${PREFIX_ROOT}/share/${ros_pkg}/config/ros_topics.yaml" \
     "${pkg_root}/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml"
 
+  # Official swarm-ros-bridge is published for Melodic only. Noetic CI must
+  # still configure this YAML/launch package; the vehicle pulls the official
+  # bridge from APT when that distro is published.
+  local comm_depends="ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-std-msgs, ${scout_msgs_dep}"
+  if [[ "${ROS_DISTRO}" == "melodic" ]]; then
+    comm_depends="${comm_depends}, ros-${ROS_DISTRO}-swarm-ros-bridge"
+  fi
+
   write_control \
     "${pkg_root}" \
     "${deb_pkg}" \
     "${version}" \
-    "ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-std-msgs, ${scout_msgs_dep}, ros-${ROS_DISTRO}-swarm-ros-bridge" \
+    "${comm_depends}" \
     "Vehicle YAML, launch, and ScoutStatus relay for the official swarm_ros_bridge"
   write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}" "${version}"
 
