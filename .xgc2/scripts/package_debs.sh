@@ -446,7 +446,7 @@ build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-mocap" \
   "agilex_mocap" \
   "ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy" \
-  "AgileX VRPN client wrapper and pose/twist/accel relay (no PX4 vision_pose)"
+  "AgileX assembly of shared xgc2-vrpn-relay (Scout1, no PX4 vision_pose)"
 
 build_communication_deb
 build_autostart_deb

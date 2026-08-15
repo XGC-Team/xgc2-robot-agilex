@@ -1,20 +1,13 @@
 <launch>
-  <!-- Scout: own tracker, local pose/twist/accel only. No vision_pose. -->
+  <!-- Assembly only. Relay logic lives in xgc2_vrpn_relay. No vision_pose. -->
   <arg name="server" default="127.0.0.1" />
   <arg name="port" default="3883" />
   <arg name="tracker" default="Scout1" />
 
-  <include file="$(find agilex_mocap)/launch/vrpn.launch">
+  <include file="$(find xgc2_vrpn_relay)/launch/mocap.launch">
     <arg name="server" value="$(arg server)" />
     <arg name="port" value="$(arg port)" />
     <arg name="tracker" value="$(arg tracker)" />
+    <arg name="vision_out" value="" />
   </include>
-
-  <node pkg="agilex_mocap" type="vrpn_relay" name="vrpn_relay" output="screen">
-    <param name="tracker" value="$(arg tracker)" />
-    <param name="pose_out" value="/pose" />
-    <param name="twist_out" value="/twist" />
-    <param name="accel_out" value="/accel" />
-    <param name="vision_out" value="" />
-  </node>
 </launch>

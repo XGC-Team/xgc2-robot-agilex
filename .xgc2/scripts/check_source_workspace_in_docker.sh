@@ -130,7 +130,8 @@ docker run --rm --network none \
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-camera
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-lidar
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-mocap
-    test -x /opt/ros/${ROS_DISTRO}/lib/agilex_mocap/vrpn_relay
+    test ! -e /opt/ros/${ROS_DISTRO}/lib/agilex_mocap/vrpn_relay
+    grep -q 'xgc2_vrpn_relay' "$(rospack find agilex_mocap)/launch/mocap.launch"
     test -f "$(rospack find agilex_swarm_ros_bridge)/src/scout_status_to_std.cpp"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-base.service"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-communication.service"

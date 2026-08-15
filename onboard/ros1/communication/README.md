@@ -7,6 +7,6 @@ in `onboard/ros1/autostart`.
 
 ```text
 src/agilex_swarm_ros_bridge
-src/agilex_mocap                 own VRPN tracker -> /pose /twist /accel
-                                 (no /mavros/vision_pose)
+src/agilex_mocap                 assembly: tracker Scout1, vision_out off
+                                 (logic in xgc2_vrpn_relay)
 ```
