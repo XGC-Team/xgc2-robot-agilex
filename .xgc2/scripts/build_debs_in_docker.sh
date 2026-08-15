@@ -132,8 +132,8 @@ if [[ "${INSTALL_CHECK}" == "true" ]]; then
       agilex_debs=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex-*_${architecture}.deb)
       agilex_meta=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex_*_${architecture}.deb)
       shopt -u nullglob
-      if [[ "${#agilex_debs[@]}" -ne 6 ]]; then
-        echo "expected 6 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
+      if [[ "${#agilex_debs[@]}" -ne 7 ]]; then
+        echo "expected 7 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
         ls -la /workspace/out >&2 || true
         exit 1
       fi

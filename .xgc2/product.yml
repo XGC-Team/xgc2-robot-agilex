@@ -1,7 +1,7 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-ros1
 name: XGC2 AgileX Onboard ROS1
-version: 0.2.0-12
+version: 0.2.0-13
 kind: ros1-apt
 summary: Vehicle-true AgileX Scout Mini minimum runtime (IMU, chassis, and
   ground-station bridge) for Melodic and Noetic.
@@ -18,6 +18,7 @@ ros:
   - ugv_sdk
   - scout_base
   - agilex_swarm_ros_bridge
+  - agilex_mocap
   - agilex_onboard_autostart
 apt:
   distribution: bionic,focal
@@ -30,6 +31,7 @@ apt:
   - ros-melodic-xgc2-agilex-ugv-sdk
   - ros-melodic-xgc2-agilex-scout-base
   - ros-melodic-xgc2-agilex-swarm-ros-bridge
+  - ros-melodic-xgc2-agilex-mocap
   - ros-melodic-xgc2-agilex-onboard-autostart
   - ros-noetic-xgc2-agilex
   - ros-noetic-xgc2-agilex-serial-imu
@@ -37,6 +39,7 @@ apt:
   - ros-noetic-xgc2-agilex-ugv-sdk
   - ros-noetic-xgc2-agilex-scout-base
   - ros-noetic-xgc2-agilex-swarm-ros-bridge
+  - ros-noetic-xgc2-agilex-mocap
   - ros-noetic-xgc2-agilex-onboard-autostart
   depends:
   - ros-melodic-scout-msgs
@@ -92,5 +95,5 @@ release:
     xgc2-ros-melodic-scout-description: verify
     xgc2-swarm-ros-bridge: verify
   apt_versions:
-    bionic: 0.2.0-12
-    focal: 0.2.0-12
+    bionic: 0.2.0-13
+    focal: 0.2.0-13

@@ -228,7 +228,7 @@ build_autostart_deb() {
     "${pkg_root}" \
     "${deb_pkg}" \
     "${version}" \
-    "iproute2, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version agilex_swarm_ros_bridge)), ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= $(deb_version serial_imu)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
+    "iproute2, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version agilex_swarm_ros_bridge)), ros-${ROS_DISTRO}-xgc2-agilex-mocap (>= $(deb_version agilex_mocap)), ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= $(deb_version serial_imu)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
     "Unified AgileX systemd manager (enables base at boot; other units install-only)"
   write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}" "${version}"
 
@@ -292,6 +292,7 @@ if [ "$1" = "remove" ] || [ "$1" = "deconfigure" ]; then
     systemctl disable xgc2-agilex-communication.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-camera.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-lidar.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-agilex-mocap.service >/dev/null 2>&1 || true
   fi
 fi
 
@@ -440,6 +441,12 @@ EOF
 
   fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${deb_pkg}_${version}_${ARCH}.deb" >/dev/null
 }
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-mocap" \
+  "agilex_mocap" \
+  "ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy" \
+  "AgileX VRPN client wrapper and pose/twist/accel relay (no PX4 vision_pose)"
 
 build_communication_deb
 build_autostart_deb

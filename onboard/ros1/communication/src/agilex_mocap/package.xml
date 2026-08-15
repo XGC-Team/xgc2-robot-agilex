@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>agilex_mocap</name>
+  <version>0.1.0</version>
+  <description>AgileX VRPN client (own rigid body only) and pose/twist/accel relay. No PX4 vision_pose. systemd lives in agilex_onboard_autostart.</description>
+  <maintainer email="apt@example.com">XGC2</maintainer>
+  <license>Proprietary</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>roslaunch</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>vrpn_client_ros</exec_depend>
+</package>

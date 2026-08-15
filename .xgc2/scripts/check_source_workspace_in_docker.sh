@@ -105,6 +105,7 @@ docker run --rm --network none \
       echo "ros-${ROS_DISTRO}-swarm-ros-bridge not in image or fetched debs" >&2
     fi
     test "$(rospack find agilex_swarm_ros_bridge)" = "/workspace/work/src/agilex-communication/agilex_swarm_ros_bridge"
+    test "$(rospack find agilex_mocap)" = "/workspace/work/src/agilex-communication/agilex_mocap"
     test ! -d /workspace/work/src/agilex-onboard/communication
     test "$(rospack find agilex_onboard_autostart)" = "/workspace/work/src/agilex-autostart/agilex_onboard_autostart"
     test ! -d /workspace/work/src/agilex-onboard/autostart
@@ -128,11 +129,14 @@ docker run --rm --network none \
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-communication
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-camera
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-lidar
+    test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-mocap
+    test -x /opt/ros/${ROS_DISTRO}/lib/agilex_mocap/vrpn_relay
     test -f "$(rospack find agilex_swarm_ros_bridge)/src/scout_status_to_std.cpp"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-base.service"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-communication.service"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-camera.service"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-lidar.service"
+    test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-mocap.service"
     test ! -d "$(rospack find agilex_swarm_ros_bridge)/systemd"
     test ! -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-onboard.target"
     test ! -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-roscore.service"

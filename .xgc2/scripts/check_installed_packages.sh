@@ -12,6 +12,7 @@ deb_packages=(
   "ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk"
   "ros-${ROS_DISTRO}-xgc2-agilex-scout-base"
   "ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge"
+  "ros-${ROS_DISTRO}-xgc2-agilex-mocap"
   "ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart"
   "ros-${ROS_DISTRO}-xgc2-scout-description"
 )
@@ -28,6 +29,7 @@ ros_packages=(
   scout_base
   scout_description
   agilex_swarm_ros_bridge
+  agilex_mocap
   agilex_onboard_autostart
 )
 
@@ -77,6 +79,9 @@ test -x "${PREFIX}/lib/agilex_onboard_autostart/start-base"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-communication"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-camera"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-lidar"
+test -x "${PREFIX}/lib/agilex_onboard_autostart/start-mocap"
+test -x "${PREFIX}/lib/agilex_mocap/vrpn_relay"
+test -f "${PREFIX}/share/agilex_mocap/launch/mocap.launch"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/setup-can0"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/wait-device"
 test ! -e "${PREFIX}/lib/agilex_onboard_autostart/start-imu"
@@ -94,6 +99,7 @@ test -f /lib/systemd/system/xgc2-agilex-base.service
 test -f /lib/systemd/system/xgc2-agilex-communication.service
 test -f /lib/systemd/system/xgc2-agilex-camera.service
 test -f /lib/systemd/system/xgc2-agilex-lidar.service
+test -f /lib/systemd/system/xgc2-agilex-mocap.service
 if id agilex >/dev/null 2>&1; then
   test -e /etc/systemd/system/multi-user.target.wants/xgc2-agilex-base.service
 else
@@ -102,6 +108,7 @@ fi
 test ! -e /etc/systemd/system/multi-user.target.wants/xgc2-agilex-communication.service
 test ! -e /etc/systemd/system/multi-user.target.wants/xgc2-agilex-camera.service
 test ! -e /etc/systemd/system/multi-user.target.wants/xgc2-agilex-lidar.service
+test ! -e /etc/systemd/system/multi-user.target.wants/xgc2-agilex-mocap.service
 test ! -f /lib/systemd/system/xgc2-agilex-onboard.target
 test ! -f /lib/systemd/system/xgc2-roscore.service
 test ! -f /lib/systemd/system/xgc2-agilex-boot-settle.service

@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+"""Relay one VRPN tracker onto local ROS topics.
+
+Every robot: pose / twist / accel, one-for-one after a quality gate.
+PX4 only: also publish /mavros/vision_pose/pose.
+
+Vision rate (target 30 Hz):
+  incoming faster  -> decide per frame, publish immediately or drop
+  incoming slower  -> publish every accepted frame; no zero-order hold
+
+Quality comes from the old mocap_direct_forward / Adapter checks:
+non-finite, degenerate quaternion, (0,0) origin, |xy|>900, jump, frozen.
+"""
+from __future__ import print_function
+
+import math
+import sys
+
+import rospy
+from geometry_msgs.msg import AccelStamped, PoseStamped, TwistStamped
+
+
+def _finite(*values):
+    for value in values:
+        if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+            return False
+        if not isinstance(value, (int, float)):
+            return False
+    return True
+
+
+def pose_quality(msg, reject_origin, max_abs_xy, max_jump_m, last_ok, last_move, frozen_s, now):
+    p = msg.pose.position
+    q = msg.pose.orientation
+    if not _finite(p.x, p.y, p.z, q.x, q.y, q.z, q.w):
+        return False, "nonfinite"
+    norm = math.sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w)
+    if not _finite(norm) or norm < 1e-6:
+        return False, "bad_quat"
+    if reject_origin and p.x == 0.0 and p.y == 0.0:
+        return False, "origin"
+    if max_abs_xy > 0.0 and (abs(p.x) > max_abs_xy or abs(p.y) > max_abs_xy):
+        return False, "abs_xy"
+    if last_ok is not None:
+        lp = last_ok.pose.position
+        jump = math.sqrt(
+            (p.x - lp.x) ** 2 + (p.y - lp.y) ** 2 + (p.z - lp.z) ** 2
+        )
+        if max_jump_m > 0.0 and jump > max_jump_m:
+            return False, "jump"
+    if last_move is not None and frozen_s > 0.0:
+        mp = last_move[0]
+        moved = math.sqrt(
+            (p.x - mp.x) ** 2 + (p.y - mp.y) ** 2 + (p.z - mp.z) ** 2
+        )
+        if moved < 1e-4 and (now - last_move[1]).to_sec() >= frozen_s:
+            return False, "frozen"
+    msg.pose.orientation.x = q.x / norm
+    msg.pose.orientation.y = q.y / norm
+    msg.pose.orientation.z = q.z / norm
+    msg.pose.orientation.w = q.w / norm
+    return True, ""
+
+
+def should_emit_vision(now, last_pub, target_hz):
+    if target_hz <= 0.0 or last_pub is None:
+        return True
+    dt = (now - last_pub).to_sec()
+    if dt < 0.0:
+        return True
+    return dt >= (1.0 / target_hz)
+
+
+def main():
+    rospy.init_node("vrpn_relay")
+    tracker = rospy.get_param("~tracker", "FS150_01")
+    prefix = rospy.get_param("~vrpn_prefix", "/vrpn_client_node")
+    pose_in = rospy.get_param("~pose_in", "{}/{}/pose".format(prefix, tracker))
+    twist_in = rospy.get_param("~twist_in", "{}/{}/twist".format(prefix, tracker))
+    accel_in = rospy.get_param("~accel_in", "{}/{}/accel".format(prefix, tracker))
+    pose_out = rospy.get_param("~pose_out", "/pose")
+    twist_out = rospy.get_param("~twist_out", "/twist")
+    accel_out = rospy.get_param("~accel_out", "/accel")
+    vision_out = rospy.get_param("~vision_out", "")
+    target_hz = float(rospy.get_param("~vision_target_hz", 30.0))
+    reject_origin = bool(rospy.get_param("~reject_origin", True))
+    max_abs_xy = float(rospy.get_param("~max_abs_xy", 900.0))
+    max_jump_m = float(rospy.get_param("~max_jump_m", 2.0))
+    frozen_s = float(rospy.get_param("~frozen_s", 0.5))
+
+    pose_pub = rospy.Publisher(pose_out, PoseStamped, queue_size=1)
+    twist_pub = rospy.Publisher(twist_out, TwistStamped, queue_size=1)
+    accel_pub = rospy.Publisher(accel_out, AccelStamped, queue_size=1)
+    vision_pub = (
+        rospy.Publisher(vision_out, PoseStamped, queue_size=1)
+        if vision_out
+        else None
+    )
+    state = {"last_ok": None, "last_vision": None, "last_move": None}
+
+    def on_pose(msg):
+        now = rospy.Time.now()
+        ok, reason = pose_quality(
+            msg,
+            reject_origin,
+            max_abs_xy,
+            max_jump_m,
+            state["last_ok"],
+            state["last_move"],
+            frozen_s,
+            now,
+        )
+        if not ok:
+            rospy.logwarn_throttle(2.0, "drop vrpn pose: %s", reason)
+            return
+        if msg.header.stamp == rospy.Time():
+            msg.header.stamp = now
+        p = msg.pose.position
+        if state["last_move"] is None:
+            state["last_move"] = (p, now)
+        else:
+            mp = state["last_move"][0]
+            moved = math.sqrt(
+                (p.x - mp.x) ** 2 + (p.y - mp.y) ** 2 + (p.z - mp.z) ** 2
+            )
+            if moved >= 1e-4:
+                state["last_move"] = (p, now)
+        state["last_ok"] = msg
+        pose_pub.publish(msg)
+        if vision_pub is None:
+            return
+        if should_emit_vision(now, state["last_vision"], target_hz):
+            state["last_vision"] = now
+            vision_pub.publish(msg)
+
+    def on_twist(msg):
+        t = msg.twist
+        if not _finite(
+            t.linear.x,
+            t.linear.y,
+            t.linear.z,
+            t.angular.x,
+            t.angular.y,
+            t.angular.z,
+        ):
+            return
+        twist_pub.publish(msg)
+
+    def on_accel(msg):
+        a = msg.accel
+        if not _finite(
+            a.linear.x,
+            a.linear.y,
+            a.linear.z,
+            a.angular.x,
+            a.angular.y,
+            a.angular.z,
+        ):
+            return
+        accel_pub.publish(msg)
+
+    rospy.Subscriber(pose_in, PoseStamped, on_pose, queue_size=1)
+    rospy.Subscriber(twist_in, TwistStamped, on_twist, queue_size=1)
+    rospy.Subscriber(accel_in, AccelStamped, on_accel, queue_size=1)
+    rospy.loginfo(
+        "vrpn_relay tracker=%s pose=%s vision=%s target_hz=%.1f",
+        tracker,
+        pose_out,
+        vision_out or "off",
+        target_hz,
+    )
+    rospy.spin()
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except rospy.ROSInterruptException:
+        sys.exit(0)

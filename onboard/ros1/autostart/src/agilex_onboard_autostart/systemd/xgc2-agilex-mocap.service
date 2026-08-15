@@ -1,0 +1,22 @@
+[Unit]
+Description=XGC2 AgileX VRPN client and pose/twist/accel relay
+After=network.target xgc2-agilex-base.service
+
+[Service]
+Type=simple
+User=agilex
+Group=agilex
+WorkingDirectory=/home/agilex
+EnvironmentFile=-/etc/xgc2/agilex/onboard.env
+Environment=ROS_DISTRO=melodic
+Environment=ROS_MASTER_URI=http://127.0.0.1:11311
+Environment=ROS_IP=127.0.0.1
+Environment=HOME=/home/agilex
+Environment=ROS_HOME=/home/agilex/.ros
+Environment=MOCAP_RIGID_BODY=Scout1
+ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/start-mocap
+Restart=on-failure
+RestartSec=3s
+
+[Install]
+WantedBy=multi-user.target

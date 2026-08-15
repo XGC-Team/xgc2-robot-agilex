@@ -11,6 +11,7 @@ install(PROGRAMS
   scripts/start-base
   scripts/start-camera
   scripts/start-communication
+  scripts/start-mocap
   scripts/start-lidar
   scripts/wait-device
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

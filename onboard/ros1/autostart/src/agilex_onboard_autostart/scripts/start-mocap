@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROS_DISTRO="${ROS_DISTRO:-melodic}"
+ROS_PREFIX="/opt/ros/${ROS_DISTRO}"
+if [[ -f "${ROS_PREFIX}/setup.bash" ]]; then
+  # shellcheck disable=SC1090
+  set +u
+  source "${ROS_PREFIX}/setup.bash"
+  set -u
+fi
+
+export ROS_MASTER_URI="${ROS_MASTER_URI:-http://127.0.0.1:11311}"
+export ROS_IP="${ROS_IP:-127.0.0.1}"
+
+if rospack find agilex_mocap >/dev/null 2>&1; then
+  :
+else
+  echo "agilex mocap: package agilex_mocap not on ROS_PACKAGE_PATH" >&2
+  exit 1
+fi
+
+SERVER="${VRPN_SERVER:-127.0.0.1}"
+PORT="${VRPN_PORT:-3883}"
+TRACKER="${MOCAP_RIGID_BODY:-Scout1}"
+
+echo "xgc2 agilex mocap: ${TRACKER}@${SERVER}:${PORT} (no vision_pose)"
+exec roslaunch agilex_mocap mocap.launch \
+  server:="${SERVER}" \
+  port:="${PORT}" \
+  tracker:="${TRACKER}"

@@ -9,4 +9,5 @@ src/agilex_onboard_autostart
   systemd/xgc2-agilex-communication.service
   systemd/xgc2-agilex-camera.service
   systemd/xgc2-agilex-lidar.service
+  systemd/xgc2-agilex-mocap.service
 ```
