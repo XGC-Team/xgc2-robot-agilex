@@ -32,6 +32,77 @@ jobs:
         with:
           fetch-depth: 2
           submodules: recursive
+  build-debs:
+    name: Build debs (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: arm64-bionic-melodic
+            os: ubuntu-18.04
+            ros_distro: melodic
+            distribution: bionic
+            arch: arm64
+            runner: ubuntu-24.04-arm
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
+          - name: amd64-bionic-melodic
+            os: ubuntu-18.04
+            ros_distro: melodic
+            distribution: bionic
+            arch: amd64
+            runner: ubuntu-latest
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
+          - name: arm64-focal-noetic
+            os: ubuntu-20.04
+            ros_distro: noetic
+            distribution: focal
+            arch: arm64
+            runner: ubuntu-24.04-arm
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
+          - name: amd64-focal-noetic
+            os: ubuntu-20.04
+            ros_distro: noetic
+            distribution: focal
+            arch: amd64
+            runner: ubuntu-latest
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+  build-sensor-debs:
+    name: Build sensor debs (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: arm64-bionic-melodic
+            distribution: bionic
+            arch: arm64
+            runner: ubuntu-24.04-arm
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-full-melodic:1.0.0
+          - name: amd64-bionic-melodic
+            distribution: bionic
+            arch: amd64
+            runner: ubuntu-latest
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-full-melodic:1.0.0
+          - name: arm64-focal-noetic
+            distribution: focal
+            arch: arm64
+            runner: ubuntu-24.04-arm
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-full-noetic:1.0.0
+          - name: amd64-focal-noetic
+            distribution: focal
+            arch: amd64
+            runner: ubuntu-latest
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-full-noetic:1.0.0
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
 
       - name: Check package metadata
         run: |
@@ -72,45 +143,6 @@ jobs:
             --image "${{ matrix.image }}" \
             --work-dir "$RUNNER_TEMP/agilex-onboard-ros1-compliance-${{ matrix.name }}"
 
-  build-debs:
-    name: Build debs (${{ matrix.name }})
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: arm64-bionic-melodic
-            os: ubuntu-18.04
-            ros_distro: melodic
-            distribution: bionic
-            arch: arm64
-            runner: ubuntu-24.04-arm
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
-          - name: amd64-bionic-melodic
-            os: ubuntu-18.04
-            ros_distro: melodic
-            distribution: bionic
-            arch: amd64
-            runner: ubuntu-latest
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-ros-melodic:1.0.0
-          - name: arm64-focal-noetic
-            os: ubuntu-20.04
-            ros_distro: noetic
-            distribution: focal
-            arch: arm64
-            runner: ubuntu-24.04-arm
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
-          - name: amd64-focal-noetic
-            os: ubuntu-20.04
-            ros_distro: noetic
-            distribution: focal
-            arch: amd64
-            runner: ubuntu-latest
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-ros-noetic:1.0.0
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Record build matrix
         run: |
@@ -155,37 +187,6 @@ jobs:
           retention-days: 14
           include-hidden-files: true
 
-  build-sensor-debs:
-    name: Build sensor debs (${{ matrix.name }})
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: arm64-bionic-melodic
-            distribution: bionic
-            arch: arm64
-            runner: ubuntu-24.04-arm
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-full-melodic:1.0.0
-          - name: amd64-bionic-melodic
-            distribution: bionic
-            arch: amd64
-            runner: ubuntu-latest
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-full-melodic:1.0.0
-          - name: arm64-focal-noetic
-            distribution: focal
-            arch: arm64
-            runner: ubuntu-24.04-arm
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-full-noetic:1.0.0
-          - name: amd64-focal-noetic
-            distribution: focal
-            arch: amd64
-            runner: ubuntu-latest
-            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-full-noetic:1.0.0
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Build optional camera and lidar debs
         run: |

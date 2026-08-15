@@ -29,16 +29,6 @@ on:
         required: false
         default: ""
         type: string
-      run_cpp_quality:
-        description: Legacy compatibility input
-        required: false
-        default: false
-        type: boolean
-      run_source_tests:
-        description: Legacy compatibility input
-        required: false
-        default: false
-        type: boolean
 
 defaults:
   run:
@@ -60,15 +50,6 @@ jobs:
         with:
           fetch-depth: 1
           submodules: recursive
-
-      - name: Validate release inputs
-        run: |
-          set -euo pipefail
-          actual_version="$(awk -F': *' '/^version:/ {print $2; exit}' .xgc2/product.yml)"
-          actual_sha="$(git rev-parse HEAD)"
-          test "${actual_version}" = "${{ inputs.expected_version }}"
-          test "${actual_sha}" = "${{ inputs.expected_source_sha }}"
-
   build-debs:
     name: Build debs (${{ matrix.name }})
     needs: validate-release-inputs
@@ -109,6 +90,29 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+
+
+
+      - name: Consume prepare_action
+        env:
+          PREPARE_ACTION: ${{ inputs.prepare_action }}
+        run: |
+          set -euo pipefail
+          case "${PREPARE_ACTION}" in
+            release|compatibility-verify) ;;
+            *)
+              echo "unsupported prepare_action: ${PREPARE_ACTION}" >&2
+              exit 1
+              ;;
+          esac
+      - name: Validate release inputs
+        run: |
+          set -euo pipefail
+          actual_version="$(awk -F': *' '/^version:/ {print $2; exit}' .xgc2/product.yml)"
+          actual_sha="$(git rev-parse HEAD)"
+          test "${actual_version}" = "${{ inputs.expected_version }}"
+          test "${actual_sha}" = "${{ inputs.expected_source_sha }}"
+
 
       - name: Build and install-check deb package
         run: |
