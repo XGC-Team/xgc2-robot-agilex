@@ -16,8 +16,10 @@ ros_package_xml() {
   local ros_pkg="$1"
   local package_xml
   package_xml="$(find \
-    "${REPO_ROOT}/onboard/ros1/base/src" \
+    "${REPO_ROOT}/onboard/ros1/chassis/src" \
     "${REPO_ROOT}/onboard/ros1/communication/src" \
+    "${REPO_ROOT}/onboard/ros1/perception/src" \
+    "${REPO_ROOT}/onboard/ros1/control/src" \
     "${REPO_ROOT}/onboard/ros1/autostart/src" \
     -type f \
     -path "*/${ros_pkg}/package.xml" \
@@ -216,12 +218,9 @@ build_autostart_deb() {
   fi
 
   mkdir -p \
-    "${pkg_root}/etc/udev/rules.d" \
     "${pkg_root}/etc/xgc2/agilex" \
     "${pkg_root}/lib/systemd/system"
 
-  cp -a "${PREFIX_ROOT}/share/${ros_pkg}/udev/99-xgc2-agilex-imu.rules" \
-    "${pkg_root}/etc/udev/rules.d/99-xgc2-agilex-imu.rules"
   cp -a "${PREFIX_ROOT}/share/${ros_pkg}/config/onboard.env" \
     "${pkg_root}/etc/xgc2/agilex/onboard.env"
   cp -a "${PREFIX_ROOT}/share/${ros_pkg}/systemd/"* \
@@ -236,13 +235,12 @@ build_autostart_deb() {
     "${pkg_root}" \
     "${deb_pkg}" \
     "${version}" \
-    "iproute2, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version agilex_swarm_ros_bridge)), ros-${ROS_DISTRO}-xgc2-agilex-mocap (>= $(deb_version agilex_mocap)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
-    "Unified AgileX systemd manager (enables base at boot; other units install-only)" \
-    "$( [[ -e "${PREFIX_ROOT}/share/serial_imu/package.xml" ]] && printf 'ros-%s-xgc2-agilex-serial-imu (>= %s)' "${ROS_DISTRO}" "$(deb_version serial_imu)" )"
+    "iproute2, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version agilex_swarm_ros_bridge)), ros-${ROS_DISTRO}-xgc2-agilex-estimator (>= $(deb_version agilex_estimator)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
+    "Unified AgileX systemd manager (install-only; does not enable or start any unit)" \
+    "ros-${ROS_DISTRO}-xgc2-agilex-serial-imu"
   write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}" "${version}"
 
   cat > "${pkg_root}/DEBIAN/conffiles" <<EOF
-/etc/udev/rules.d/99-xgc2-agilex-imu.rules
 /etc/xgc2/agilex/onboard.env
 EOF
 
@@ -251,11 +249,6 @@ EOF
 set -e
 
 if [ "$1" = "configure" ]; then
-  if command -v udevadm >/dev/null 2>&1; then
-    udevadm control --reload-rules >/dev/null 2>&1 || true
-    udevadm trigger --subsystem-match=tty >/dev/null 2>&1 || true
-  fi
-
   if id agilex >/dev/null 2>&1; then
     usermod -aG dialout agilex >/dev/null 2>&1 || true
   fi
@@ -271,7 +264,7 @@ if [ "$1" = "configure" ]; then
 
   if command -v systemctl >/dev/null 2>&1; then
     systemctl daemon-reload >/dev/null 2>&1 || true
-    # Keep old unit files on disk; only stop them from racing the new base unit.
+    # Keep old unit files on disk; none of the new units are enabled.
     systemctl disable swarm_ros_bridge.service >/dev/null 2>&1 || true
     systemctl disable handsfree_imu.service >/dev/null 2>&1 || true
     systemctl disable turn_on_wheeltec_robot.service >/dev/null 2>&1 || true
@@ -279,12 +272,17 @@ if [ "$1" = "configure" ]; then
     systemctl disable xgc2-roscore.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-boot-settle.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-can0.service >/dev/null 2>&1 || true
-    systemctl disable xgc2-agilex-imu.service >/dev/null 2>&1 || true
-    systemctl disable xgc2-agilex-chassis.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-agilex-base.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-swarm-ros-bridge.service >/dev/null 2>&1 || true
-    if id agilex >/dev/null 2>&1; then
-      systemctl enable xgc2-agilex-base.service >/dev/null 2>&1 || true
-    fi
+    systemctl disable xgc2-agilex-chassis.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-agilex-imu.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-agilex-imu-hi226.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-agilex-communication.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-agilex-swarm-ros-bridge.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-agilex-camera.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-agilex-lidar.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-agilex-lidar-helios16.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-agilex-mocap.service >/dev/null 2>&1 || true
   fi
 fi
 
@@ -297,10 +295,15 @@ set -e
 
 if [ "$1" = "remove" ] || [ "$1" = "deconfigure" ]; then
   if command -v systemctl >/dev/null 2>&1; then
+    systemctl disable xgc2-agilex-chassis.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-agilex-imu.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-agilex-imu-hi226.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-base.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-communication.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-agilex-swarm-ros-bridge.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-camera.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-lidar.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-agilex-lidar-helios16.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-mocap.service >/dev/null 2>&1 || true
   fi
 fi
@@ -327,7 +330,6 @@ EOF
   chmod 0755 "${pkg_root}/DEBIAN/postinst" "${pkg_root}/DEBIAN/prerm" "${pkg_root}/DEBIAN/postrm"
   chmod 0644 "${pkg_root}/usr/share/doc/${deb_pkg}/README"
   find "${pkg_root}/lib/systemd/system" -type f -exec chmod 0644 {} +
-  chmod 0644 "${pkg_root}/etc/udev/rules.d/99-xgc2-agilex-imu.rules"
   chmod 0644 "${pkg_root}/etc/xgc2/agilex/onboard.env"
 
   fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${deb_pkg}_${version}_${ARCH}.deb" >/dev/null
@@ -343,17 +345,21 @@ build_meta_deb() {
     "${pkg_root}" \
     "${deb_pkg}" \
     "${version}" \
-    "ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart (>= ${version}), ros-${ROS_DISTRO}-xgc2-agilex-serial-imu (>= ${version}), ros-${ROS_DISTRO}-xgc2-estimator-rigid-state, ros-${ROS_DISTRO}-xgc2-ugv-controller, xgc2-vrpn-relay" \
-    "XGC2 AgileX vehicle min-boot meta package (no camera/LiDAR)"
+    "ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart (>= ${version}), ros-${ROS_DISTRO}-xgc2-estimator-rigid-state, ros-${ROS_DISTRO}-xgc2-ugv-controller, xgc2-vrpn-relay" \
+    "XGC2 AgileX vehicle min-boot meta package (chassis + bridge; no IMU/camera/LiDAR)" \
+    "ros-${ROS_DISTRO}-xgc2-agilex-serial-imu, ros-${ROS_DISTRO}-xgc2-agilex-rslidar-sdk, ros-${ROS_DISTRO}-xgc2-agilex-onboard-rviz"
 
   cat > "${pkg_root}/usr/share/doc/${deb_pkg}/README" <<EOF
 ${deb_pkg}
 
-Install this meta package on the vehicle. Autostart owns all four units.
-Base is enabled for the next boot when user agilex exists; it is not
-started now. Communication, camera, and lidar stay install-only.
+Install this meta package on the vehicle. Autostart owns the units.
+No unit is enabled or started. Enable them yourself if this host should
+run chassis, IMU, or communication at boot.
 
   sudo apt-get install ${deb_pkg}
+  sudo apt-get install ros-${ROS_DISTRO}-xgc2-agilex-serial-imu
+  # sudo systemctl enable xgc2-agilex-chassis.service
+  # sudo systemctl enable xgc2-agilex-imu-hi226.service
 EOF
 
   find "${pkg_root}" -type d -exec chmod 0755 {} +
@@ -363,17 +369,6 @@ EOF
 
   fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${deb_pkg}_${version}_${ARCH}.deb" >/dev/null
 }
-
-if [[ -e "${PREFIX_ROOT}/share/serial_imu/package.xml" ]]; then
-  build_deb \
-    "ros-${ROS_DISTRO}-xgc2-agilex-serial-imu" \
-    "serial_imu" \
-    "ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-serial, ros-${ROS_DISTRO}-std-msgs" \
-    "AgileX onboard serial IMU driver from the vehicle tree" \
-    "lib/serial_imu/serial_imu"
-else
-  echo "skip serial_imu: not installed in ${PREFIX_ROOT}"
-fi
 
 build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-wrp-io" \
@@ -456,10 +451,16 @@ EOF
 }
 
 build_deb \
-  "ros-${ROS_DISTRO}-xgc2-agilex-mocap" \
-  "agilex_mocap" \
-  "ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy, xgc2-vrpn-relay" \
-  "AgileX assembly of shared xgc2-vrpn-relay (pose_0, no PX4 vision_pose)"
+  "ros-${ROS_DISTRO}-xgc2-agilex-estimator" \
+  "agilex_estimator" \
+  "ros-${ROS_DISTRO}-roslaunch, xgc2-vrpn-relay, ros-${ROS_DISTRO}-xgc2-estimator-rigid-state" \
+  "AgileX perception: VRPN mocap plus rigid-state estimator"
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-nmpc" \
+  "agilex_nmpc" \
+  "ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-xgc2-agilex-estimator (>= $(deb_version agilex_estimator)), ros-${ROS_DISTRO}-xgc2-ugv-controller" \
+  "AgileX control: estimator plus unicycle NMPC"
 
 build_chassis_deb() {
   local deb_pkg="ros-${ROS_DISTRO}-xgc2-agilex-chassis"
@@ -477,11 +478,11 @@ build_chassis_deb() {
   cat > "${pkg_root}/usr/share/doc/${deb_pkg}/README" <<EOF
 ${deb_pkg}
 
-Chassis stack for hosts without an IMU. Does not pull serial_imu.
+Chassis stack. Does not pull serial_imu. Autostart stays install-only.
 
   sudo apt-get install ${deb_pkg}
   sudo apt-get install ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart
-  # then set IMU_REQUIRED=0 in /etc/xgc2/agilex/onboard.env
+  # sudo systemctl enable xgc2-agilex-chassis.service
 EOF
 
   find "${pkg_root}" -type d -exec chmod 0755 {} +

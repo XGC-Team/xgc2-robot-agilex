@@ -1,4 +1,0 @@
-<launch>
-  <node pkg="rviz" type="rviz" name="agilex_sensors_rviz"
-        args="-d $(find agilex_onboard_sensors)/rviz/sensors.rviz"/>
-</launch>

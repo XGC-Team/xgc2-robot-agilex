@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROS_DISTRO="${ROS_DISTRO:-melodic}"
+ROS_PREFIX="/opt/ros/${ROS_DISTRO}"
+# shellcheck disable=SC1091
+source "${ROS_PREFIX}/setup.bash"
+
+export ROS_MASTER_URI="${ROS_MASTER_URI:-http://127.0.0.1:11311}"
+export ROS_IP="${ROS_IP:-127.0.0.1}"
+
+sec="${IMU_SETTLE_SEC:-2}"
+echo "xgc2 agilex imu-hi226: settle ${sec}s"
+sleep "${sec}"
+
+"${ROS_PREFIX}/lib/agilex_onboard_autostart/wait-device" \
+  "${IMU_DEVICE:-/dev/imu}" \
+  --timeout "${IMU_DEVICE_WAIT_TIMEOUT:-90}"
+
+exec roslaunch agilex_onboard_autostart imu-hi226.launch

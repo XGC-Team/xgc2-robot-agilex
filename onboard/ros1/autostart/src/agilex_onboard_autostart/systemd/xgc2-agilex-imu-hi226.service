@@ -1,0 +1,30 @@
+[Unit]
+Description=XGC2 AgileX optional HI226 serial IMU
+After=network.target systemd-udevd.service xgc2-agilex-chassis.service
+StartLimitIntervalSec=0
+# Install-only. Enable on hosts that have the HI226 /dev/imu accessory.
+
+[Service]
+Type=simple
+User=agilex
+Group=agilex
+SupplementaryGroups=dialout
+WorkingDirectory=/home/agilex
+EnvironmentFile=-/etc/xgc2/agilex/onboard.env
+Environment=ROS_DISTRO=melodic
+Environment=ROS_MASTER_URI=http://127.0.0.1:11311
+Environment=ROS_IP=127.0.0.1
+Environment=HOME=/home/agilex
+Environment=ROS_HOME=/home/agilex/.ros
+Environment=IMU_SETTLE_SEC=2
+Environment=IMU_DEVICE=/dev/imu
+Environment=IMU_DEVICE_WAIT_TIMEOUT=90
+ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/start-imu-hi226
+Restart=always
+RestartSec=5
+TimeoutStartSec=180
+TimeoutStopSec=15
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target

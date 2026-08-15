@@ -29,14 +29,32 @@ jobs:
           set -euo pipefail
           git diff --check HEAD
           test ! -e onboard/ros1/src
-          test ! -e onboard/ros1/base/src/autostart
-          test ! -e onboard/ros1/base/src/communication
-          test ! -e onboard/ros1/base/src/sensors
-          test ! -e onboard/ros1/base/src/chassis/scout_description
-          test -d onboard/ros1/base/src
+          test ! -e onboard/ros1/base
+          test ! -e onboard/ros1/chassis/src/autostart
+          test ! -e onboard/ros1/chassis/src/communication
+          test ! -e onboard/ros1/chassis/src/sensors
+          test ! -e onboard/ros1/chassis/src/imu
+          test ! -e onboard/ros1/chassis/src/scout_description
+          test ! -e onboard/ros1/communication/src/agilex_mocap
+          test ! -e onboard/ros1/sensors/src/agilex_mocap
+          test ! -e onboard/ros1/sensors/src/viz
+          test ! -e onboard/ros1/sensors/src/agilex_onboard_sensors
+          test ! -e onboard/ros1/autostart/src/agilex_onboard_autostart/launch/base.launch
+          test -d onboard/ros1/chassis/src
           test -d onboard/ros1/communication/src
+          test -d onboard/ros1/perception/src
+          test ! -e onboard/ros1/perception/src/agilex_mocap
+          test -f onboard/ros1/perception/src/agilex_estimator/package.xml
+          test -d onboard/ros1/control/src
+          test -f onboard/ros1/control/src/agilex_nmpc/package.xml
           test -d onboard/ros1/autostart/src
           test -d onboard/ros1/sensors/src
+          test ! -e onboard/ros1/sensors/src/camera
+          test -d onboard/ros1/sensors/src/lidar/rslidar_sdk
+          test -d onboard/ros1/sensors/src/imu/serial_imu
+          test -d onboard/ros1/visualization/src
+          test -f onboard/ros1/visualization/src/agilex_onboard_rviz/package.xml
+          test ! -e onboard/ros1/visualization/src/agilex_onboard_viz
           test ! -e .gitmodules
           bash -n .xgc2/scripts/build_debs_in_docker.sh
           bash -n .xgc2/scripts/build_sensor_debs_in_docker.sh
@@ -51,18 +69,43 @@ jobs:
           from pathlib import Path
           import xml.etree.ElementTree as ET
           roots = [
-              Path("onboard/ros1/base/src"),
+              Path("onboard/ros1/chassis/src"),
               Path("onboard/ros1/communication/src"),
+              Path("onboard/ros1/perception/src"),
+              Path("onboard/ros1/control/src"),
               Path("onboard/ros1/autostart/src"),
               Path("onboard/ros1/sensors/src"),
+              Path("onboard/ros1/visualization/src"),
           ]
           files = []
+          names = set()
           for root in roots:
-              files.extend(root.rglob("package.xml"))
+              for path in root.rglob("package.xml"):
+                  files.append(path)
+                  name = ET.parse(path).getroot().findtext("name")
+                  if name:
+                      names.add(name)
               files.extend(root.rglob("*.launch"))
           for path in files:
               ET.parse(path)
-          print(f"parsed {len(files)} xml files")
+          declared = []
+          in_packages = False
+          for line in Path(".xgc2/product.yml").read_text(encoding="utf-8").splitlines():
+              if line.startswith("  packages:"):
+                  in_packages = True
+                  continue
+              if in_packages:
+                  if line.startswith("  - "):
+                      declared.append(line[4:].strip())
+                  elif line and not line.startswith("   "):
+                      break
+          missing = sorted(names - set(declared))
+          extra = sorted(set(declared) - names)
+          if missing or extra:
+              raise SystemExit(
+                  f"product.yml ros.packages mismatch missing={missing} extra={extra}"
+              )
+          print(f"parsed {len(files)} xml files; {len(declared)} train packages")
           PY
 
   build-debs:
@@ -182,7 +225,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Build camera and lidar debs
+      - name: Build IMU, camera, and lidar debs
         run: |
           .xgc2/scripts/build_sensor_debs_in_docker.sh \
             --image "${{ matrix.image }}" \
@@ -190,11 +233,11 @@ jobs:
             --output-dir "$GITHUB_WORKSPACE/debs-sensors"
       - name: Create trusted build manifest
         run: |
-          product_version="$(awk -F': *' '/^version:/ {print $2; exit}' .xgc2/sensors.yml)"
+          product_version="$(awk -F': *' '/^version:/ {print $2; exit}' .xgc2/product.yml)"
           python3 .xgc2/scripts/xgc2_artifact_manifest.py build \
             --deb-dir debs-sensors \
             --output-dir .ci/build-manifests \
-            --product xgc2-agilex-onboard-sensors \
+            --product xgc2-agilex-onboard-ros1 \
             --product-version "$product_version" \
             --distribution "${{ matrix.distribution }}" \
             --architecture "${{ matrix.arch }}" \

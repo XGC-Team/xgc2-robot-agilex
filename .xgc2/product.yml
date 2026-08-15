@@ -1,25 +1,29 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-ros1
 name: XGC2 AgileX Onboard ROS1
-version: 0.2.0-16
+version: 0.2.0-18
 kind: ros1-apt
-summary: Vehicle-true AgileX Scout Mini minimum runtime (IMU, chassis, and
-  ground-station bridge) for Melodic and Noetic.
+summary: Vehicle-true AgileX Scout Mini onboard runtime for Melodic and
+  Noetic. Chassis, bridge, perception, control, and autostart are the
+  install set; IMU, Helios 16, and RViz are optional published packages.
 groups:
 - robotics
 - agilex
 - onboard
 ros:
   distro: melodic,noetic
-  workspace: onboard/ros1/base
+  workspace: onboard/ros1
   packages:
-  - serial_imu
   - wrp_io
   - ugv_sdk
   - scout_base
   - agilex_swarm_ros_bridge
-  - agilex_mocap
+  - agilex_estimator
+  - agilex_nmpc
   - agilex_onboard_autostart
+  - serial_imu
+  - rslidar_sdk
+  - agilex_onboard_rviz
 apt:
   distribution: bionic,focal
   install:
@@ -27,22 +31,28 @@ apt:
   packages:
   - ros-melodic-xgc2-agilex
   - ros-melodic-xgc2-agilex-chassis
-  - ros-melodic-xgc2-agilex-serial-imu
   - ros-melodic-xgc2-agilex-wrp-io
   - ros-melodic-xgc2-agilex-ugv-sdk
   - ros-melodic-xgc2-agilex-scout-base
   - ros-melodic-xgc2-agilex-swarm-ros-bridge
-  - ros-melodic-xgc2-agilex-mocap
+  - ros-melodic-xgc2-agilex-estimator
+  - ros-melodic-xgc2-agilex-nmpc
   - ros-melodic-xgc2-agilex-onboard-autostart
+  - ros-melodic-xgc2-agilex-serial-imu
+  - ros-melodic-xgc2-agilex-rslidar-sdk
+  - ros-melodic-xgc2-agilex-onboard-rviz
   - ros-noetic-xgc2-agilex
   - ros-noetic-xgc2-agilex-chassis
-  - ros-noetic-xgc2-agilex-serial-imu
   - ros-noetic-xgc2-agilex-wrp-io
   - ros-noetic-xgc2-agilex-ugv-sdk
   - ros-noetic-xgc2-agilex-scout-base
   - ros-noetic-xgc2-agilex-swarm-ros-bridge
-  - ros-noetic-xgc2-agilex-mocap
+  - ros-noetic-xgc2-agilex-estimator
+  - ros-noetic-xgc2-agilex-nmpc
   - ros-noetic-xgc2-agilex-onboard-autostart
+  - ros-noetic-xgc2-agilex-serial-imu
+  - ros-noetic-xgc2-agilex-rslidar-sdk
+  - ros-noetic-xgc2-agilex-onboard-rviz
   depends:
   - ros-melodic-scout-msgs
   - ros-noetic-scout-msgs
@@ -59,7 +69,6 @@ apt:
   - ros-melodic-roslaunch
   - ros-melodic-rospy
   - ros-melodic-sensor-msgs
-  - ros-melodic-serial
   - ros-melodic-std-msgs
   - ros-melodic-tf
   - ros-melodic-tf2
@@ -69,8 +78,6 @@ apt:
   - iproute2
   - systemd
   - udev
-  - xgc2-utils-linux-timezone
-  - xgc2-utils-linux-performance-mode
   - xgc2-vrpn-relay
   - ros-melodic-xgc2-estimator-rigid-state
   - ros-noetic-xgc2-estimator-rigid-state
@@ -87,11 +94,8 @@ usage:
     sudo apt install ros-noetic-xgc2-agilex-chassis
     sudo apt install ros-noetic-xgc2-agilex-onboard-autostart
   smoke_test: |
-    rospack find serial_imu
     rospack find scout_msgs
     rospack find scout_base
-    roslaunch --files agilex_onboard_autostart base.launch
-    roslaunch --files agilex_onboard_autostart imu.launch
     roslaunch --files agilex_onboard_autostart chassis.launch
     test -f "$(rospack find scout_description)/urdf/scout_visual.urdf"
     rospack find swarm_ros_bridge
@@ -107,5 +111,5 @@ release:
     xgc2-estimator-rigid-state: verify
     xgc2-ugv-controller: verify
   apt_versions:
-    bionic: 0.2.0-16
-    focal: 0.2.0-16
+    bionic: 0.2.0-18
+    focal: 0.2.0-18

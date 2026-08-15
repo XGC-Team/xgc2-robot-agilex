@@ -90,9 +90,11 @@ if [[ "${BUILD_PACKAGES}" == "true" ]]; then
     /workspace/agilex/.xgc2/scripts/install_local_xgc2_debs.sh
 
     rm -rf /workspace/work/build /workspace/work/devel /workspace/work/install-root /workspace/work/src
-    mkdir -p /workspace/work/src/agilex-onboard /workspace/work/src/agilex-communication /workspace/work/src/agilex-autostart
-    rsync -a --delete /workspace/agilex/onboard/ros1/base/src/ /workspace/work/src/agilex-onboard/
+    mkdir -p /workspace/work/src/agilex-chassis /workspace/work/src/agilex-communication /workspace/work/src/agilex-perception /workspace/work/src/agilex-control /workspace/work/src/agilex-autostart
+    rsync -a --delete /workspace/agilex/onboard/ros1/chassis/src/ /workspace/work/src/agilex-chassis/
     rsync -a --delete /workspace/agilex/onboard/ros1/communication/src/ /workspace/work/src/agilex-communication/
+    rsync -a --delete /workspace/agilex/onboard/ros1/perception/src/ /workspace/work/src/agilex-perception/
+    rsync -a --delete /workspace/agilex/onboard/ros1/control/src/ /workspace/work/src/agilex-control/
     rsync -a --delete /workspace/agilex/onboard/ros1/autostart/src/ /workspace/work/src/agilex-autostart/
 
     cd /workspace/work
@@ -151,7 +153,9 @@ if [[ "${INSTALL_CHECK}" == "true" ]]; then
         ls -la /workspace/out >&2 || true
         exit 1
       fi
-      dpkg -i "${agilex_debs[@]}" "${agilex_meta[@]}"
+      # Sibling estimator/VRPN/NMPC debs are verified on the release train.
+      # The closed build image only needs AgileX file layout checks.
+      dpkg -i --force-depends "${agilex_debs[@]}" "${agilex_meta[@]}"
       /workspace/agilex/.xgc2/scripts/check_installed_packages.sh
     '
 fi

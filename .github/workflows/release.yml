@@ -144,3 +144,83 @@ jobs:
             .ci/build-manifests/*.json
           retention-days: 14
           include-hidden-files: true
+
+  build-sensor-debs:
+    name: Build sensor debs (${{ matrix.name }})
+    needs: validate-release-inputs
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: arm64-bionic-melodic
+            distribution: bionic
+            arch: arm64
+            runner: ubuntu-24.04-arm
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-full-melodic:1.0.0
+          - name: amd64-bionic-melodic
+            distribution: bionic
+            arch: amd64
+            runner: ubuntu-latest
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-bionic-full-melodic:1.0.0
+          - name: arm64-focal-noetic
+            distribution: focal
+            arch: arm64
+            runner: ubuntu-24.04-arm
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-full-noetic:1.0.0
+          - name: amd64-focal-noetic
+            distribution: focal
+            arch: amd64
+            runner: ubuntu-latest
+            image: ghcr.io/xgc-team/xgc2-images/xgc2-build-focal-full-noetic:1.0.0
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Consume prepare_action
+        env:
+          PREPARE_ACTION: ${{ inputs.prepare_action }}
+        run: |
+          set -euo pipefail
+          case "${PREPARE_ACTION}" in
+            release|compatibility-verify) ;;
+            *)
+              echo "unsupported prepare_action: ${PREPARE_ACTION}" >&2
+              exit 1
+              ;;
+          esac
+      - name: Validate release inputs
+        run: |
+          set -euo pipefail
+          actual_version="$(awk -F': *' '/^version:/ {print $2; exit}' .xgc2/product.yml)"
+          actual_sha="$(git rev-parse HEAD)"
+          test "${actual_version}" = "${{ inputs.expected_version }}"
+          test "${actual_sha}" = "${{ inputs.expected_source_sha }}"
+      - name: Build IMU, lidar, and RViz debs
+        run: |
+          .xgc2/scripts/build_sensor_debs_in_docker.sh \
+            --image "${{ matrix.image }}" \
+            --work-dir "$RUNNER_TEMP/xgc2-agilex-sensors-${{ matrix.name }}" \
+            --output-dir "$GITHUB_WORKSPACE/debs-sensors"
+      - name: Create release-train build manifest
+        run: |
+          python3 .xgc2/scripts/xgc2_artifact_manifest.py build \
+            --deb-dir debs-sensors \
+            --output-dir .ci/build-manifests \
+            --product xgc2-agilex-onboard-ros1 \
+            --product-version "${{ inputs.expected_version }}" \
+            --distribution "${{ matrix.distribution }}" \
+            --architecture "${{ matrix.arch }}" \
+            --source-sha "${{ inputs.expected_source_sha }}" \
+            --ci-run-id "$GITHUB_RUN_ID" \
+            --ci-workflow "$GITHUB_WORKFLOW" \
+            --ci-workflow-ref "$GITHUB_WORKFLOW_REF"
+      - name: Upload sensor deb artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: xgc2-agilex-onboard-sensors-debs-${{ matrix.name }}
+          path: |
+            debs-sensors/*.deb
+            .ci/build-manifests/*.json
+          retention-days: 14
+          include-hidden-files: true

@@ -1,0 +1,28 @@
+<launch>
+  <!-- RViz is fixed on world / base_link / rslidar / estimator.
+       tracker only goes to the VRPN relay. Does not publish /cmd_vel. -->
+  <arg name="tracker" default="pose_0" />
+  <arg name="world_frame" default="world" />
+  <arg name="mocap_frame" default="base_link" />
+  <arg name="lidar_x" default="0" />
+  <arg name="lidar_y" default="0" />
+  <arg name="lidar_z" default="0" />
+  <arg name="lidar_yaw" default="0" />
+  <arg name="lidar_pitch" default="0" />
+  <arg name="lidar_roll" default="0" />
+
+  <node pkg="agilex_onboard_rviz" type="vrpn_viz_tf" name="vrpn_viz_tf" output="screen">
+    <param name="tracker" value="$(arg tracker)" />
+    <param name="world_frame" value="$(arg world_frame)" />
+    <param name="mocap_frame" value="$(arg mocap_frame)" />
+    <param name="pose_raw_topic" value="/pose_raw" />
+  </node>
+
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_rslidar"
+        args="$(arg lidar_x) $(arg lidar_y) $(arg lidar_z)
+              $(arg lidar_yaw) $(arg lidar_pitch) $(arg lidar_roll)
+              $(arg mocap_frame) rslidar 100" />
+
+  <node pkg="rviz" type="rviz" name="agilex_rviz"
+        args="-d $(find agilex_onboard_rviz)/rviz/viz.rviz" />
+</launch>

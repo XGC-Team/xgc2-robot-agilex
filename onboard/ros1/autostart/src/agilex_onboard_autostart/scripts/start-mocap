@@ -13,10 +13,10 @@ fi
 export ROS_MASTER_URI="${ROS_MASTER_URI:-http://127.0.0.1:11311}"
 export ROS_IP="${ROS_IP:-127.0.0.1}"
 
-if rospack find agilex_mocap >/dev/null 2>&1; then
+if rospack find agilex_estimator >/dev/null 2>&1; then
   :
 else
-  echo "agilex mocap: package agilex_mocap not on ROS_PACKAGE_PATH" >&2
+  echo "agilex mocap: package agilex_estimator not on ROS_PACKAGE_PATH" >&2
   exit 1
 fi
 
@@ -25,7 +25,7 @@ PORT="${VRPN_PORT:-3883}"
 TRACKER="${MOCAP_RIGID_BODY:-pose_0}"
 
 echo "xgc2 agilex mocap: ${TRACKER}@${SERVER}:${PORT} (no vision_pose)"
-exec roslaunch agilex_mocap mocap.launch \
+exec roslaunch agilex_estimator mocap.launch \
   server:="${SERVER}" \
   port:="${PORT}" \
   tracker:="${TRACKER}"

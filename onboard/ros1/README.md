@@ -1,25 +1,30 @@
 # Onboard ROS1 workspaces
 
-Four sibling workspaces. Sensors stay out of the min-boot compile.
+Seven sibling workspaces.
 
 ```text
-base/src/                chassis stack
-  imu/                   serial_imu
-  chassis/               wrp_io, ugv_sdk, scout_base
+chassis/src/             wrp_io, ugv_sdk, scout_base
                          (scout_msgs and scout_description come from APT)
 
 communication/src/       agilex_swarm_ros_bridge (YAML+launch+relay)
                          official swarm_ros_bridge from APT
 
-autostart/src/           agilex_onboard_autostart
-                         base systemd, udev, compose launches (install only)
+perception/src/          agilex_estimator
+                         (mocap.launch + estimator.launch)
 
-sensors/src/             xgc2-agilex-onboard-sensors
-  rslidar_sdk
-  agilex_d435_media
-  agilex_onboard_sensors
-                         (D435 ROS driver is XGC-Team/xgc2-camera-d435)
+control/src/             agilex_nmpc
+                         (shared unicycle NMPC)
+
+sensors/src/             hardware drivers only
+  lidar/rslidar_sdk
+  imu/serial_imu
+                         (D435 driver is shared xgc2-camera-d435)
+
+visualization/src/       agilex_onboard_rviz
+
+autostart/src/           agilex_onboard_autostart
+                         chassis/IMU/comm/camera/lidar/mocap/WebRTC compose
+                         and units (install only)
 ```
 
-All four units are owned by `autostart`. Min-boot apt installs them all
-and enables only `xgc2-agilex-base.service` for the next boot.
+Autostart owns every unit. Apt installs them and enables none.

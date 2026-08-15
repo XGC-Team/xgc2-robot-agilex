@@ -1,5 +1,0 @@
-<launch>
-  <include file="$(find agilex_d435_media)/launch/fallback_webrtc.launch"/>
-  <include file="$(find agilex_d435_media)/launch/fallback_webrtc_depth.launch"/>
-  <include file="$(find agilex_d435_media)/launch/fallback_webrtc_infra.launch"/>
-</launch>

@@ -1,28 +1,9 @@
 # AgileX ROS1 sensors
 
-Optional D435i + Helios 16 + Media Edge assembly.
-systemd lives in `autostart`. Not min-boot.
-
-## Video path
+Optional serial IMU and Helios 16 drivers. Camera capture is the shared
+`xgc2-camera-d435` product. Not visualization and not min-boot.
 
 ```text
-preferred  native capture owner
-           xgc_native_v4l2_rtp  OR  gazebo_sim_camera
-           -> loopback H264/RTP + control socket
-           -> xgc-media-edge -> WebRTC
-
-last resort  another process already holds the camera
-             ros_fallback_rtp / ros_image_rtp_adapter
-             (ROS Image subscribe + re-encode)
+src/lidar/rslidar_sdk
+src/imu/serial_imu
 ```
-
-`camera.launch` includes the shared `xgc2_camera_d435` product, which
-starts `realsense2_camera`. That process owns USB. While it is running,
-WebRTC must use `fallback_webrtc*.launch`. To use the native path, stop
-RealSense first:
-
-```bash
-roslaunch agilex_onboard_sensors webrtc.launch
-```
-
-Do not run RealSense and `xgc_native_v4l2_rtp` on the same device.

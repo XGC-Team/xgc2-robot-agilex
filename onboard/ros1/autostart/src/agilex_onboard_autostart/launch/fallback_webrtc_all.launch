@@ -1,0 +1,5 @@
+<launch>
+  <include file="$(find agilex_onboard_autostart)/launch/fallback_webrtc.launch" />
+  <include file="$(find agilex_onboard_autostart)/launch/fallback_webrtc_depth.launch" />
+  <include file="$(find agilex_onboard_autostart)/launch/fallback_webrtc_infra.launch" />
+</launch>

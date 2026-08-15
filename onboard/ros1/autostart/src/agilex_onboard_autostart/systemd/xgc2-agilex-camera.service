@@ -1,6 +1,6 @@
 [Unit]
 Description=XGC2 AgileX D435i camera
-After=network.target systemd-udevd.service xgc2-agilex-base.service
+After=network.target systemd-udevd.service xgc2-agilex-chassis.service
 
 [Service]
 Type=simple

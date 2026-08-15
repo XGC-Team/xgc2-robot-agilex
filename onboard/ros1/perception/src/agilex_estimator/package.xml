@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>agilex_estimator</name>
+  <version>0.1.0</version>
+  <description>AgileX perception assembly: VRPN mocap plus rigid-state estimator. Does not start NMPC or publish /cmd_vel.</description>
+  <maintainer email="apt@example.com">XGC2</maintainer>
+  <license>Proprietary</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>estimator_vrpn_ugv_state</exec_depend>
+  <exec_depend>roslaunch</exec_depend>
+  <exec_depend>xgc2_vrpn_relay</exec_depend>
+</package>

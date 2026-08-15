@@ -1,10 +1,10 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-sensors
 name: XGC2 AgileX Onboard Sensors
-version: 0.1.0-2
+version: 0.2.0-18
 kind: ros1-apt
-summary: Optional D435i and RoboSense Helios 16 runtime. Not part of the
-  minimum boot target.
+summary: Optional serial IMU, RoboSense Helios 16, and onboard RViz. Built
+  by the same product train as chassis; not part of the min-boot meta.
 groups:
 - robotics
 - agilex
@@ -13,33 +13,36 @@ ros:
   distro: melodic,noetic
   workspace: onboard/ros1/sensors
   packages:
+  - serial_imu
   - rslidar_sdk
-  - agilex_d435_media
-  - agilex_onboard_sensors
+  - agilex_onboard_rviz
 apt:
   distribution: bionic,focal
   install:
-  - ros-melodic-xgc2-agilex-onboard-sensors
+  - ros-melodic-xgc2-agilex-serial-imu
+  - ros-melodic-xgc2-agilex-onboard-rviz
   packages:
+  - ros-melodic-xgc2-agilex-serial-imu
   - ros-melodic-xgc2-agilex-rslidar-sdk
-  - ros-melodic-xgc2-agilex-d435-media
-  - ros-melodic-xgc2-agilex-onboard-sensors
+  - ros-melodic-xgc2-agilex-onboard-rviz
+  - ros-noetic-xgc2-agilex-serial-imu
   - ros-noetic-xgc2-agilex-rslidar-sdk
-  - ros-noetic-xgc2-agilex-d435-media
-  - ros-noetic-xgc2-agilex-onboard-sensors
+  - ros-noetic-xgc2-agilex-onboard-rviz
 vehicle:
   os: ubuntu-18.04
   ros_distro: melodic
   arch: arm64
 usage:
   install: |
-    sudo apt install ros-melodic-xgc2-agilex-onboard-sensors
+    sudo apt install ros-melodic-xgc2-agilex-serial-imu
+    sudo apt install ros-melodic-xgc2-agilex-onboard-rviz
   smoke_test: |
-    roslaunch --files agilex_onboard_sensors camera.launch
-    roslaunch --files agilex_onboard_sensors lidar.launch
-    test -f "$(rospack find agilex_onboard_sensors)/rviz/sensors.rviz"
+    rospack find serial_imu
+    roslaunch --files serial_imu imu_msg.launch
+    roslaunch --files agilex_onboard_rviz rviz.launch
+    test -f "$(rospack find agilex_onboard_rviz)/rviz/viz.rviz"
 release:
-  workflow: ci.yml
+  workflow: release.yml
   apt_versions:
-    bionic: 0.1.0-2
-    focal: 0.1.0-2
+    bionic: 0.2.0-18
+    focal: 0.2.0-18

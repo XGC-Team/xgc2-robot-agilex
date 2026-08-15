@@ -32,6 +32,8 @@ docker run --rm --network none \
       "ros-${ROS_DISTRO}-cv-bridge" \
       "ros-${ROS_DISTRO}-image-transport" \
       "ros-${ROS_DISTRO}-pcl-ros" \
+      "ros-${ROS_DISTRO}-serial" \
+      "ros-${ROS_DISTRO}-sensor-msgs" \
       libpcl-dev \
       libyaml-cpp-dev
     do
@@ -42,8 +44,9 @@ docker run --rm --network none \
     done
 
     rm -rf /workspace/work/build /workspace/work/devel /workspace/work/install-root /workspace/work/src
-    mkdir -p /workspace/work/src/agilex-sensors
+    mkdir -p /workspace/work/src/agilex-sensors /workspace/work/src/agilex-visualization
     rsync -a --delete /workspace/agilex/onboard/ros1/sensors/src/ /workspace/work/src/agilex-sensors/
+    rsync -a --delete /workspace/agilex/onboard/ros1/visualization/src/ /workspace/work/src/agilex-visualization/
 
     cd /workspace/work
     set +u
@@ -61,3 +64,8 @@ docker run --rm --network none \
 
 echo "Sensor Debian package output:"
 find "${OUTPUT_DIR}" -maxdepth 1 -type f -name "*.deb" -print | sort
+sensor_count="$(find "${OUTPUT_DIR}" -maxdepth 1 -type f -name "ros-*-xgc2-agilex-*.deb" | wc -l)"
+if [[ "${sensor_count}" -ne 3 ]]; then
+  echo "expected 3 AgileX sensor debs, found ${sensor_count}" >&2
+  exit 1
+fi

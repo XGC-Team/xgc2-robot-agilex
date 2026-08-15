@@ -1,0 +1,12 @@
+<launch>
+  <!-- UGV: VRPN client only. Do not relay onto /pose, /ugv/pose, or vision_pose. -->
+  <arg name="server" default="127.0.0.1" />
+  <arg name="port" default="3883" />
+  <arg name="tracker" default="pose_0" />
+
+  <include file="$(find xgc2_vrpn_relay)/launch/vrpn.launch">
+    <arg name="server" value="$(arg server)" />
+    <arg name="port" value="$(arg port)" />
+    <arg name="tracker" value="$(arg tracker)" />
+  </include>
+</launch>

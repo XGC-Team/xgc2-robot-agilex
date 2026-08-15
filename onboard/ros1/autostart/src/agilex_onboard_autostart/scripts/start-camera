@@ -13,4 +13,4 @@ sec="${CAMERA_SETTLE_SEC:-5}"
 echo "xgc2 agilex camera: settle ${sec}s"
 sleep "${sec}"
 
-exec roslaunch agilex_onboard_sensors camera.launch
+exec roslaunch agilex_onboard_autostart camera.launch

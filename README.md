@@ -3,10 +3,11 @@
 Vehicle-true ROS Melodic runtime for the AgileX Scout Mini onboard computer.
 
 Source of truth is the Xavier copy under `/home/agilex`. This repository keeps
-the minimum boot graph only: IMU and chassis in `onboard/ros1/base`,
-the ground-station bridge in `onboard/ros1/communication`, plus
-install-only systemd units in `onboard/ros1/autostart`. Camera and LiDAR
-are a fourth workspace, `onboard/ros1/sensors`. Chassis messages and the Mini visual/TF model come from
+the chassis in `onboard/ros1/chassis`, the ground-station bridge in
+`onboard/ros1/communication`, mocap in `onboard/ros1/perception`, plus
+install-only systemd units in `onboard/ros1/autostart`. IMU, camera, and
+LiDAR drivers live in `onboard/ros1/sensors`. RViz and compose launches
+live in `onboard/ros1/visualization`. Chassis messages and the Mini visual/TF model come from
 the published `xgc2-scout-msgs` and `xgc2-scout-description` packages.
 
 ## Vehicle
@@ -19,35 +20,37 @@ the published `xgc2-scout-msgs` and `xgc2-scout-description` packages.
 | ROS | Melodic |
 | Arch | arm64 |
 
-All four systemd units live in `agilex_onboard_autostart`.
-`apt install ros-melodic-xgc2-agilex` installs them all. On the vehicle,
-base is enabled for the next boot. Communication, camera, and lidar stay
-install-only until an operator enables them. Camera/lidar still need the
-sensors package before those two units can actually start.
+All systemd units live in `agilex_onboard_autostart`.
+`apt install ros-melodic-xgc2-agilex` installs chassis, bridge, and
+autostart. No unit is enabled or started. IMU, camera, and lidar still
+need the matching sensors packages before those units can actually start.
 
 ```text
-xgc2-agilex-base.service
-  start-base: settle, wait /dev/imu, wait can0 UP
+xgc2-agilex-chassis.service
+  start-chassis: settle, wait can0 UP
   ExecStartPre setup-can0 @ 500000
-  agilex_onboard_autostart/base.launch
-    imu.launch      -> serial_imu  /imu/data
-    chassis.launch  -> scout_base_node + scout_visual.urdf TF
-xgc2-agilex-communication.service
-  start-communication: wait /imu/data and /scout_status
+  agilex_onboard_autostart/chassis.launch
+    scout_base_node + scout_visual.urdf TF
+xgc2-agilex-imu-hi226.service
+  start-imu-hi226: wait /dev/imu
+  agilex_onboard_autostart/imu-hi226.launch -> /imu/data
+xgc2-agilex-swarm-ros-bridge.service
+  start-swarm-ros-bridge: wait /scout_status; wait /imu/data if present
   agilex_swarm_ros_bridge/swarm.launch
     /imu/data Imu 30 Hz :3001
     /scout/twist Twist 1 Hz :3002
     /scout/status_text String 1 Hz :3003
     /cmd_vel in from gcs :3001
 xgc2-agilex-camera.service
-xgc2-agilex-lidar.service
+xgc2-agilex-lidar-helios16.service
+xgc2-agilex-mocap.service
+  start-mocap: VRPN client only, no /pose or /ugv/pose relay
 ```
 
 ## Packages
 
 | Debian package | ROS package | Role |
 | --- | --- | --- |
-| `ros-melodic-xgc2-agilex-serial-imu` | `serial_imu` | Serial IMU driver, `/dev/imu`. HI226 field-effective rate is 100 Hz; Gazebo Scout IMU in `xgc2-gazebo-sim-agilex` must match. |
 | `ros-melodic-xgc2-agilex-wrp-io` | `wrp_io` | CAN/serial IO |
 | `ros-melodic-xgc2-agilex-ugv-sdk` | `ugv_sdk` | Scout CAN protocol |
 | `ros-melodic-scout-msgs` | `scout_msgs` | Chassis messages from `xgc2-scout-msgs` (not packaged here) |
@@ -55,25 +58,27 @@ xgc2-agilex-lidar.service
 | `ros-melodic-xgc2-scout-description` | `scout_description` | Mini visual/TF from `xgc2-scout-description` (not packaged here) |
 | `ros-melodic-swarm-ros-bridge` | `swarm_ros_bridge` | Official XGC2 bridge (APT, not rebuilt here) |
 | `ros-melodic-xgc2-agilex-swarm-ros-bridge` | `agilex_swarm_ros_bridge` | Vehicle YAML+launch for the official bridge |
-| `ros-melodic-xgc2-agilex` | (meta) | Vehicle min-boot: pulls the packages below; does not enable or start them |
-| `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | all four systemd units; enables base at boot |
+| `ros-melodic-xgc2-agilex-estimator` | `agilex_estimator` | Perception: VRPN mocap + rigid-state estimator |
+| `ros-melodic-xgc2-agilex-nmpc` | `agilex_nmpc` | Control: estimator + unicycle NMPC |
+| `ros-melodic-xgc2-agilex` | (meta) | Vehicle chassis + bridge; does not enable or start them |
+| `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | chassis/IMU/comm/camera/lidar/mocap units; install-only |
 
-D435 / D435i capture lives in the shared [`xgc2-camera-d435`](https://github.com/XGC-Team/xgc2-camera-d435) product (`realsense2_camera`, `realsense2_description`, `xgc2_camera_d435`). This vehicle only includes `camera.launch`. Other robots clone that repository into their workspace and run `roslaunch xgc2_camera_d435 d435.launch`. Camera and LiDAR compose on Scout is a **separate** product (`xgc2-agilex-onboard-sensors`) with two install-only services.
+D435 / D435i capture lives in the shared [`xgc2-camera-d435`](https://github.com/XGC-Team/xgc2-camera-d435) product. Scout only names topics in `agilex_onboard_autostart/camera.launch`.
 
 | Debian package | ROS package | Role |
 | --- | --- | --- |
+| `ros-melodic-xgc2-agilex-serial-imu` | `serial_imu` | Optional HI226 driver, `/dev/imu`. Field-effective rate is 100 Hz; Gazebo Scout IMU in `xgc2-gazebo-sim-agilex` must match. |
 | `ros-melodic-xgc2-agilex-rslidar-sdk` | `rslidar_sdk` | Helios 16, `/rslidar_points`, frame `rslidar` |
-| `ros-melodic-xgc2-agilex-onboard-sensors` | `agilex_onboard_sensors` | `camera.launch`, `lidar.launch`, onboard RViz |
+| `ros-melodic-xgc2-agilex-onboard-rviz` | `agilex_onboard_rviz` | Onboard RViz config |
 
 ```bash
-sudo apt-get install ros-melodic-xgc2-agilex-onboard-sensors
-# do not stop a running catkin_ws driver; these land in /opt/ros/melodic
-roslaunch agilex_onboard_sensors camera.launch
-roslaunch agilex_onboard_sensors lidar.launch
-roslaunch agilex_onboard_sensors rviz.launch
+sudo apt-get install ros-melodic-xgc2-agilex-onboard-rviz
+roslaunch agilex_onboard_rviz rviz.launch
+roslaunch agilex_onboard_autostart camera.launch
+roslaunch agilex_onboard_autostart lidar.launch
 ```
 
-Onboard RViz is `agilex_onboard_sensors/rviz/sensors.rviz` (fixed frame `rslidar`, `/rslidar_points`, color, depth). Camera runtime also needs the vehicle `librealsense2` (on Xavier it is `/usr/local/lib`).
+Onboard RViz is `agilex_onboard_rviz/rviz/viz.rviz`. Camera runtime also needs the vehicle `librealsense2` (on Xavier it is `/usr/local/lib`).
 
 `docs/` in this product only keeps the vendor manual PDF. Field notes live in the main repo `docs/field/agilex/`.
 
@@ -83,8 +88,8 @@ Packages are published to `http://xgc2.apt.xiaokang.ink`. A new computer only ne
 
 | Machine | Ubuntu | ROS | `arch=` | `deb` suite | Install |
 | --- | --- | --- | --- | --- | --- |
-| Vehicle (Xavier, with IMU) | 18.04 | Melodic | `arm64` | `bionic` | `ros-melodic-xgc2-agilex` |
-| Vehicle (Orin / Noetic, chassis only) | 20.04 | Noetic | `arm64` | `focal` | `ros-noetic-xgc2-agilex-chassis` |
+| Vehicle (Xavier, optional IMU) | 18.04 | Melodic | `arm64` | `bionic` | `ros-melodic-xgc2-agilex` |
+| Vehicle (Orin / Noetic, chassis) | 20.04 | Noetic | `arm64` | `focal` | `ros-noetic-xgc2-agilex-chassis` |
 | New workstation / ground station | 20.04 | Noetic | `amd64` | `focal` | `ros-noetic-scout-msgs` (and the bridge if it should talk to the vehicle) |
 
 Fingerprint of `xgc2-archive-keyring.gpg`:
@@ -132,17 +137,18 @@ sudo apt-get update \
   -o APT::Get::List-Cleanup="0"
 ```
 
-Vehicle with IMU (Xavier / Melodic):
+Vehicle chassis (Xavier / Melodic). IMU is optional:
 
 ```bash
-sudo apt-get install xgc2-utils-linux-timezone
 sudo apt-get install ros-melodic-xgc2-agilex
-# postinst enables xgc2-agilex-base.service for the next boot.
-# It does not start it now, and does not enable communication.
-# sudo systemctl enable --now xgc2-agilex-communication.service
-# sudo apt-get install ros-melodic-xgc2-agilex-onboard-sensors
+# postinst does not enable or start any unit.
+# sudo apt-get install ros-melodic-xgc2-agilex-serial-imu
+# sudo systemctl enable xgc2-agilex-chassis.service
+# sudo systemctl enable xgc2-agilex-imu-hi226.service
+# sudo systemctl enable --now xgc2-agilex-swarm-ros-bridge.service
+# sudo apt-get install ros-melodic-xgc2-agilex-onboard-rviz
 # sudo systemctl enable --now xgc2-agilex-camera.service
-# sudo systemctl enable --now xgc2-agilex-lidar.service
+# sudo systemctl enable --now xgc2-agilex-lidar-helios16.service
 ```
 
 Vehicle without IMU (Orin NX / Noetic chassis only):
@@ -150,8 +156,7 @@ Vehicle without IMU (Orin NX / Noetic chassis only):
 ```bash
 sudo apt-get install ros-noetic-xgc2-agilex-chassis
 sudo apt-get install ros-noetic-xgc2-agilex-onboard-autostart
-# then set IMU_REQUIRED=0 in /etc/xgc2/agilex/onboard.env
-# sudo systemctl enable xgc2-agilex-base.service
+# sudo systemctl enable xgc2-agilex-chassis.service
 ```
 
 Ground station / new PC that only needs to decode chassis status from `tcp://<vehicle>:3002`:

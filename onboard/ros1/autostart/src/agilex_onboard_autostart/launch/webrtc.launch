@@ -1,0 +1,15 @@
+<launch>
+  <!-- Scout color preview: shared V4L2 RTP owner. Stop realsense2_camera first. -->
+  <arg name="device" default="/dev/video0" />
+  <include file="$(find xgc2_camera_driver)/launch/native_v4l2_media.launch">
+    <arg name="device" value="$(arg device)" />
+    <arg name="width" value="640" />
+    <arg name="height" value="480" />
+    <arg name="fps" value="30" />
+    <arg name="pixel_format" value="mjpeg" />
+    <arg name="source_id" value="color" />
+    <arg name="frame_id" value="camera_color_optical_frame" />
+    <arg name="rtp_port" value="5004" />
+    <arg name="control_socket" value="/tmp/xgc2/media/color.sock" />
+  </include>
+</launch>

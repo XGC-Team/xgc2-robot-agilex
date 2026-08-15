@@ -1,0 +1,12 @@
+<launch>
+  <!-- Last resort while realsense2_camera owns USB. Shared ROS Image -> RTP. -->
+  <include file="$(find xgc2_camera_driver)/launch/ros_image_rtp.launch">
+    <arg name="image_topic" value="/camera/color/image_raw" />
+    <arg name="source_id" value="color" />
+    <arg name="frame_id" value="camera_color_optical_frame" />
+    <arg name="width" value="640" />
+    <arg name="height" value="480" />
+    <arg name="rtp_port" value="5004" />
+    <arg name="control_socket" value="/tmp/xgc2/media/color.sock" />
+  </include>
+</launch>

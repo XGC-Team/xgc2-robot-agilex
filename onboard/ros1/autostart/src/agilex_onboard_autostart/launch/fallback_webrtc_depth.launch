@@ -1,0 +1,11 @@
+<launch>
+  <include file="$(find xgc2_camera_driver)/launch/ros_image_rtp.launch">
+    <arg name="image_topic" value="/camera/depth/image_rect_raw" />
+    <arg name="source_id" value="depth-preview" />
+    <arg name="frame_id" value="camera_depth_optical_frame" />
+    <arg name="width" value="848" />
+    <arg name="height" value="480" />
+    <arg name="rtp_port" value="5006" />
+    <arg name="control_socket" value="/tmp/xgc2/media/depth.sock" />
+  </include>
+</launch>
