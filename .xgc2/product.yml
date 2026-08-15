@@ -69,6 +69,7 @@ apt:
   - udev
   - xgc2-utils-linux-timezone
   - xgc2-utils-linux-performance-mode
+  - xgc2-vrpn-relay
 vehicle:
   os: ubuntu-18.04
   ros_distro: melodic
@@ -94,6 +95,7 @@ release:
     xgc2-scout-description: verify
     xgc2-swarm-ros-bridge: verify
     xgc2-linux-utils: verify
+    xgc2-vrpn-relay: verify
   apt_versions:
     bionic: 0.2.0-14
     focal: 0.2.0-14
