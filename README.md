@@ -47,7 +47,7 @@ xgc2-agilex-lidar.service
 
 | Debian package | ROS package | Role |
 | --- | --- | --- |
-| `ros-melodic-xgc2-agilex-serial-imu` | `serial_imu` | Serial IMU driver, `/dev/imu` |
+| `ros-melodic-xgc2-agilex-serial-imu` | `serial_imu` | Serial IMU driver, `/dev/imu`. HI226 field-effective rate is 100 Hz; Gazebo Scout IMU in `xgc2-gazebo-sim-agilex` must match. |
 | `ros-melodic-xgc2-agilex-wrp-io` | `wrp_io` | CAN/serial IO |
 | `ros-melodic-xgc2-agilex-ugv-sdk` | `ugv_sdk` | Scout CAN protocol |
 | `ros-melodic-scout-msgs` | `scout_msgs` | Chassis messages from `xgc2-scout-msgs` (not packaged here) |

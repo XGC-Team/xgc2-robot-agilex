@@ -1,3 +1,5 @@
 <launch>
+  <!-- HI226 field-effective rate is 100 Hz. Pair any rate change with
+       gazebo_sim_scout imu update_rate / updateRateHZ in xgc2-gazebo-sim-agilex. -->
   <node pkg="serial_imu" name="HI226" type="serial_imu" />
 </launch>
