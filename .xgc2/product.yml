@@ -28,6 +28,56 @@ apt:
   distribution: bionic,focal
   install:
   - ros-melodic-xgc2-agilex
+  - ros-noetic-xgc2-agilex
+  package_distributions:
+    ros-melodic-xgc2-agilex:
+    - bionic
+    ros-melodic-xgc2-agilex-chassis:
+    - bionic
+    ros-melodic-xgc2-agilex-wrp-io:
+    - bionic
+    ros-melodic-xgc2-agilex-ugv-sdk:
+    - bionic
+    ros-melodic-xgc2-agilex-scout-base:
+    - bionic
+    ros-melodic-xgc2-agilex-swarm-ros-bridge:
+    - bionic
+    ros-melodic-xgc2-agilex-estimator:
+    - bionic
+    ros-melodic-xgc2-agilex-nmpc:
+    - bionic
+    ros-melodic-xgc2-agilex-onboard-autostart:
+    - bionic
+    ros-melodic-xgc2-agilex-serial-imu:
+    - bionic
+    ros-melodic-xgc2-agilex-rslidar-sdk:
+    - bionic
+    ros-melodic-xgc2-agilex-onboard-rviz:
+    - bionic
+    ros-noetic-xgc2-agilex:
+    - focal
+    ros-noetic-xgc2-agilex-chassis:
+    - focal
+    ros-noetic-xgc2-agilex-wrp-io:
+    - focal
+    ros-noetic-xgc2-agilex-ugv-sdk:
+    - focal
+    ros-noetic-xgc2-agilex-scout-base:
+    - focal
+    ros-noetic-xgc2-agilex-swarm-ros-bridge:
+    - focal
+    ros-noetic-xgc2-agilex-estimator:
+    - focal
+    ros-noetic-xgc2-agilex-nmpc:
+    - focal
+    ros-noetic-xgc2-agilex-onboard-autostart:
+    - focal
+    ros-noetic-xgc2-agilex-serial-imu:
+    - focal
+    ros-noetic-xgc2-agilex-rslidar-sdk:
+    - focal
+    ros-noetic-xgc2-agilex-onboard-rviz:
+    - focal
   packages:
   - ros-melodic-xgc2-agilex
   - ros-melodic-xgc2-agilex-chassis
