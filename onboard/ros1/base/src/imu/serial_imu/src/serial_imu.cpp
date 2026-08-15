@@ -1,4 +1,11 @@
 // Serial HI226 IMU. Publish one ROS message per complete decoded packet.
+//
+// Field-effective rate is 100 Hz. rostopic hz and rosbag counts can read
+// closer to 200 Hz because the device may emit more than one complete
+// packet per sample. Treat 100 Hz as the fusion and simulation contract.
+// Keep gazebo_sim_scout (xgc2-gazebo-sim-agilex scout_mini.gazebo
+// update_rate / updateRateHZ) on the same rate. A driver rate change
+// needs a paired sim commit that says so.
 
 #include <ros/ros.h>
 #include <serial/serial.h>
