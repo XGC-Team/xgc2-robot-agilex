@@ -13,16 +13,11 @@ send_topics:
   max_freq: 30
   srcIP: self
   srcPort: 3001
-- topic_name: /scout/twist
-  msg_type: geometry_msgs/Twist
-  max_freq: 1
-  srcIP: self
-  srcPort: 3002
 - topic_name: /scout/status_text
   msg_type: std_msgs/String
-  max_freq: 1
+  max_freq: 2
   srcIP: self
-  srcPort: 3003
+  srcPort: 3002
 
 recv_topics:
 - topic_name: /cmd_vel

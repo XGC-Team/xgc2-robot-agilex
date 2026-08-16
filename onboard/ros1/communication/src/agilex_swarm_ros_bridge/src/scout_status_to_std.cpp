@@ -1,10 +1,9 @@
-// Forward bag-validated ScoutStatus fields as standard ROS messages at 1 Hz.
+// Forward bag-validated ScoutStatus fields as std_msgs/String at 2 Hz.
 // Official swarm_ros_bridge only carries Imu, Twist, and String.
 
 #include <cstdio>
 #include <string>
 
-#include <geometry_msgs/Twist.h>
 #include <ros/ros.h>
 #include <scout_msgs/ScoutStatus.h>
 #include <std_msgs/String.h>
@@ -26,29 +25,21 @@ int main(int argc, char** argv) {
   ros::NodeHandle nh;
   ros::NodeHandle private_nh("~");
 
-  double rate_hz = 1.0;
-  std::string twist_topic = "/scout/twist";
+  double rate_hz = 2.0;
   std::string text_topic = "/scout/status_text";
   private_nh.param("rate", rate_hz, rate_hz);
-  private_nh.param("twist_topic", twist_topic, twist_topic);
   private_nh.param("text_topic", text_topic, text_topic);
   if (rate_hz <= 0.0) {
-    rate_hz = 1.0;
+    rate_hz = 2.0;
   }
 
   ros::Subscriber sub = nh.subscribe("/scout_status", 1, onStatus);
-  ros::Publisher twist_pub = nh.advertise<geometry_msgs::Twist>(twist_topic, 1);
   ros::Publisher text_pub = nh.advertise<std_msgs::String>(text_topic, 1);
   ros::Rate rate(rate_hz);
 
   while (ros::ok()) {
     ros::spinOnce();
     if (g_have_status) {
-      geometry_msgs::Twist twist;
-      twist.linear.x = g_latest.linear_velocity;
-      twist.angular.z = g_latest.angular_velocity;
-      twist_pub.publish(twist);
-
       char buf[160];
       std::snprintf(
           buf, sizeof(buf),

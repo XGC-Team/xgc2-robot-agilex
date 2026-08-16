@@ -1,11 +1,11 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-ros1
 name: XGC2 AgileX Onboard ROS1
-version: 0.2.0-19
+version: 0.2.0-20
 kind: ros1-apt
 summary: Vehicle-true AgileX Scout Mini onboard runtime for Melodic and
-  Noetic. Chassis, bridge, perception, control, and autostart are the
-  install set; IMU, Helios 16, and RViz are optional published packages.
+  Noetic. Chassis, bridge, and autostart are the install set; IMU, Helios
+  16, RViz, estimator, and NMPC are optional published packages.
 groups:
 - robotics
 - agilex
@@ -128,11 +128,6 @@ apt:
   - iproute2
   - systemd
   - udev
-  - xgc2-vrpn-relay
-  - ros-melodic-xgc2-estimator-rigid-state
-  - ros-noetic-xgc2-estimator-rigid-state
-  - ros-melodic-xgc2-ugv-controller
-  - ros-noetic-xgc2-ugv-controller
 vehicle:
   os: ubuntu-18.04
   ros_distro: melodic
@@ -156,9 +151,6 @@ release:
     xgc2-scout-msgs: rebuild
     xgc2-scout-description: verify
     xgc2-swarm-ros-bridge: verify
-    xgc2-vrpn-relay: verify
-    xgc2-estimator-rigid-state: verify
-    xgc2-ugv-controller: verify
   apt_versions:
-    bionic: 0.2.0-19
-    focal: 0.2.0-19
+    bionic: 0.2.0-20
+    focal: 0.2.0-20

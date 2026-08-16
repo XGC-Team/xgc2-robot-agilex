@@ -2,8 +2,7 @@
   <arg name="config" default="$(find agilex_swarm_ros_bridge)/config/ros_topics.yaml" />
 
   <node pkg="agilex_swarm_ros_bridge" type="scout_status_to_std" name="scout_status_to_std">
-    <param name="rate" value="1.0" />
-    <param name="twist_topic" value="/scout/twist" />
+    <param name="rate" value="2.0" />
     <param name="text_topic" value="/scout/status_text" />
   </node>
 

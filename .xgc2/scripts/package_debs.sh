@@ -235,7 +235,7 @@ build_autostart_deb() {
     "${pkg_root}" \
     "${deb_pkg}" \
     "${version}" \
-    "iproute2, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version agilex_swarm_ros_bridge)), ros-${ROS_DISTRO}-xgc2-agilex-estimator (>= $(deb_version agilex_estimator)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
+    "iproute2, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version agilex_swarm_ros_bridge)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
     "Unified AgileX systemd manager (install-only; does not enable or start any unit)" \
     "ros-${ROS_DISTRO}-xgc2-agilex-serial-imu"
   write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}" "${version}"
@@ -346,8 +346,8 @@ build_meta_deb() {
     "${pkg_root}" \
     "${deb_pkg}" \
     "${version}" \
-    "ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart (>= ${version}), ros-${ROS_DISTRO}-xgc2-estimator-rigid-state, ros-${ROS_DISTRO}-xgc2-ugv-controller, xgc2-vrpn-relay" \
-    "XGC2 AgileX vehicle min-boot meta package (chassis + bridge; no IMU/camera/LiDAR)" \
+    "ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart (>= ${version})" \
+    "XGC2 AgileX vehicle min-boot meta package (chassis + bridge; no IMU/camera/LiDAR/estimator/NMPC)" \
     "ros-${ROS_DISTRO}-xgc2-agilex-serial-imu, ros-${ROS_DISTRO}-xgc2-agilex-rslidar-sdk, ros-${ROS_DISTRO}-xgc2-agilex-onboard-rviz"
 
   cat > "${pkg_root}/usr/share/doc/${deb_pkg}/README" <<EOF

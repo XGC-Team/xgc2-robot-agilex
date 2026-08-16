@@ -37,9 +37,8 @@ xgc2-agilex-imu-hi226.service
 xgc2-agilex-swarm-ros-bridge.service
   start-swarm-ros-bridge: wait /scout_status; wait /imu/data if present
   agilex_swarm_ros_bridge/swarm.launch
-    /imu/data Imu 30 Hz :3001
-    /scout/twist Twist 1 Hz :3002
-    /scout/status_text String 1 Hz :3003
+    /imu/data Imu max 30 Hz :3001
+    /scout/status_text String max 2 Hz :3002
     /cmd_vel in from gcs :3001
 xgc2-agilex-camera.service
 xgc2-agilex-lidar-helios16.service
@@ -58,9 +57,9 @@ xgc2-agilex-mocap.service
 | `ros-melodic-xgc2-scout-description` | `scout_description` | Mini visual/TF from `xgc2-scout-description` (not packaged here) |
 | `ros-melodic-swarm-ros-bridge` | `swarm_ros_bridge` | Official XGC2 bridge (APT, not rebuilt here) |
 | `ros-melodic-xgc2-agilex-swarm-ros-bridge` | `agilex_swarm_ros_bridge` | Vehicle YAML+launch for the official bridge |
-| `ros-melodic-xgc2-agilex-estimator` | `agilex_estimator` | Perception: VRPN mocap + rigid-state estimator |
-| `ros-melodic-xgc2-agilex-nmpc` | `agilex_nmpc` | Control: estimator + unicycle NMPC |
-| `ros-melodic-xgc2-agilex` | (meta) | Vehicle chassis + bridge; does not enable or start them |
+| `ros-melodic-xgc2-agilex-estimator` | `agilex_estimator` | Optional algorithm: VRPN mocap + rigid-state estimator. Not a Depends of the vehicle meta or systemd. |
+| `ros-melodic-xgc2-agilex-nmpc` | `agilex_nmpc` | Optional algorithm: estimator + unicycle NMPC. Not a Depends of the vehicle meta or systemd. |
+| `ros-melodic-xgc2-agilex` | (meta) | Vehicle chassis + bridge + autostart units; does not enable or start them |
 | `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | chassis/IMU/comm/camera/lidar/mocap units; install-only. Site params in `/etc/xgc2/agilex/onboard.env`. Enable chassis only; mocap is Agent `agilex-mocap-ros1`. |
 
 D435 / D435i capture lives in the shared [`xgc2-camera-d435`](https://github.com/XGC-Team/xgc2-camera-d435) product. Scout only names topics in `agilex_onboard_autostart/camera.launch`.
@@ -158,13 +157,7 @@ sudo apt-get install ros-noetic-xgc2-agilex-onboard-autostart
 sudo systemctl enable xgc2-agilex-chassis.service
 ```
 
-Ground station / new PC that only needs to decode chassis status from `tcp://<vehicle>:3002`:
-
-```bash
-sudo apt-get install ros-noetic-scout-msgs
-```
-
-Chassis still publishes `/scout_status` locally. A 1 Hz relay copies only bag-validated fields onto standard topics the official bridge already carries: `/scout/twist` (`geometry_msgs/Twist`) on port 3002 and `/scout/status_text` (`std_msgs/String`) on 3003. `/imu/data` stays on 3001. `/cmd_vel` comes back from `gcs` on its own port 3001. Point the station at those ports and keep the vehicle YAML `gcs` address on the same subnet. Do not enable the onboard systemd target on a laptop.
+Chassis still publishes `/scout_status` locally and is not sent across the official bridge. A 2 Hz relay copies bag-validated fields onto `/scout/status_text` (`std_msgs/String`) on port 3002. The official bridge also sends `/imu/data` at most 30 Hz on 3001 and receives `/cmd_vel` from `gcs` on that car's GCS bind port (3001 for the first car). Point the station at those ports and keep the vehicle YAML `gcs` address on the same subnet. Do not enable the onboard systemd target on a laptop.
 
 ## CI
 

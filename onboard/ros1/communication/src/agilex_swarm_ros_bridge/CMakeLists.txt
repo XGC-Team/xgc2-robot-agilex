@@ -4,14 +4,13 @@ project(agilex_swarm_ros_bridge)
 add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
   roscpp
   scout_msgs
   std_msgs
 )
 
 catkin_package(
-  CATKIN_DEPENDS geometry_msgs roscpp scout_msgs std_msgs
+  CATKIN_DEPENDS roscpp scout_msgs std_msgs
 )
 
 include_directories(${catkin_INCLUDE_DIRS})
