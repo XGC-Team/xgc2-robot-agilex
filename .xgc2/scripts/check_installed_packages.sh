@@ -119,6 +119,11 @@ test ! -f /lib/systemd/system/xgc2-agilex-can0.service
 test ! -f /lib/systemd/system/xgc2-agilex-communication.service
 test ! -f /etc/udev/rules.d/99-xgc2-agilex-imu.rules
 test -f /etc/xgc2/agilex/onboard.env
+grep -q '^MOCAP_RIGID_BODY=' /etc/xgc2/agilex/onboard.env
+grep -q '^VRPN_SERVER=' /etc/xgc2/agilex/onboard.env
+! grep -E '^Environment=' /lib/systemd/system/xgc2-agilex-*.service
+grep -q 'EnvironmentFile=-/etc/xgc2/agilex/onboard.env' /lib/systemd/system/xgc2-agilex-chassis.service
+grep -q 'EnvironmentFile=-/etc/xgc2/agilex/onboard.env' /lib/systemd/system/xgc2-agilex-mocap.service
 test -f /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
 
 roslaunch --files agilex_onboard_autostart imu-hi226.launch >/dev/null

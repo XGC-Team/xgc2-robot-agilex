@@ -264,7 +264,8 @@ if [ "$1" = "configure" ]; then
 
   if command -v systemctl >/dev/null 2>&1; then
     systemctl daemon-reload >/dev/null 2>&1 || true
-    # Keep old unit files on disk; none of the new units are enabled.
+    # Keep old unit files on disk. Experiment-time units stay disabled so
+    # they cannot race Agent process.run-definition. Chassis is operator-owned.
     systemctl disable swarm_ros_bridge.service >/dev/null 2>&1 || true
     systemctl disable handsfree_imu.service >/dev/null 2>&1 || true
     systemctl disable turn_on_wheeltec_robot.service >/dev/null 2>&1 || true
@@ -274,7 +275,7 @@ if [ "$1" = "configure" ]; then
     systemctl disable xgc2-agilex-can0.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-base.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-swarm-ros-bridge.service >/dev/null 2>&1 || true
-    systemctl disable xgc2-agilex-chassis.service >/dev/null 2>&1 || true
+    # Chassis is the operator-owned boot unit. Do not disable it on upgrade.
     systemctl disable xgc2-agilex-imu.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-imu-hi226.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-communication.service >/dev/null 2>&1 || true
@@ -353,13 +354,12 @@ build_meta_deb() {
 ${deb_pkg}
 
 Install this meta package on the vehicle. Autostart owns the units.
-No unit is enabled or started. Enable them yourself if this host should
-run chassis, IMU, or communication at boot.
+No unit is enabled or started. Enable only the chassis at boot.
+Mocap, IMU, camera, lidar, and the swarm bridge stay install-only.
 
   sudo apt-get install ${deb_pkg}
-  sudo apt-get install ros-${ROS_DISTRO}-xgc2-agilex-serial-imu
-  # sudo systemctl enable xgc2-agilex-chassis.service
-  # sudo systemctl enable xgc2-agilex-imu-hi226.service
+  sudo systemctl enable xgc2-agilex-chassis.service
+  # sudo apt-get install ros-${ROS_DISTRO}-xgc2-agilex-serial-imu
 EOF
 
   find "${pkg_root}" -type d -exec chmod 0755 {} +

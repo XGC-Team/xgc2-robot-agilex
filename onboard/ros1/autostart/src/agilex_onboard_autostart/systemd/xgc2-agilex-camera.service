@@ -8,13 +8,8 @@ User=agilex
 Group=agilex
 SupplementaryGroups=dialout
 WorkingDirectory=/home/agilex
+# Install-only. Agent or a manual start owns experiment-time camera.
 EnvironmentFile=-/etc/xgc2/agilex/onboard.env
-Environment=ROS_DISTRO=melodic
-Environment=ROS_MASTER_URI=http://127.0.0.1:11311
-Environment=ROS_IP=127.0.0.1
-Environment=HOME=/home/agilex
-Environment=ROS_HOME=/home/agilex/.ros
-Environment=CAMERA_SETTLE_SEC=5
 ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/start-camera
 Restart=always
 RestartSec=5

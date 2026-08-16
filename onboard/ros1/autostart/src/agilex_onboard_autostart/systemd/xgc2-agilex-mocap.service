@@ -7,13 +7,10 @@ Type=simple
 User=agilex
 Group=agilex
 WorkingDirectory=/home/agilex
+# VRPN_SERVER / VRPN_PORT / MOCAP_RIGID_BODY come from onboard.env.
+# Install-only: do not enable at boot. Agent process.run-definition
+# (agilex-mocap-ros1) starts this for a Session with per-run parameters.
 EnvironmentFile=-/etc/xgc2/agilex/onboard.env
-Environment=ROS_DISTRO=melodic
-Environment=ROS_MASTER_URI=http://127.0.0.1:11311
-Environment=ROS_IP=127.0.0.1
-Environment=HOME=/home/agilex
-Environment=ROS_HOME=/home/agilex/.ros
-Environment=MOCAP_RIGID_BODY=pose_0
 ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/start-mocap
 Restart=on-failure
 RestartSec=3s

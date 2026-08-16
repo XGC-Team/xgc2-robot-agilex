@@ -7,21 +7,9 @@ Type=simple
 User=agilex
 Group=agilex
 WorkingDirectory=/home/agilex
+# Install-only. Bridge config path and IMU flags live in onboard.env.
+# Agent or a manual start owns experiment-time comms.
 EnvironmentFile=-/etc/xgc2/agilex/onboard.env
-Environment=ROS_DISTRO=melodic
-Environment=ROS_MASTER_URI=http://127.0.0.1:11311
-Environment=ROS_IP=127.0.0.1
-Environment=HOME=/home/agilex
-Environment=ROS_HOME=/home/agilex/.ros
-Environment=COMM_SETTLE_SEC=2
-Environment=SWARM_ROS_BRIDGE_CONFIG=/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
-Environment=IMU_DEVICE=/dev/imu
-Environment=IMU_REQUIRED=0
-Environment=IMU_READY_TOPIC=/imu/data
-Environment=SCOUT_STATUS_TOPIC=/scout_status
-Environment=ROS_MASTER_WAIT_TIMEOUT=60
-Environment=IMU_TOPIC_WAIT_TIMEOUT=90
-Environment=SCOUT_STATUS_WAIT_TIMEOUT=90
 ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/start-swarm-ros-bridge
 Restart=always
 RestartSec=5

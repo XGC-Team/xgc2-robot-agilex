@@ -1,8 +1,18 @@
 # AgileX ROS1 autostart workspace
 
 Owns every onboard systemd unit. Sibling of `chassis`, `communication`,
-`perception`, `control`, `sensors`, and `visualization`. Install-only:
-does not enable or start any unit.
+`perception`, `control`, `sensors`, and `visualization`.
+
+Site identity (rigid body, VRPN server, ROS_IP, CAN) lives in
+`/etc/xgc2/agilex/onboard.env`. Units only `EnvironmentFile` that path;
+they do not bake `MOCAP_RIGID_BODY` or `ROS_IP`. Copy the packaged
+`config/onboard.env` there on first install if missing.
+
+Install-only by default: the package does not enable or start any unit.
+Enable **chassis** at boot if the vehicle should always have CAN/TF.
+Leave mocap, IMU, camera, lidar, and the swarm bridge disabled. Agent
+`process.run-definition` `agilex-mocap-ros1` starts mocap for a Session
+with per-run `rigidBody` / `vrpnServer`.
 
 ```text
 src/agilex_onboard_autostart

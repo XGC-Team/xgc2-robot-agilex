@@ -10,15 +10,9 @@ User=agilex
 Group=agilex
 SupplementaryGroups=dialout
 WorkingDirectory=/home/agilex
+# IMU_DEVICE and ROS_* come from onboard.env. Install-only unless this host
+# has the HI226 accessory.
 EnvironmentFile=-/etc/xgc2/agilex/onboard.env
-Environment=ROS_DISTRO=melodic
-Environment=ROS_MASTER_URI=http://127.0.0.1:11311
-Environment=ROS_IP=127.0.0.1
-Environment=HOME=/home/agilex
-Environment=ROS_HOME=/home/agilex/.ros
-Environment=IMU_SETTLE_SEC=2
-Environment=IMU_DEVICE=/dev/imu
-Environment=IMU_DEVICE_WAIT_TIMEOUT=90
 ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/start-imu-hi226
 Restart=always
 RestartSec=5

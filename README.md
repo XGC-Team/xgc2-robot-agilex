@@ -61,7 +61,7 @@ xgc2-agilex-mocap.service
 | `ros-melodic-xgc2-agilex-estimator` | `agilex_estimator` | Perception: VRPN mocap + rigid-state estimator |
 | `ros-melodic-xgc2-agilex-nmpc` | `agilex_nmpc` | Control: estimator + unicycle NMPC |
 | `ros-melodic-xgc2-agilex` | (meta) | Vehicle chassis + bridge; does not enable or start them |
-| `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | chassis/IMU/comm/camera/lidar/mocap units; install-only |
+| `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | chassis/IMU/comm/camera/lidar/mocap units; install-only. Site params in `/etc/xgc2/agilex/onboard.env`. Enable chassis only; mocap is Agent `agilex-mocap-ros1`. |
 
 D435 / D435i capture lives in the shared [`xgc2-camera-d435`](https://github.com/XGC-Team/xgc2-camera-d435) product. Scout only names topics in `agilex_onboard_autostart/camera.launch`.
 
@@ -142,13 +142,12 @@ Vehicle chassis (Xavier / Melodic). IMU is optional:
 ```bash
 sudo apt-get install ros-melodic-xgc2-agilex
 # postinst does not enable or start any unit.
+sudo systemctl enable xgc2-agilex-chassis.service
+# Site identity (rigid body, VRPN, ROS_IP) is /etc/xgc2/agilex/onboard.env.
+# Do not enable mocap / IMU / camera / lidar / swarm-ros-bridge at boot.
+# Agent process.run-definition agilex-mocap-ros1 starts mocap for a Session.
 # sudo apt-get install ros-melodic-xgc2-agilex-serial-imu
-# sudo systemctl enable xgc2-agilex-chassis.service
-# sudo systemctl enable xgc2-agilex-imu-hi226.service
-# sudo systemctl enable --now xgc2-agilex-swarm-ros-bridge.service
 # sudo apt-get install ros-melodic-xgc2-agilex-onboard-rviz
-# sudo systemctl enable --now xgc2-agilex-camera.service
-# sudo systemctl enable --now xgc2-agilex-lidar-helios16.service
 ```
 
 Vehicle without IMU (Orin NX / Noetic chassis only):
@@ -156,7 +155,7 @@ Vehicle without IMU (Orin NX / Noetic chassis only):
 ```bash
 sudo apt-get install ros-noetic-xgc2-agilex-chassis
 sudo apt-get install ros-noetic-xgc2-agilex-onboard-autostart
-# sudo systemctl enable xgc2-agilex-chassis.service
+sudo systemctl enable xgc2-agilex-chassis.service
 ```
 
 Ground station / new PC that only needs to decode chassis status from `tcp://<vehicle>:3002`:

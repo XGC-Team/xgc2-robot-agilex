@@ -10,16 +10,8 @@ User=agilex
 Group=agilex
 SupplementaryGroups=dialout
 WorkingDirectory=/home/agilex
+# Site identity (ROS_*, CAN_*, HOME) lives only in onboard.env.
 EnvironmentFile=-/etc/xgc2/agilex/onboard.env
-Environment=ROS_DISTRO=melodic
-Environment=ROS_MASTER_URI=http://127.0.0.1:11311
-Environment=ROS_IP=127.0.0.1
-Environment=HOME=/home/agilex
-Environment=ROS_HOME=/home/agilex/.ros
-Environment=BOOT_SETTLE_SEC=10
-Environment=CAN_IF=can0
-Environment=CAN_BITRATE=500000
-Environment=CAN_WAIT_TIMEOUT=90
 # setup-can0 needs root; + runs this ExecStartPre as root on systemd 237+.
 ExecStartPre=+/opt/ros/melodic/lib/agilex_onboard_autostart/setup-can0
 ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/start-chassis
