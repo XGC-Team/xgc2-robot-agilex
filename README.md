@@ -57,8 +57,6 @@ xgc2-agilex-mocap.service
 | `ros-melodic-xgc2-scout-description` | `scout_description` | Mini visual/TF from `xgc2-scout-description` (not packaged here) |
 | `ros-melodic-swarm-ros-bridge` | `swarm_ros_bridge` | Official XGC2 bridge (APT, not rebuilt here) |
 | `ros-melodic-xgc2-agilex-swarm-ros-bridge` | `agilex_swarm_ros_bridge` | Vehicle YAML+launch for the official bridge |
-| `ros-melodic-xgc2-agilex-estimator` | `agilex_estimator` | Optional algorithm: VRPN mocap + rigid-state estimator. Not a Depends of the vehicle meta or systemd. |
-| `ros-melodic-xgc2-agilex-nmpc` | `agilex_nmpc` | Optional algorithm: estimator + unicycle NMPC. Not a Depends of the vehicle meta or systemd. |
 | `ros-melodic-xgc2-agilex` | (meta) | Vehicle chassis + bridge + autostart units; does not enable or start them |
 | `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | chassis/IMU/comm/camera/lidar/mocap units; install-only. Site params in `/etc/xgc2/agilex/onboard.env`. Enable chassis only; mocap is Agent `agilex-mocap-ros1`. |
 

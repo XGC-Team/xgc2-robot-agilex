@@ -450,18 +450,6 @@ EOF
   fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${deb_pkg}_${version}_${ARCH}.deb" >/dev/null
 }
 
-build_deb \
-  "ros-${ROS_DISTRO}-xgc2-agilex-estimator" \
-  "agilex_estimator" \
-  "ros-${ROS_DISTRO}-roslaunch, xgc2-vrpn-relay, ros-${ROS_DISTRO}-xgc2-estimator-rigid-state" \
-  "AgileX perception: VRPN mocap plus rigid-state estimator"
-
-build_deb \
-  "ros-${ROS_DISTRO}-xgc2-agilex-nmpc" \
-  "agilex_nmpc" \
-  "ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-xgc2-agilex-estimator (>= $(deb_version agilex_estimator)), ros-${ROS_DISTRO}-xgc2-ugv-controller" \
-  "AgileX control: estimator plus unicycle NMPC"
-
 build_chassis_deb() {
   local deb_pkg="ros-${ROS_DISTRO}-xgc2-agilex-chassis"
   local version="${PACKAGE_VERSION}"

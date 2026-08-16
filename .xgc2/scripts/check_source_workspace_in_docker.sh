@@ -88,11 +88,9 @@ docker run --rm --network none \
     test ! -d /workspace/agilex/onboard/ros1/sensors/src/agilex_onboard_sensors
 
     rm -rf /workspace/work/build /workspace/work/devel /workspace/work/src
-    mkdir -p /workspace/work/src/agilex-chassis /workspace/work/src/agilex-communication /workspace/work/src/agilex-perception /workspace/work/src/agilex-control /workspace/work/src/agilex-autostart
+    mkdir -p /workspace/work/src/agilex-chassis /workspace/work/src/agilex-communication /workspace/work/src/agilex-autostart
     rsync -a --delete /workspace/agilex/onboard/ros1/chassis/src/ /workspace/work/src/agilex-chassis/
     rsync -a --delete /workspace/agilex/onboard/ros1/communication/src/ /workspace/work/src/agilex-communication/
-    rsync -a --delete /workspace/agilex/onboard/ros1/perception/src/ /workspace/work/src/agilex-perception/
-    rsync -a --delete /workspace/agilex/onboard/ros1/control/src/ /workspace/work/src/agilex-control/
     rsync -a --delete /workspace/agilex/onboard/ros1/autostart/src/ /workspace/work/src/agilex-autostart/
 
     cd /workspace/work
@@ -122,9 +120,8 @@ docker run --rm --network none \
       echo "ros-${ROS_DISTRO}-swarm-ros-bridge not in image or fetched debs" >&2
     fi
     test "$(rospack find agilex_swarm_ros_bridge)" = "/workspace/work/src/agilex-communication/agilex_swarm_ros_bridge"
-    test "$(rospack find agilex_estimator)" = "/workspace/work/src/agilex-perception/agilex_estimator"
-    test "$(rospack find agilex_nmpc)" = "/workspace/work/src/agilex-control/agilex_nmpc"
-    test ! -d /workspace/work/src/agilex-perception/agilex_mocap
+    test ! -d /workspace/work/src/agilex-perception
+    test ! -d /workspace/work/src/agilex-control
     test ! -d /workspace/work/src/agilex-communication/agilex_mocap
     test ! -d /workspace/work/src/agilex-chassis/communication
     test "$(rospack find agilex_onboard_autostart)" = "/workspace/work/src/agilex-autostart/agilex_onboard_autostart"
@@ -151,9 +148,9 @@ docker run --rm --network none \
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-lidar-helios16
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-mocap
     test ! -e /opt/ros/${ROS_DISTRO}/lib/agilex_estimator/vrpn_relay
-    grep -q 'xgc2_vrpn_relay' "$(rospack find agilex_estimator)/launch/mocap.launch"
-    grep -q 'vrpn.launch' "$(rospack find agilex_estimator)/launch/mocap.launch"
-    ! grep -q 'pose_out' "$(rospack find agilex_estimator)/launch/mocap.launch"
+    grep -q 'xgc2_vrpn_relay' /workspace/agilex/onboard/ros1/perception/src/agilex_estimator/launch/mocap.launch
+    grep -q 'vrpn.launch' /workspace/agilex/onboard/ros1/perception/src/agilex_estimator/launch/mocap.launch
+    ! grep -q 'pose_out' /workspace/agilex/onboard/ros1/perception/src/agilex_estimator/launch/mocap.launch
     test -f "$(rospack find agilex_swarm_ros_bridge)/src/scout_status_to_std.cpp"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-chassis.service"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-imu-hi226.service"

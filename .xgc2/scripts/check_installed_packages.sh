@@ -12,8 +12,6 @@ deb_packages=(
   "ros-${ROS_DISTRO}-xgc2-agilex-scout-base"
   "ros-${ROS_DISTRO}-xgc2-agilex-chassis"
   "ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge"
-  "ros-${ROS_DISTRO}-xgc2-agilex-estimator"
-  "ros-${ROS_DISTRO}-xgc2-agilex-nmpc"
   "ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart"
   "ros-${ROS_DISTRO}-xgc2-scout-description"
 )
@@ -29,8 +27,6 @@ ros_packages=(
   scout_base
   scout_description
   agilex_swarm_ros_bridge
-  agilex_estimator
-  agilex_nmpc
   agilex_onboard_autostart
 )
 
@@ -83,11 +79,7 @@ test -x "${PREFIX}/lib/agilex_onboard_autostart/start-camera"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-lidar-helios16"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-mocap"
 test ! -e "${PREFIX}/lib/agilex_estimator/vrpn_relay"
-test -f "${PREFIX}/share/agilex_estimator/launch/mocap.launch"
-test -f "${PREFIX}/share/agilex_estimator/launch/estimator.launch"
-grep -q 'xgc2_vrpn_relay' "${PREFIX}/share/agilex_estimator/launch/mocap.launch"
-grep -q 'vrpn.launch' "${PREFIX}/share/agilex_estimator/launch/mocap.launch"
-! grep -q 'pose_out' "${PREFIX}/share/agilex_estimator/launch/mocap.launch"
+test ! -e "${PREFIX}/share/agilex_estimator"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/setup-can0"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/wait-device"
 test ! -e "${PREFIX}/lib/agilex_onboard_autostart/start-roscore"

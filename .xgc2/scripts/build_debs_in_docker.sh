@@ -90,11 +90,9 @@ if [[ "${BUILD_PACKAGES}" == "true" ]]; then
     /workspace/agilex/.xgc2/scripts/install_local_xgc2_debs.sh
 
     rm -rf /workspace/work/build /workspace/work/devel /workspace/work/install-root /workspace/work/src
-    mkdir -p /workspace/work/src/agilex-chassis /workspace/work/src/agilex-communication /workspace/work/src/agilex-perception /workspace/work/src/agilex-control /workspace/work/src/agilex-autostart
+    mkdir -p /workspace/work/src/agilex-chassis /workspace/work/src/agilex-communication /workspace/work/src/agilex-autostart
     rsync -a --delete /workspace/agilex/onboard/ros1/chassis/src/ /workspace/work/src/agilex-chassis/
     rsync -a --delete /workspace/agilex/onboard/ros1/communication/src/ /workspace/work/src/agilex-communication/
-    rsync -a --delete /workspace/agilex/onboard/ros1/perception/src/ /workspace/work/src/agilex-perception/
-    rsync -a --delete /workspace/agilex/onboard/ros1/control/src/ /workspace/work/src/agilex-control/
     rsync -a --delete /workspace/agilex/onboard/ros1/autostart/src/ /workspace/work/src/agilex-autostart/
 
     cd /workspace/work
@@ -134,8 +132,8 @@ if [[ "${INSTALL_CHECK}" == "true" ]]; then
       agilex_debs=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex-*_${architecture}.deb)
       agilex_meta=(/workspace/out/ros-${ROS_DISTRO}-xgc2-agilex_*_${architecture}.deb)
       shopt -u nullglob
-      if [[ "${#agilex_debs[@]}" -ne 8 ]]; then
-        echo "expected 8 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
+      if [[ "${#agilex_debs[@]}" -ne 6 ]]; then
+        echo "expected 6 AgileX debs for ${architecture}, found ${#agilex_debs[@]}" >&2
         ls -la /workspace/out >&2 || true
         exit 1
       fi

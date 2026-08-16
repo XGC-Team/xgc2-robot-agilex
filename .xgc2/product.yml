@@ -1,11 +1,11 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-ros1
 name: XGC2 AgileX Onboard ROS1
-version: 0.2.0-20
+version: 0.2.0-21
 kind: ros1-apt
 summary: Vehicle-true AgileX Scout Mini onboard runtime for Melodic and
   Noetic. Chassis, bridge, and autostart are the install set; IMU, Helios
-  16, RViz, estimator, and NMPC are optional published packages.
+  16, and RViz are optional published packages.
 groups:
 - robotics
 - agilex
@@ -18,8 +18,6 @@ ros:
   - ugv_sdk
   - scout_base
   - agilex_swarm_ros_bridge
-  - agilex_estimator
-  - agilex_nmpc
   - agilex_onboard_autostart
   - serial_imu
   - rslidar_sdk
@@ -42,10 +40,6 @@ apt:
     - bionic
     ros-melodic-xgc2-agilex-swarm-ros-bridge:
     - bionic
-    ros-melodic-xgc2-agilex-estimator:
-    - bionic
-    ros-melodic-xgc2-agilex-nmpc:
-    - bionic
     ros-melodic-xgc2-agilex-onboard-autostart:
     - bionic
     ros-melodic-xgc2-agilex-serial-imu:
@@ -66,10 +60,6 @@ apt:
     - focal
     ros-noetic-xgc2-agilex-swarm-ros-bridge:
     - focal
-    ros-noetic-xgc2-agilex-estimator:
-    - focal
-    ros-noetic-xgc2-agilex-nmpc:
-    - focal
     ros-noetic-xgc2-agilex-onboard-autostart:
     - focal
     ros-noetic-xgc2-agilex-serial-imu:
@@ -85,8 +75,6 @@ apt:
   - ros-melodic-xgc2-agilex-ugv-sdk
   - ros-melodic-xgc2-agilex-scout-base
   - ros-melodic-xgc2-agilex-swarm-ros-bridge
-  - ros-melodic-xgc2-agilex-estimator
-  - ros-melodic-xgc2-agilex-nmpc
   - ros-melodic-xgc2-agilex-onboard-autostart
   - ros-melodic-xgc2-agilex-serial-imu
   - ros-melodic-xgc2-agilex-rslidar-sdk
@@ -97,8 +85,6 @@ apt:
   - ros-noetic-xgc2-agilex-ugv-sdk
   - ros-noetic-xgc2-agilex-scout-base
   - ros-noetic-xgc2-agilex-swarm-ros-bridge
-  - ros-noetic-xgc2-agilex-estimator
-  - ros-noetic-xgc2-agilex-nmpc
   - ros-noetic-xgc2-agilex-onboard-autostart
   - ros-noetic-xgc2-agilex-serial-imu
   - ros-noetic-xgc2-agilex-rslidar-sdk
@@ -152,5 +138,5 @@ release:
     xgc2-scout-description: verify
     xgc2-swarm-ros-bridge: verify
   apt_versions:
-    bionic: 0.2.0-20
-    focal: 0.2.0-20
+    bionic: 0.2.0-21
+    focal: 0.2.0-21
