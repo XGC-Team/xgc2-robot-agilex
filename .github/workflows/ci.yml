@@ -99,13 +99,19 @@ jobs:
                       declared.append(line[4:].strip())
                   elif line and not line.startswith("   "):
                       break
-          missing = sorted(names - set(declared))
-          extra = sorted(set(declared) - names)
-          if missing or extra:
+          # ros.packages is the vehicle train inventory. Algorithm-layer
+          # package.xml files may remain on disk without being this product.
+          missing = sorted(set(declared) - names)
+          extra = []
+          if missing:
               raise SystemExit(
-                  f"product.yml ros.packages mismatch missing={missing} extra={extra}"
+                  f"product.yml ros.packages missing on disk={missing}"
               )
-          print(f"parsed {len(files)} xml files; {len(declared)} train packages")
+          undeclared = sorted(names - set(declared))
+          print(
+              f"parsed {len(files)} xml files; {len(declared)} train packages"
+              + (f"; source-only {undeclared}" if undeclared else "")
+          )
           PY
 
   build-debs:
