@@ -6,6 +6,11 @@
   <arg name="ns" default="ugv1" />
   <arg name="imu_topic" default="/imu/data" />
   <arg name="auto_start_tracking" default="false" />
+  <arg name="shuttle" default="false" />
+  <arg name="shuttle_x" default="0.0" />
+  <arg name="shuttle_y_min" default="-2.0" />
+  <arg name="shuttle_y_max" default="2.0" />
+  <arg name="shuttle_speed" default="0.5" />
 
   <include file="$(find agilex_estimator)/launch/estimator.launch">
     <arg name="server" value="$(arg server)" />
@@ -24,5 +29,15 @@
     <arg name="vrpn_rigid_body" value="$(arg tracker)" />
     <arg name="auto_start_tracking" value="$(arg auto_start_tracking)" />
     <arg name="cmd_vel_topic" value="/cmd_vel" />
+  </include>
+
+  <include if="$(arg shuttle)" file="$(find unicycle_reference_trajectory)/launch/ugv_unicycle_target_replanner.launch">
+    <arg name="ns" value="$(arg ns)" />
+    <arg name="random_targets" value="false" />
+    <arg name="shuttle_mode" value="true" />
+    <arg name="shuttle_x" value="$(arg shuttle_x)" />
+    <arg name="shuttle_y_min" value="$(arg shuttle_y_min)" />
+    <arg name="shuttle_y_max" value="$(arg shuttle_y_max)" />
+    <arg name="shuttle_speed" value="$(arg shuttle_speed)" />
   </include>
 </launch>
