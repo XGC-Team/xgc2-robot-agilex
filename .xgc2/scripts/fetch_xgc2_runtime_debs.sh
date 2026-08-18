@@ -44,7 +44,7 @@ fetch() {
   return 1
 }
 
-fetch "ros-${ros_distro}-scout-msgs" "0.3.3-10"
+fetch "ros-${ros_distro}-scout-msgs" "0.3.3-11"
 if [[ "${ros_distro}" == "melodic" ]]; then
   fetch "ros-${ros_distro}-xgc2-scout-description" "0.4.10-1"
   fetch "ros-${ros_distro}-swarm-ros-bridge" "1.1.0-9"
