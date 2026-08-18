@@ -46,11 +46,11 @@ fetch() {
 
 fetch "ros-${ros_distro}-scout-msgs" "0.3.3-11"
 if [[ "${ros_distro}" == "melodic" ]]; then
-  fetch "ros-${ros_distro}-xgc2-scout-description" "0.4.10-1"
-  fetch "ros-${ros_distro}-swarm-ros-bridge" "1.1.0-9"
+  fetch "ros-${ros_distro}-xgc2-scout-description" "0.4.10-3"
+  fetch "ros-${ros_distro}-swarm-ros-bridge" "1.1.0-11"
 else
-  fetch "ros-${ros_distro}-xgc2-scout-description" "0.4.10-14"
-  fetch "ros-${ros_distro}-swarm-ros-bridge" "1.1.0-9" optional
+  fetch "ros-${ros_distro}-xgc2-scout-description" "0.4.10-15"
+  fetch "ros-${ros_distro}-swarm-ros-bridge" "1.1.0-11" optional
 fi
 
 ls -l "${out_dir}"
