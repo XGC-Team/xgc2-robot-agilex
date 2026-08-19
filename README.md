@@ -26,14 +26,15 @@ autostart. No unit is enabled or started. IMU, camera, and lidar still
 need the matching sensors packages before those units can actually start.
 
 ```text
+xgc2-agilex-roscore.service
+  start-roscore: the only ROS master
 xgc2-agilex-chassis.service
-  start-chassis: settle, wait can0 UP
+  Wants roscore; wait-roscore; stagger; settle; wait can0 UP
   ExecStartPre setup-can0 @ 500000
-  agilex_onboard_autostart/chassis.launch
-    scout_base_node + scout_visual.urdf TF
+  roslaunch --wait chassis.launch (scout_base_node required)
 xgc2-agilex-imu-hi226.service
-  start-imu-hi226: wait /dev/imu
-  agilex_onboard_autostart/imu-hi226.launch -> /imu/data
+  wait-roscore; stagger; wait /dev/imu
+  roslaunch --wait imu-hi226.launch (HI226 required) -> /imu/data
 xgc2-agilex-swarm-ros-bridge.service
   start-swarm-ros-bridge: wait /scout_status; wait /imu/data if present
   agilex_swarm_ros_bridge/swarm.launch
@@ -58,7 +59,7 @@ xgc2-agilex-mocap.service
 | `ros-melodic-swarm-ros-bridge` | `swarm_ros_bridge` | Official XGC2 bridge (APT, not rebuilt here) |
 | `ros-melodic-xgc2-agilex-swarm-ros-bridge` | `agilex_swarm_ros_bridge` | Vehicle YAML+launch for the official bridge |
 | `ros-melodic-xgc2-agilex` | (meta) | Vehicle chassis + bridge + autostart units; does not enable or start them |
-| `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | chassis/IMU/comm/camera/lidar/mocap units; install-only. Site params in `/etc/xgc2/agilex/onboard.env`. Enable chassis only; mocap is Agent `agilex-mocap-ros1`. |
+| `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | standalone roscore + chassis/IMU/comm/camera/lidar/mocap/panel units; install-only. Site params in `/etc/xgc2/agilex/onboard.env`. Enable chassis (Wants roscore). Mocap for Agent sessions is `agilex-mocap-ros1`. |
 
 D435 / D435i capture lives in the shared [`xgc2-camera-d435`](https://github.com/XGC-Team/xgc2-camera-d435) product. Scout only names topics in `agilex_onboard_autostart/camera.launch`.
 

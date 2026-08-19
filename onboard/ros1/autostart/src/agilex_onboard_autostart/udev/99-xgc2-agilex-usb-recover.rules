@@ -1,0 +1,2 @@
+# candleLight / gs_usb: interface comes back DOWN; bring can0 up and reopen chassis.
+ACTION=="add", SUBSYSTEM=="net", KERNEL=="can0", TAG+="systemd", ENV{SYSTEMD_WANTS}="xgc2-agilex-usb-recover@can.service"

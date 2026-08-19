@@ -1,6 +1,7 @@
 [Unit]
 Description=XGC2 AgileX VRPN client and pose/twist/accel relay
-After=network.target xgc2-agilex-chassis.service
+After=network.target xgc2-agilex-roscore.service
+Wants=xgc2-agilex-roscore.service
 
 [Service]
 Type=simple

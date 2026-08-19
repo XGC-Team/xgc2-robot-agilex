@@ -36,6 +36,12 @@ wait_topic() {
   return 1
 }
 
+HERE="$(cd "$(dirname "$0")" && pwd)"
+"${HERE}/wait-roscore"
+stagger="${SWARM_STAGGER_SEC:-6}"
+echo "xgc2 agilex communication: stagger ${stagger}s after roscore"
+sleep "${stagger}"
+
 sec="${COMM_SETTLE_SEC:-2}"
 echo "xgc2 agilex communication: settle ${sec}s"
 sleep "${sec}"
@@ -47,4 +53,4 @@ if [[ "${IMU_REQUIRED:-0}" == "1" || -e "${IMU_DEVICE:-/dev/imu}" ]]; then
 fi
 
 CONFIG="${SWARM_ROS_BRIDGE_CONFIG:-/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml}"
-exec roslaunch agilex_swarm_ros_bridge swarm.launch config:="${CONFIG}"
+exec roslaunch --wait agilex_swarm_ros_bridge swarm.launch config:="${CONFIG}"

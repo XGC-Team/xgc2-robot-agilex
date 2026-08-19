@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# udev/systemd oneshot: bring the USB device back without a manual restart.
+set -euo pipefail
+
+HERE="$(cd "$(dirname "$0")" && pwd)"
+kind="${1:-}"
+
+case "${kind}" in
+  can)
+    if [[ -x "${HERE}/setup-can0" ]]; then
+      "${HERE}/setup-can0"
+    else
+      echo "usb-recover can: setup-can0 missing" >&2
+      exit 1
+    fi
+    if command -v systemctl >/dev/null 2>&1; then
+      systemctl try-restart xgc2-agilex-chassis.service >/dev/null 2>&1 || true
+    fi
+    ;;
+  imu)
+    device="${IMU_DEVICE:-/dev/imu}"
+    deadline=$((SECONDS + 8))
+    while [[ ${SECONDS} -lt ${deadline} ]]; do
+      if [[ -e "${device}" ]]; then
+        break
+      fi
+      sleep 0.2
+    done
+    if [[ ! -e "${device}" ]]; then
+      echo "usb-recover imu: ${device} did not appear" >&2
+      exit 1
+    fi
+    if command -v systemctl >/dev/null 2>&1; then
+      systemctl try-restart xgc2-agilex-imu-hi226.service >/dev/null 2>&1 || true
+    fi
+    ;;
+  *)
+    echo "usb-recover: usage: usb-recover can|imu" >&2
+    exit 2
+    ;;
+esac

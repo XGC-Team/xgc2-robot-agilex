@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROS_DISTRO="${ROS_DISTRO:-melodic}"
+ROS_PREFIX="/opt/ros/${ROS_DISTRO}"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck disable=SC1091
+set +u
+source "${ROS_PREFIX}/setup.bash"
+set -u
+
+if [[ -n "${FIELD_PANEL_OVERLAY:-}" && -f "${FIELD_PANEL_OVERLAY}" ]]; then
+  # shellcheck disable=SC1090
+  set +u
+  source "${FIELD_PANEL_OVERLAY}"
+  set -u
+fi
+
+export ROS_MASTER_URI="${ROS_MASTER_URI:-http://127.0.0.1:11311}"
+export ROS_IP="${ROS_IP:-127.0.0.1}"
+
+"${HERE}/wait-roscore"
+sec="${PANEL_STAGGER_SEC:-6}"
+echo "xgc2 field panel: stagger ${sec}s after roscore"
+sleep "${sec}"
+
+if ! rospack find xgc2_field_panel >/dev/null 2>&1; then
+  echo "xgc2 field panel: package xgc2_field_panel is not installed" >&2
+  exit 1
+fi
+
+exec roslaunch --wait xgc2_field_panel panel.launch \
+  port:="${FIELD_PANEL_PORT:-8099}" \
+  bind:="${FIELD_PANEL_BIND:-0.0.0.0}" \
+  ns:="${FIELD_PANEL_NS:-ugv1}"

@@ -1,6 +1,7 @@
 [Unit]
 Description=XGC2 AgileX optional HI226 serial IMU
-After=network.target systemd-udevd.service xgc2-agilex-chassis.service
+After=network.target systemd-udevd.service xgc2-agilex-roscore.service
+Wants=xgc2-agilex-roscore.service
 StartLimitIntervalSec=0
 # Install-only. Enable on hosts that have the HI226 /dev/imu accessory.
 

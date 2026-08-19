@@ -1,0 +1,10 @@
+[Unit]
+Description=XGC2 AgileX USB recover (%i)
+After=systemd-udevd.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/xgc2/agilex/onboard.env
+ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/usb-recover %i
+TimeoutStartSec=90

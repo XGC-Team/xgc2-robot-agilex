@@ -9,6 +9,12 @@ source "${ROS_PREFIX}/setup.bash"
 export ROS_MASTER_URI="${ROS_MASTER_URI:-http://127.0.0.1:11311}"
 export ROS_IP="${ROS_IP:-127.0.0.1}"
 
+HERE="$(cd "$(dirname "$0")" && pwd)"
+"${HERE}/wait-roscore"
+stagger="${IMU_STAGGER_SEC:-4}"
+echo "xgc2 agilex imu-hi226: stagger ${stagger}s after roscore"
+sleep "${stagger}"
+
 sec="${IMU_SETTLE_SEC:-2}"
 echo "xgc2 agilex imu-hi226: settle ${sec}s"
 sleep "${sec}"
@@ -17,4 +23,4 @@ sleep "${sec}"
   "${IMU_DEVICE:-/dev/imu}" \
   --timeout "${IMU_DEVICE_WAIT_TIMEOUT:-90}"
 
-exec roslaunch agilex_onboard_autostart imu-hi226.launch
+exec roslaunch --wait agilex_onboard_autostart imu-hi226.launch

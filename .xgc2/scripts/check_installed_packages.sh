@@ -82,7 +82,10 @@ test ! -e "${PREFIX}/lib/agilex_estimator/vrpn_relay"
 test ! -e "${PREFIX}/share/agilex_estimator"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/setup-can0"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/wait-device"
-test ! -e "${PREFIX}/lib/agilex_onboard_autostart/start-roscore"
+test -x "${PREFIX}/lib/agilex_onboard_autostart/start-roscore"
+test -x "${PREFIX}/lib/agilex_onboard_autostart/wait-roscore"
+test -x "${PREFIX}/lib/agilex_onboard_autostart/usb-recover"
+test -x "${PREFIX}/lib/agilex_onboard_autostart/start-field-panel"
 test ! -e "${PREFIX}/lib/agilex_onboard_autostart/start-communication"
 test ! -e "${PREFIX}/lib/agilex_onboard_autostart/scout_status_to_std"
 test -x "${PREFIX}/lib/agilex_swarm_ros_bridge/scout_status_to_std"
@@ -92,6 +95,9 @@ test -f "${PREFIX}/share/agilex_swarm_ros_bridge/config/ros_topics.yaml"
 test ! -f "${PREFIX}/share/agilex_onboard_autostart/config/ros_topics.yaml"
 test -f "${PREFIX}/share/agilex_onboard_autostart/launch/swarm.launch"
 test -f /lib/systemd/system/xgc2-agilex-chassis.service
+test -f /lib/systemd/system/xgc2-agilex-roscore.service
+test -f /lib/systemd/system/xgc2-agilex-usb-recover@.service
+test -f /lib/systemd/system/xgc2-field-panel.service
 test -f /lib/systemd/system/xgc2-agilex-imu-hi226.service
 test -f /lib/systemd/system/xgc2-agilex-swarm-ros-bridge.service
 test -f /lib/systemd/system/xgc2-agilex-camera.service
@@ -99,23 +105,31 @@ test -f /lib/systemd/system/xgc2-agilex-lidar-helios16.service
 test -f /lib/systemd/system/xgc2-agilex-mocap.service
 test ! -f /lib/systemd/system/xgc2-agilex-base.service
 test ! -e /etc/systemd/system/multi-user.target.wants/xgc2-agilex-chassis.service
+test ! -e /etc/systemd/system/multi-user.target.wants/xgc2-agilex-roscore.service
 test ! -e /etc/systemd/system/multi-user.target.wants/xgc2-agilex-imu-hi226.service
 test ! -e /etc/systemd/system/multi-user.target.wants/xgc2-agilex-swarm-ros-bridge.service
 test ! -e /etc/systemd/system/multi-user.target.wants/xgc2-agilex-camera.service
 test ! -e /etc/systemd/system/multi-user.target.wants/xgc2-agilex-lidar-helios16.service
 test ! -e /etc/systemd/system/multi-user.target.wants/xgc2-agilex-mocap.service
+test ! -e /etc/systemd/system/multi-user.target.wants/xgc2-field-panel.service
 test ! -f /lib/systemd/system/xgc2-agilex-onboard.target
 test ! -f /lib/systemd/system/xgc2-roscore.service
 test ! -f /lib/systemd/system/xgc2-agilex-boot-settle.service
 test ! -f /lib/systemd/system/xgc2-agilex-can0.service
 test ! -f /lib/systemd/system/xgc2-agilex-communication.service
 test ! -f /etc/udev/rules.d/99-xgc2-agilex-imu.rules
+test -f /etc/udev/rules.d/99-xgc2-agilex-usb-recover.rules
 test -f /etc/xgc2/agilex/onboard.env
 grep -q '^MOCAP_RIGID_BODY=' /etc/xgc2/agilex/onboard.env
 grep -q '^VRPN_SERVER=' /etc/xgc2/agilex/onboard.env
+grep -q '^FIELD_PANEL_STATE_SOURCE=estimator$' /etc/xgc2/agilex/onboard.env
 ! grep -E '^Environment=' /lib/systemd/system/xgc2-agilex-*.service
+! grep -E '^Environment=' /lib/systemd/system/xgc2-field-panel.service
 grep -q 'EnvironmentFile=-/etc/xgc2/agilex/onboard.env' /lib/systemd/system/xgc2-agilex-chassis.service
+grep -q 'EnvironmentFile=-/etc/xgc2/agilex/onboard.env' /lib/systemd/system/xgc2-agilex-roscore.service
 grep -q 'EnvironmentFile=-/etc/xgc2/agilex/onboard.env' /lib/systemd/system/xgc2-agilex-mocap.service
+grep -q 'roslaunch --wait' "${PREFIX}/lib/agilex_onboard_autostart/start-chassis"
+grep -q 'required="true"' "${PREFIX}/share/scout_base/launch/scout_mini_base.launch"
 test -f /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
 
 roslaunch --files agilex_onboard_autostart imu-hi226.launch >/dev/null

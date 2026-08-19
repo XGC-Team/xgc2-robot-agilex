@@ -13,6 +13,12 @@ fi
 export ROS_MASTER_URI="${ROS_MASTER_URI:-http://127.0.0.1:11311}"
 export ROS_IP="${ROS_IP:-127.0.0.1}"
 
+HERE="$(cd "$(dirname "$0")" && pwd)"
+"${HERE}/wait-roscore"
+stagger="${MOCAP_STAGGER_SEC:-4}"
+echo "xgc2 agilex mocap: stagger ${stagger}s after roscore"
+sleep "${stagger}"
+
 if rospack find agilex_estimator >/dev/null 2>&1; then
   :
 else
@@ -25,7 +31,7 @@ PORT="${VRPN_PORT:-3883}"
 TRACKER="${MOCAP_RIGID_BODY:-pose_0}"
 
 echo "xgc2 agilex mocap: ${TRACKER}@${SERVER}:${PORT} (no vision_pose)"
-exec roslaunch agilex_estimator mocap.launch \
+exec roslaunch --wait agilex_estimator mocap.launch \
   server:="${SERVER}" \
   port:="${PORT}" \
   tracker:="${TRACKER}"

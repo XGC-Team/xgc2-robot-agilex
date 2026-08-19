@@ -1,6 +1,7 @@
 [Unit]
 Description=XGC2 AgileX chassis (CAN driver and TF)
-After=network.target local-fs.target systemd-modules-load.service systemd-udevd.service
+After=network.target local-fs.target systemd-modules-load.service systemd-udevd.service xgc2-agilex-roscore.service
+Wants=xgc2-agilex-roscore.service
 StartLimitIntervalSec=0
 # IMU, communication, camera, and LiDAR are separate services.
 

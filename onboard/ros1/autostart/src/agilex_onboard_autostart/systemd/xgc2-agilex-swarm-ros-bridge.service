@@ -1,6 +1,7 @@
 [Unit]
 Description=XGC2 AgileX swarm_ros_bridge
-After=network.target xgc2-agilex-chassis.service
+After=network.target xgc2-agilex-roscore.service
+Wants=xgc2-agilex-roscore.service
 
 [Service]
 Type=simple

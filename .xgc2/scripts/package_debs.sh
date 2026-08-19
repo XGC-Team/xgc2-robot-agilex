@@ -219,12 +219,17 @@ build_autostart_deb() {
 
   mkdir -p \
     "${pkg_root}/etc/xgc2/agilex" \
+    "${pkg_root}/etc/udev/rules.d" \
     "${pkg_root}/lib/systemd/system"
 
   cp -a "${PREFIX_ROOT}/share/${ros_pkg}/config/onboard.env" \
     "${pkg_root}/etc/xgc2/agilex/onboard.env"
   cp -a "${PREFIX_ROOT}/share/${ros_pkg}/systemd/"* \
     "${pkg_root}/lib/systemd/system/"
+  if [[ -f "${PREFIX_ROOT}/share/${ros_pkg}/udev/99-xgc2-agilex-usb-recover.rules" ]]; then
+    cp -a "${PREFIX_ROOT}/share/${ros_pkg}/udev/99-xgc2-agilex-usb-recover.rules" \
+      "${pkg_root}/etc/udev/rules.d/99-xgc2-agilex-usb-recover.rules"
+  fi
   sed -i \
     -e "s|/opt/ros/melodic|/opt/ros/${ROS_DISTRO}|g" \
     -e "s|ROS_DISTRO=melodic|ROS_DISTRO=${ROS_DISTRO}|g" \
@@ -275,7 +280,11 @@ if [ "$1" = "configure" ]; then
     systemctl disable xgc2-agilex-can0.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-base.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-swarm-ros-bridge.service >/dev/null 2>&1 || true
-    # Chassis is the operator-owned boot unit. Do not disable it on upgrade.
+    # Chassis and standalone roscore are operator-owned. Do not disable on upgrade.
+    if command -v udevadm >/dev/null 2>&1; then
+      udevadm control --reload-rules >/dev/null 2>&1 || true
+      udevadm trigger --subsystem-match=net --action=add >/dev/null 2>&1 || true
+    fi
     systemctl disable xgc2-agilex-imu.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-imu-hi226.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-communication.service >/dev/null 2>&1 || true
@@ -297,6 +306,8 @@ set -e
 if [ "$1" = "remove" ] || [ "$1" = "deconfigure" ]; then
   if command -v systemctl >/dev/null 2>&1; then
     systemctl disable xgc2-agilex-chassis.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-agilex-roscore.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-field-panel.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-imu.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-imu-hi226.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-base.service >/dev/null 2>&1 || true
@@ -331,6 +342,9 @@ EOF
   chmod 0755 "${pkg_root}/DEBIAN/postinst" "${pkg_root}/DEBIAN/prerm" "${pkg_root}/DEBIAN/postrm"
   chmod 0644 "${pkg_root}/usr/share/doc/${deb_pkg}/README"
   find "${pkg_root}/lib/systemd/system" -type f -exec chmod 0644 {} +
+  if [[ -f "${pkg_root}/etc/udev/rules.d/99-xgc2-agilex-usb-recover.rules" ]]; then
+    chmod 0644 "${pkg_root}/etc/udev/rules.d/99-xgc2-agilex-usb-recover.rules"
+  fi
   chmod 0644 "${pkg_root}/etc/xgc2/agilex/onboard.env"
 
   fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${deb_pkg}_${version}_${ARCH}.deb" >/dev/null

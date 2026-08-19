@@ -1,21 +1,20 @@
 [Unit]
-Description=XGC2 AgileX RoboSense Helios 16 lidar
+Description=XGC2 field panel (Web :8099)
 After=network.target xgc2-agilex-roscore.service
 Wants=xgc2-agilex-roscore.service
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
 User=agilex
 Group=agilex
 WorkingDirectory=/home/agilex
-# Install-only. Agent or a manual start owns experiment-time lidar.
 EnvironmentFile=-/etc/xgc2/agilex/onboard.env
-ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/start-lidar-helios16
+ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/start-field-panel
 Restart=always
-RestartSec=5
-StartLimitIntervalSec=0
-TimeoutStartSec=120
-TimeoutStopSec=15
+RestartSec=3
+TimeoutStartSec=90
+TimeoutStopSec=20
 KillMode=mixed
 
 [Install]

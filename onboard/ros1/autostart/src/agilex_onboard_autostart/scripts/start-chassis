@@ -9,6 +9,12 @@ source "${ROS_PREFIX}/setup.bash"
 export ROS_MASTER_URI="${ROS_MASTER_URI:-http://127.0.0.1:11311}"
 export ROS_IP="${ROS_IP:-127.0.0.1}"
 
+HERE="$(cd "$(dirname "$0")" && pwd)"
+"${HERE}/wait-roscore"
+stagger="${CHASSIS_STAGGER_SEC:-2}"
+echo "xgc2 agilex chassis: stagger ${stagger}s after roscore"
+sleep "${stagger}"
+
 sec="${BOOT_SETTLE_SEC:-10}"
 echo "xgc2 agilex chassis: settle ${sec}s (USB CAN)"
 sleep "${sec}"
@@ -27,4 +33,4 @@ if ! ip link show "${CAN_IF}" 2>/dev/null | grep -q "UP"; then
   exit 1
 fi
 
-exec roslaunch agilex_onboard_autostart chassis.launch
+exec roslaunch --wait agilex_onboard_autostart chassis.launch

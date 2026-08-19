@@ -147,6 +147,10 @@ docker run --rm --network none \
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-camera
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-lidar-helios16
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-mocap
+    test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-roscore
+    test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/wait-roscore
+    test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/usb-recover
+    test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-field-panel
     test ! -e /opt/ros/${ROS_DISTRO}/lib/agilex_estimator/vrpn_relay
     grep -q 'xgc2_vrpn_relay' /workspace/agilex/onboard/ros1/perception/src/agilex_estimator/launch/mocap.launch
     grep -q 'vrpn.launch' /workspace/agilex/onboard/ros1/perception/src/agilex_estimator/launch/mocap.launch
@@ -159,9 +163,15 @@ docker run --rm --network none \
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-camera.service"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-lidar-helios16.service"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-mocap.service"
+    test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-roscore.service"
+    test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-usb-recover@.service"
+    test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-field-panel.service"
+    test -f "$(rospack find agilex_onboard_autostart)/udev/99-xgc2-agilex-usb-recover.rules"
     test ! -d "$(rospack find agilex_swarm_ros_bridge)/systemd"
     test ! -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-onboard.target"
     test ! -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-roscore.service"
+    grep -q 'roslaunch --wait' "$(rospack find agilex_onboard_autostart)/scripts/start-chassis"
+    grep -q 'required="true"' /workspace/agilex/onboard/ros1/chassis/src/scout_base/launch/scout_mini_base.launch
 
     roslaunch --files agilex_onboard_autostart imu-hi226.launch >/dev/null
     roslaunch --files agilex_onboard_autostart chassis.launch >/dev/null

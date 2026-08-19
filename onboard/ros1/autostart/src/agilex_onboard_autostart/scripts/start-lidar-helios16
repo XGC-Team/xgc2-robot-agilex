@@ -9,8 +9,14 @@ source "${ROS_PREFIX}/setup.bash"
 export ROS_MASTER_URI="${ROS_MASTER_URI:-http://127.0.0.1:11311}"
 export ROS_IP="${ROS_IP:-127.0.0.1}"
 
+HERE="$(cd "$(dirname "$0")" && pwd)"
+"${HERE}/wait-roscore"
+stagger="${LIDAR_STAGGER_SEC:-8}"
+echo "xgc2 agilex lidar-helios16: stagger ${stagger}s after roscore"
+sleep "${stagger}"
+
 sec="${LIDAR_SETTLE_SEC:-5}"
 echo "xgc2 agilex lidar-helios16: settle ${sec}s"
 sleep "${sec}"
 
-exec roslaunch agilex_onboard_autostart lidar-helios16.launch
+exec roslaunch --wait agilex_onboard_autostart lidar-helios16.launch
