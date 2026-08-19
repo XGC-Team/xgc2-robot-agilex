@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>xgc2_onboard_teleop</name>
+  <version>0.1.0</version>
+  <description>Generic onboard camera viewer and dual-page teleop. Not field-panel and not a guidance stack.</description>
+  <maintainer email="apt@example.com">XGC2</maintainer>
+  <license>Proprietary</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>roslaunch</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+</package>

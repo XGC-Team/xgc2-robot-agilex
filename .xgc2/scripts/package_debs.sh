@@ -21,6 +21,7 @@ ros_package_xml() {
     "${REPO_ROOT}/onboard/ros1/perception/src" \
     "${REPO_ROOT}/onboard/ros1/control/src" \
     "${REPO_ROOT}/onboard/ros1/autostart/src" \
+    "${REPO_ROOT}/onboard/ros1/teleop/src" \
     -type f \
     -path "*/${ros_pkg}/package.xml" \
     -print | sort | head -n 1)"
@@ -308,6 +309,7 @@ if [ "$1" = "remove" ] || [ "$1" = "deconfigure" ]; then
     systemctl disable xgc2-agilex-chassis.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-roscore.service >/dev/null 2>&1 || true
     systemctl disable xgc2-field-panel.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-agilex-onboard-teleop.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-imu.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-imu-hi226.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-base.service >/dev/null 2>&1 || true
@@ -361,7 +363,7 @@ build_meta_deb() {
     "${deb_pkg}" \
     "${version}" \
     "ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart (>= ${version})" \
-    "XGC2 AgileX vehicle min-boot meta package (chassis + bridge; no IMU/camera/LiDAR/estimator/NMPC)" \
+    "XGC2 AgileX vehicle min-boot meta package (chassis + bridge; no IMU/camera/LiDAR/estimator/NMPC/teleop)" \
     "ros-${ROS_DISTRO}-xgc2-agilex-serial-imu, ros-${ROS_DISTRO}-xgc2-agilex-rslidar-sdk, ros-${ROS_DISTRO}-xgc2-agilex-onboard-rviz"
 
   cat > "${pkg_root}/usr/share/doc/${deb_pkg}/README" <<EOF
@@ -499,5 +501,11 @@ build_communication_deb
 build_autostart_deb
 build_chassis_deb
 build_meta_deb
+
+build_deb \
+  "ros-${ROS_DISTRO}-xgc2-agilex-onboard-teleop" \
+  "xgc2_onboard_teleop" \
+  "ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-std-msgs" \
+  "Optional onboard camera viewer and dual-page teleop (not field-panel)"
 
 find "${OUTPUT_DIR}" -maxdepth 1 -type f -name "ros-${ROS_DISTRO}-xgc2-agilex*.deb" -print | sort

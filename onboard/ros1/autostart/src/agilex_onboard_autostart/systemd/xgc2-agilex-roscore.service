@@ -1,7 +1,7 @@
 [Unit]
 Description=XGC2 AgileX standalone ROS1 master
 After=network.target
-Before=xgc2-agilex-chassis.service xgc2-agilex-imu-hi226.service xgc2-agilex-camera.service xgc2-agilex-lidar-helios16.service xgc2-agilex-swarm-ros-bridge.service xgc2-agilex-mocap.service xgc2-field-panel.service
+Before=xgc2-agilex-chassis.service xgc2-agilex-imu-hi226.service xgc2-agilex-camera.service xgc2-agilex-lidar-helios16.service xgc2-agilex-swarm-ros-bridge.service xgc2-agilex-mocap.service xgc2-field-panel.service xgc2-agilex-onboard-teleop.service
 StartLimitIntervalSec=0
 
 [Service]

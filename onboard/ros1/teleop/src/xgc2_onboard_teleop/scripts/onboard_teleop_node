@@ -1,0 +1,780 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Generic onboard camera + teleop. Python 2/3.
+# Dual-page UI: D-pad and landscape dual sticks with MJPEG.
+# Does not start guidance, VRPN, NMPC, or field-panel stacks.
+from __future__ import print_function
+
+import json
+import os
+import sys
+import threading
+import time
+
+try:
+    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+    from SocketServer import ThreadingMixIn
+    from urlparse import urlparse
+except ImportError:
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    from socketserver import ThreadingMixIn
+    from urllib.parse import urlparse
+
+try:
+    from sensor_msgs.msg import CompressedImage, Image
+except ImportError:
+    CompressedImage = None
+    Image = None
+
+try:
+    import cv2
+except ImportError:
+    cv2 = None
+
+try:
+    from cv_bridge import CvBridge
+except ImportError:
+    CvBridge = None
+
+try:
+    import rospy
+    from geometry_msgs.msg import Twist
+    from std_msgs.msg import String
+except ImportError:
+    rospy = None
+    Twist = None
+    String = None
+
+try:
+    from scout_msgs.msg import ScoutStatus
+except ImportError:
+    ScoutStatus = None
+
+BATTERY_EMPTY_V = 20.5
+BATTERY_FULL_V = 29.2
+BATT_RE = __import__("re").compile(r"batt=([0-9.]+)")
+
+BIND = os.environ.get("ONBOARD_TELEOP_BIND", "0.0.0.0")
+PORT = int(os.environ.get("ONBOARD_TELEOP_PORT", "8100"))
+ROS_DISTRO = os.environ.get("ROS_DISTRO", "melodic")
+CMD_VEL_TOPIC = os.environ.get("ONBOARD_TELEOP_CMD_VEL", "/cmd_vel")
+ONBOARD_ENV = os.environ.get(
+    "ONBOARD_TELEOP_ONBOARD_ENV", "/etc/xgc2/agilex/onboard.env"
+)
+PANEL_CONFIG = os.environ.get(
+    "ONBOARD_TELEOP_CONFIG",
+    os.path.expanduser("~/.config/xgc2_onboard_teleop.json"),
+)
+HERE = os.path.dirname(os.path.abspath(__file__))
+WEB_NAME = "index.html"
+CAMERA_RAW = os.environ.get(
+    "ONBOARD_TELEOP_CAMERA_RAW", "/camera/color/image_raw"
+)
+CAMERA_COMPRESSED = os.environ.get(
+    "ONBOARD_TELEOP_CAMERA_COMPRESSED",
+    "/camera/color/image_raw/compressed",
+)
+CAMERA_FPS = 8.0
+TELEOP_V = 0.4
+TELEOP_DEADZONE = 0.02
+TELEOP_STICK_DEADZONE = 0.08
+TELEOP_BUTTONS = {
+    "forward": "teleop_fwd",
+    "back": "teleop_back",
+    "left": "teleop_left",
+    "right": "teleop_right",
+}
+PERSIST_FIELDS = (("speed", float),)
+
+
+def _as_float(value, fallback):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return fallback
+    if number != number:
+        return fallback
+    return number
+
+
+def _read_env_file(path):
+    values = {}
+    if not os.path.isfile(path):
+        return values
+    handle = open(path, "r")
+    try:
+        for raw in handle:
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            values[key.strip()] = value.strip().strip("'\"")
+    finally:
+        handle.close()
+    return values
+
+
+def _atomic_write(path, text):
+    directory = os.path.dirname(path) or "."
+    if directory and not os.path.isdir(directory):
+        try:
+            os.makedirs(directory)
+        except OSError:
+            pass
+    tmp = path + ".tmp"
+    handle = open(tmp, "w")
+    try:
+        handle.write(text)
+    finally:
+        handle.close()
+    if os.path.exists(path):
+        os.remove(path)
+    os.rename(tmp, path)
+
+
+def _package_share():
+    candidates = [
+        os.path.normpath(os.path.join(HERE, "..")),
+        os.path.join("/opt/ros", ROS_DISTRO, "share", "xgc2_onboard_teleop"),
+    ]
+    for candidate in candidates:
+        if os.path.isfile(os.path.join(candidate, "package.xml")):
+            return os.path.abspath(candidate)
+        if os.path.isfile(os.path.join(candidate, "web", WEB_NAME)):
+            return os.path.abspath(candidate)
+    return os.path.abspath(os.path.join(HERE, ".."))
+
+
+def _web_root():
+    env = os.environ.get("ONBOARD_TELEOP_WEB", "")
+    if env and os.path.isfile(os.path.join(env, WEB_NAME)):
+        return os.path.abspath(env)
+    share = _package_share()
+    for candidate in (
+        os.path.join(share, "web"),
+        os.path.join(HERE, "..", "web"),
+    ):
+        if os.path.isfile(os.path.join(candidate, WEB_NAME)):
+            return os.path.abspath(candidate)
+    return os.path.abspath(os.path.join(HERE, "..", "web"))
+
+
+class PanelState(object):
+    def __init__(self):
+        env = _read_env_file(ONBOARD_ENV)
+        self.lock = threading.Lock()
+        self.speed = _as_float(env.get("ONBOARD_TELEOP_SPEED", TELEOP_V), TELEOP_V)
+        self.teleop_v = 0.0
+        self.teleop_w = 0.0
+        self.teleop_fwd = False
+        self.teleop_back = False
+        self.teleop_left = False
+        self.teleop_right = False
+        self.estop = False
+        self.topics = {}
+        self.cmd_pub = None
+        self.ros_ready = False
+        self.last_error = ""
+        self.camera_sub = None
+
+
+STATE = PanelState()
+_CV_BRIDGE = CvBridge() if CvBridge is not None else None
+
+
+class CameraHub(object):
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.cond = threading.Condition(self.lock)
+        self.viewers = 0
+        self.jpeg = None
+        self.stamp = 0.0
+        self.topic = ""
+        self.error = ""
+
+    def status(self):
+        with self.lock:
+            return {
+                "viewers": int(self.viewers),
+                "topic": self.topic,
+                "error": self.error,
+                "has_frame": self.jpeg is not None,
+            }
+
+    def add_viewer(self):
+        with self.lock:
+            self.viewers += 1
+            start = self.viewers == 1
+            self.error = ""
+        if start:
+            ok, message = _ensure_camera_stream()
+            if not ok:
+                with self.lock:
+                    self.error = message
+
+    def remove_viewer(self):
+        with self.lock:
+            if self.viewers > 0:
+                self.viewers -= 1
+            stop = self.viewers == 0
+        if stop:
+            _unbind_camera_sub()
+            with self.lock:
+                self.jpeg = None
+                self.topic = ""
+
+    def set_jpeg(self, data):
+        if not data:
+            return
+        now = time.time()
+        with self.cond:
+            if self.stamp and (now - self.stamp) < (1.0 / CAMERA_FPS):
+                return
+            self.jpeg = data
+            self.stamp = now
+            self.error = ""
+            self.cond.notify_all()
+
+    def wait_jpeg(self, timeout=1.0):
+        deadline = time.time() + timeout
+        with self.cond:
+            while self.jpeg is None and time.time() < deadline:
+                remain = deadline - time.time()
+                if remain <= 0:
+                    break
+                self.cond.wait(remain)
+            return self.jpeg
+
+
+CAMERA = CameraHub()
+
+
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+    daemon_threads = True
+    allow_reuse_address = True
+
+
+def persistable_config():
+    data = {}
+    for name, _kind in PERSIST_FIELDS:
+        data[name] = getattr(STATE, name)
+    return data
+
+
+def apply_saved_config(data):
+    if not isinstance(data, dict):
+        return
+    for name, kind in PERSIST_FIELDS:
+        if name not in data:
+            continue
+        try:
+            value = kind(data[name])
+        except (TypeError, ValueError):
+            continue
+        if name == "speed" and value <= 0.05:
+            continue
+        setattr(STATE, name, value)
+
+
+def load_panel_config(path=None):
+    config_path = path or PANEL_CONFIG
+    if not config_path or not os.path.isfile(config_path):
+        return False
+    handle = open(config_path, "r")
+    try:
+        raw = handle.read()
+    finally:
+        handle.close()
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        return False
+    apply_saved_config(data)
+    return True
+
+
+def save_panel_config(path=None):
+    config_path = path or PANEL_CONFIG
+    if not config_path:
+        return False
+    try:
+        _atomic_write(
+            config_path, json.dumps(persistable_config(), indent=2, sort_keys=True)
+        )
+    except (IOError, OSError):
+        return False
+    return True
+
+
+def _note(topic, data, stale_s=0.5):
+    with STATE.lock:
+        STATE.topics[topic] = {"stamp": time.time(), "data": data, "stale_s": stale_s}
+
+
+def _teleop_speeds():
+    speed = _as_float(STATE.speed, TELEOP_V)
+    if speed <= 0.05:
+        speed = TELEOP_V
+    yaw_speed = speed if speed >= 0.4 else 0.4
+    return speed, yaw_speed
+
+
+def _teleop_active():
+    if STATE.estop:
+        return False
+    if STATE.teleop_fwd or STATE.teleop_back or STATE.teleop_left or STATE.teleop_right:
+        return True
+    return (
+        abs(STATE.teleop_v) > TELEOP_DEADZONE or abs(STATE.teleop_w) > TELEOP_DEADZONE
+    )
+
+
+def _clamp_unit(value):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    if number < -1.0:
+        return -1.0
+    if number > 1.0:
+        return 1.0
+    return number
+
+
+def _teleop_cmd():
+    speed, yaw_speed = _teleop_speeds()
+    v = 0.0
+    w = 0.0
+    if STATE.teleop_fwd:
+        v = speed
+    elif STATE.teleop_back:
+        v = -speed
+    if STATE.teleop_left:
+        w = yaw_speed
+    elif STATE.teleop_right:
+        w = -yaw_speed
+    return v, w
+
+
+def _clear_teleop():
+    STATE.teleop_fwd = False
+    STATE.teleop_back = False
+    STATE.teleop_left = False
+    STATE.teleop_right = False
+    STATE.teleop_v = 0.0
+    STATE.teleop_w = 0.0
+
+
+def _publish_teleop_cmd(v, w):
+    if rospy is None or Twist is None or STATE.cmd_pub is None:
+        return
+    twist = Twist()
+    twist.linear.x = float(v)
+    twist.angular.z = float(w)
+    STATE.cmd_pub.publish(twist)
+
+
+def _publish_zero_cmd():
+    _publish_teleop_cmd(0.0, 0.0)
+
+
+def apply_teleop(payload):
+    if not isinstance(payload, dict):
+        payload = {}
+    with STATE.lock:
+        if STATE.estop:
+            return False, "estop"
+        button = str(payload.get("button") or "").strip().lower()
+        if button in ("stop", "clear") or payload.get("clear"):
+            _clear_teleop()
+            _publish_zero_cmd()
+            return True, "遥控已松开"
+        if button in ("stick", "analog") or payload.get("stick"):
+            STATE.teleop_fwd = False
+            STATE.teleop_back = False
+            STATE.teleop_left = False
+            STATE.teleop_right = False
+            throttle = _clamp_unit(payload.get("throttle", 0.0))
+            yaw = _clamp_unit(payload.get("yaw", 0.0))
+            if abs(throttle) < TELEOP_STICK_DEADZONE:
+                throttle = 0.0
+            if abs(yaw) < TELEOP_STICK_DEADZONE:
+                yaw = 0.0
+            speed, yaw_speed = _teleop_speeds()
+            STATE.teleop_v = throttle * speed
+            STATE.teleop_w = yaw * yaw_speed
+            if not _teleop_active():
+                STATE.teleop_v = 0.0
+                STATE.teleop_w = 0.0
+                _publish_zero_cmd()
+            else:
+                _publish_teleop_cmd(STATE.teleop_v, STATE.teleop_w)
+            return True, "摇杆"
+        attr = TELEOP_BUTTONS.get(button)
+        if attr is None:
+            return False, "unknown teleop button"
+        if "pressed" in payload:
+            on = bool(payload.get("pressed"))
+        else:
+            on = not getattr(STATE, attr)
+        if on:
+            if button == "forward":
+                STATE.teleop_back = False
+            elif button == "back":
+                STATE.teleop_fwd = False
+            elif button == "left":
+                STATE.teleop_right = False
+            elif button == "right":
+                STATE.teleop_left = False
+        setattr(STATE, attr, on)
+        STATE.teleop_v, STATE.teleop_w = _teleop_cmd()
+        if not _teleop_active():
+            _publish_zero_cmd()
+        else:
+            _publish_teleop_cmd(STATE.teleop_v, STATE.teleop_w)
+        return True, "遥控 %s" % button
+
+
+def apply_config(payload):
+    if not isinstance(payload, dict):
+        return False, "bad config"
+    with STATE.lock:
+        apply_saved_config(payload)
+        saved = save_panel_config()
+    if not saved:
+        return True, "速度已应用，但未能写入 %s" % PANEL_CONFIG
+    return True, "已保存"
+
+
+def snapshot():
+    now = time.time()
+    with STATE.lock:
+        topics = {}
+        for name, item in STATE.topics.items():
+            age = None
+            if item.get("stamp"):
+                age = now - item["stamp"]
+            topics[name] = {
+                "age_s": age,
+                "ok": age is not None and age < item.get("stale_s", 0.5),
+                "data": item.get("data"),
+            }
+        teleop_active = _teleop_active()
+        batt = topics.get("battery") or {}
+        batt_data = batt.get("data") or {}
+        return {
+            "speed": STATE.speed,
+            "teleop_active": teleop_active,
+            "teleop": {
+                "forward": bool(STATE.teleop_fwd),
+                "back": bool(STATE.teleop_back),
+                "left": bool(STATE.teleop_left),
+                "right": bool(STATE.teleop_right),
+                "v": float(STATE.teleop_v),
+                "w": float(STATE.teleop_w),
+            },
+            "estop": STATE.estop,
+            "last_error": STATE.last_error,
+            "ros_ready": bool(STATE.ros_ready),
+            "topics": topics,
+            "battery": {
+                "ok": bool(batt.get("ok")),
+                "voltage": batt_data.get("voltage"),
+                "percent": batt_data.get("percent"),
+            },
+            "camera": CAMERA.status(),
+            "port": PORT,
+        }
+
+
+def _published_names():
+    if rospy is None:
+        return []
+    try:
+        return [item[0] for item in rospy.get_published_topics()]
+    except Exception:
+        return []
+
+
+def _camera_topic_up():
+    names = _published_names()
+    return CAMERA_COMPRESSED in names or CAMERA_RAW in names
+
+
+def _on_camera_compressed(msg):
+    data = getattr(msg, "data", None)
+    if data is None:
+        return
+    CAMERA.set_jpeg(bytes(data) if not isinstance(data, bytes) else data)
+
+
+def _on_camera_raw(msg):
+    if cv2 is None or _CV_BRIDGE is None:
+        return
+    try:
+        bgr = _CV_BRIDGE.imgmsg_to_cv2(msg, "bgr8")
+    except Exception:
+        return
+    height, width = bgr.shape[:2]
+    if width > 480:
+        height = int(height * 480.0 / width)
+        bgr = cv2.resize(bgr, (480, height), interpolation=cv2.INTER_AREA)
+    ok, buf = cv2.imencode(".jpg", bgr, [int(cv2.IMWRITE_JPEG_QUALITY), 65])
+    if not ok:
+        return
+    jpeg = buf.tobytes() if hasattr(buf, "tobytes") else buf.tostring()
+    CAMERA.set_jpeg(jpeg)
+
+
+def _unbind_camera_sub():
+    with STATE.lock:
+        sub = STATE.camera_sub
+        STATE.camera_sub = None
+    if sub is None:
+        return
+    try:
+        sub.unregister()
+    except Exception:
+        pass
+
+
+def _bind_camera_sub():
+    if rospy is None:
+        return False, "ROS 未就绪"
+    names = _published_names()
+    _unbind_camera_sub()
+    if CompressedImage is not None and CAMERA_COMPRESSED in names:
+        sub = rospy.Subscriber(
+            CAMERA_COMPRESSED, CompressedImage, _on_camera_compressed, queue_size=1
+        )
+        topic = CAMERA_COMPRESSED
+    elif Image is not None:
+        sub = rospy.Subscriber(CAMERA_RAW, Image, _on_camera_raw, queue_size=1)
+        topic = CAMERA_RAW
+    else:
+        return False, "没有图像消息类型"
+    with STATE.lock:
+        STATE.camera_sub = sub
+    with CAMERA.lock:
+        CAMERA.topic = topic
+    return True, topic
+
+
+def _ensure_camera_stream():
+    if rospy is None or not STATE.ros_ready:
+        return False, "遥控面板 ROS 未就绪"
+    if not _camera_topic_up():
+        return False, "没有相机话题。需要画面时先启动 xgc2-agilex-camera.service"
+    return _bind_camera_sub()
+
+
+def _finite(value):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if number != number:
+        return None
+    return number
+
+
+def _battery_percent(voltage):
+    volts = _finite(voltage)
+    if volts is None:
+        return None
+    span = BATTERY_FULL_V - BATTERY_EMPTY_V
+    if span <= 0.0:
+        return None
+    pct = (volts - BATTERY_EMPTY_V) / span
+    if pct < 0.0:
+        pct = 0.0
+    if pct > 1.0:
+        pct = 1.0
+    return pct * 100.0
+
+
+def _note_battery(voltage, source):
+    volts = _finite(voltage)
+    if volts is None:
+        return
+    _note(
+        "battery",
+        {
+            "voltage": volts,
+            "percent": _battery_percent(volts),
+            "source": source,
+        },
+        1.5,
+    )
+
+
+def _on_scout_status(msg):
+    _note_battery(getattr(msg, "battery_voltage", None), "scout_status")
+
+
+def _on_scout_status_text(msg):
+    text = getattr(msg, "data", "") or ""
+    match = BATT_RE.search(text)
+    if not match:
+        return
+    _note_battery(match.group(1), "status_text")
+
+
+def _on_cmd(msg):
+    _note("cmd_vel", {"v": msg.linear.x, "w": msg.angular.z}, 0.3)
+
+
+def ros_setup():
+    if rospy is None:
+        return
+    rospy.init_node("xgc2_onboard_teleop", anonymous=False, disable_signals=True)
+    STATE.ros_ready = True
+    STATE.cmd_pub = rospy.Publisher(CMD_VEL_TOPIC, Twist, queue_size=10)
+    rospy.Subscriber(CMD_VEL_TOPIC, Twist, _on_cmd)
+    if ScoutStatus is not None:
+        rospy.Subscriber("/scout_status", ScoutStatus, _on_scout_status, queue_size=1)
+    if String is not None:
+        rospy.Subscriber("/scout/status_text", String, _on_scout_status_text, queue_size=1)
+
+
+def teleop_loop():
+    while True:
+        time.sleep(0.05)
+        if rospy is None or STATE.cmd_pub is None:
+            continue
+        with STATE.lock:
+            allowed = (not STATE.estop) and _teleop_active()
+            twist = Twist()
+            if allowed:
+                twist.linear.x = float(STATE.teleop_v)
+                twist.angular.z = float(STATE.teleop_w)
+        if allowed:
+            STATE.cmd_pub.publish(twist)
+
+
+class Handler(BaseHTTPRequestHandler):
+    def log_message(self, fmt, *args):
+        sys.stderr.write("%s - %s\n" % (self.address_string(), fmt % args))
+
+    def _send(self, code, body, content_type="application/json"):
+        data = body if isinstance(body, bytes) else body.encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_GET(self):
+        parsed = urlparse(self.path)
+        path = parsed.path
+        if path == "/" or path.startswith("/index"):
+            page = os.path.join(_web_root(), WEB_NAME)
+            handle = open(page, "rb")
+            try:
+                self._send(200, handle.read(), "text/html; charset=utf-8")
+            finally:
+                handle.close()
+            return
+        if path == "/api/status":
+            self._send(200, json.dumps(snapshot()))
+            return
+        if path == "/api/camera/status":
+            self._send(200, json.dumps(CAMERA.status()))
+            return
+        if path == "/api/camera/stream":
+            self._stream_camera()
+            return
+        self._send(404, json.dumps({"error": "not found"}))
+
+    def _stream_camera(self):
+        CAMERA.add_viewer()
+        try:
+            deadline = time.time() + 12.0
+            jpeg = None
+            while jpeg is None and time.time() < deadline:
+                if CAMERA.status().get("topic") == "":
+                    _ensure_camera_stream()
+                jpeg = CAMERA.wait_jpeg(0.8)
+            if jpeg is None:
+                err = CAMERA.status().get("error") or "相机无画面"
+                self._send(503, json.dumps({"ok": False, "error": err}))
+                return
+            self.send_response(200)
+            self.send_header(
+                "Content-Type", "multipart/x-mixed-replace; boundary=frame"
+            )
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Pragma", "no-cache")
+            self.end_headers()
+            while True:
+                jpeg = CAMERA.wait_jpeg(1.5)
+                if jpeg is None:
+                    continue
+                header = (
+                    b"--frame\r\nContent-Type: image/jpeg\r\nContent-Length: %d\r\n\r\n"
+                    % len(jpeg)
+                )
+                try:
+                    self.wfile.write(header)
+                    self.wfile.write(jpeg)
+                    self.wfile.write(b"\r\n")
+                    self.wfile.flush()
+                except Exception:
+                    break
+        finally:
+            CAMERA.remove_viewer()
+
+    def _read_json(self):
+        length = int(self.headers.get("Content-Length", "0") or 0)
+        raw = self.rfile.read(length) if length else b"{}"
+        if not raw:
+            return {}
+        if not isinstance(raw, str):
+            raw = raw.decode("utf-8")
+        return json.loads(raw)
+
+    def do_POST(self):
+        try:
+            payload = self._read_json()
+        except ValueError:
+            self._send(400, json.dumps({"ok": False, "error": "bad json"}))
+            return
+        path = self.path
+        if path == "/api/teleop":
+            ok, message = apply_teleop(payload)
+        elif path == "/api/config":
+            ok, message = apply_config(payload)
+        else:
+            self._send(404, json.dumps({"ok": False, "error": "not found"}))
+            return
+        self._send(200 if ok else 400, json.dumps({"ok": ok, "message": message}))
+
+
+def main():
+    load_panel_config()
+    http_only = (
+        "--http-only" in sys.argv
+        or os.environ.get("ONBOARD_TELEOP_HTTP_ONLY") == "1"
+    )
+    if not http_only:
+        ros_setup()
+        worker = threading.Thread(target=teleop_loop)
+        worker.daemon = True
+        worker.start()
+    server = ThreadedHTTPServer((BIND, PORT), Handler)
+    print(
+        "xgc2 onboard teleop http://%s:%d/  (http_only=%s)"
+        % (BIND, PORT, http_only)
+    )
+    sys.stdout.flush()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    server.server_close()
+    _publish_zero_cmd()
+
+
+if __name__ == "__main__":
+    main()

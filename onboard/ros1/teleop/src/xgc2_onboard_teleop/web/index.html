@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>车载遥控</title>
+  <style>
+    :root { font-family: sans-serif; color: #111; }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: #e8e8e8;
+      min-height: 100%;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+    input, textarea, select {
+      -webkit-user-select: text;
+      user-select: text;
+    }
+    .page {
+      width: 960px;
+      max-width: 100%;
+      margin: 0;
+      padding: 8px;
+      display: grid;
+      gap: 6px;
+      background: #f4f4f4;
+    }
+    h1 { font-size: 18px; margin: 0; }
+    h2 { font-size: 15px; margin: 0 0 6px; }
+    section {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 8px 10px;
+    }
+    .head { display: flex; align-items: center; gap: 10px; }
+    .batt {
+      flex: 0 0 auto;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border: 1px solid #ccc;
+      background: #f7f7f7;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .batt.ok { color: #064; background: #e8f7ee; border-color: #8cc; }
+    .batt.warn { color: #850; background: #fff4d6; border-color: #dc8; }
+    .batt.bad { color: #800; background: #fde8e8; border-color: #e88; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+    .field { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .field label { flex: 0 0 48px; font-size: 12px; }
+    .field input { flex: 1 1 auto; min-width: 0; width: 8em; padding: 3px 6px; font-size: 16px; }
+    button { padding: 6px 10px; cursor: pointer; font-size: 14px; }
+    button.go { background: #0b6; color: #fff; border: 0; font-size: 15px; padding: 8px 14px; }
+    .teleop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .teleop-head h2 { margin: 0; }
+    .pad { display: grid; grid-template-columns: repeat(3, minmax(56px, 72px)); gap: 8px; }
+    .pad button { min-height: 44px; touch-action: none; }
+    .pad button.pressed { background: #0b6; color: #fff; border: 2px solid #064; }
+    .stick { display: grid; justify-items: center; gap: 4px; }
+    .stick-base {
+      width: 148px;
+      height: 148px;
+      border-radius: 50%;
+      border: 2px solid #888;
+      background: radial-gradient(circle at 50% 50%, #f7f7f7, #e4e4e4);
+      position: relative;
+      touch-action: none;
+    }
+    .stick-knob {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: #333;
+      border: 2px solid #111;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .stick-base.active .stick-knob { background: #0b6; border-color: #064; }
+    .stick-label { font-size: 12px; color: #444; }
+    #teleop-pad[hidden], #drive-sheet[hidden] { display: none !important; }
+    html.drive-open, body.drive-open {
+      overflow: hidden;
+      height: 100%;
+      position: fixed;
+      width: 100%;
+    }
+    #drive-sheet {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: #000;
+      color: #fff;
+      overscroll-behavior: none;
+      touch-action: none;
+    }
+    .drive-rotate-hint { display: none; }
+    @media (orientation: portrait) {
+      .drive-rotate-hint {
+        display: flex;
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0,0,0,0.78);
+        font-size: 22px;
+      }
+    }
+    .drive-cam { position: absolute; inset: 0; background: #111; }
+    .drive-cam img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #111;
+    }
+    .drive-cam-hint {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      background: rgba(0,0,0,0.35);
+      pointer-events: none;
+    }
+    .drive-cam.playing .drive-cam-hint {
+      inset: auto 8px 8px auto;
+      background: rgba(0,0,0,0.4);
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+    .drive-top {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 10px;
+    }
+    .drive-stick {
+      position: absolute;
+      top: 50%;
+      z-index: 2;
+      transform: translateY(-50%);
+      display: grid;
+      justify-items: center;
+      gap: 4px;
+      pointer-events: none;
+    }
+    .drive-stick.left { left: 12px; }
+    .drive-stick.right { right: 12px; }
+    .drive-stick .stick-base {
+      pointer-events: auto;
+      width: clamp(110px, 34vmin, 210px);
+      height: clamp(110px, 34vmin, 210px);
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.18), rgba(255,255,255,0.06));
+      border-color: rgba(255,255,255,0.55);
+    }
+    .drive-stick .stick-knob { background: rgba(255,255,255,0.9); border-color: #ccc; }
+    .drive-stick .stick-base.active .stick-knob { background: #0b6; border-color: #064; }
+    .drive-stick .stick-label { color: #ddd; }
+    .note { font-size: 11px; color: #555; margin: 4px 0 0; }
+    #msg {
+      flex: 1 1 auto;
+      font-size: 12px;
+      padding: 4px 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #msg.ok { background: #e8f7ee; color: #064; }
+    #msg.bad { background: #fde8e8; color: #800; font-weight: 700; }
+    @media (max-width: 800px) {
+      .page { width: 100%; }
+      .stick-base { width: 42vw; height: 42vw; max-width: 168px; max-height: 168px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="head">
+    <h1>车载遥控</h1>
+    <div id="battery" class="batt">电量 —</div>
+    <div id="msg"></div>
+  </div>
+  <section id="teleop">
+    <div class="teleop-head">
+      <h2>十字键遥控</h2>
+      <button type="button" class="go" id="open-drive" onclick="openDrive()">遥控画面</button>
+    </div>
+    <div class="row">
+      <div class="field"><label>速度</label><input id="speed" type="number" step="0.05" /></div>
+      <button type="button" id="save-speed" onclick="saveSpeed()">保存速度</button>
+    </div>
+    <div id="teleop-pad" class="pad">
+      <span></span>
+      <button type="button" id="btn-forward">前进</button>
+      <span></span>
+      <button type="button" id="btn-left">左转</button>
+      <button type="button" id="btn-stop" onclick="toggleTeleop('stop')">停</button>
+      <button type="button" id="btn-right">右转</button>
+      <span></span>
+      <button type="button" id="btn-back">后退</button>
+    </div>
+    <p class="note" id="teleop-note">电脑用十字键或方向键。手机默认进全屏：点画面拉流，双杆模拟油门/转向。</p>
+  </section>
+</div>
+<div id="drive-sheet" hidden>
+  <div class="drive-cam" id="drive-cam" onclick="toggleCamera()">
+    <img id="drive-img" alt="" />
+    <div class="drive-cam-hint" id="drive-cam-hint">点击播放</div>
+  </div>
+  <div class="drive-top">
+    <div id="drive-batt" class="batt">电量 —</div>
+    <button type="button" onclick="closeDrive()">关闭</button>
+  </div>
+  <div class="drive-rotate-hint">请横过来握持</div>
+  <div class="stick drive-stick left">
+    <div class="stick-base" id="stick-left" data-axis="throttle">
+      <div class="stick-knob" id="stick-left-knob"></div>
+    </div>
+    <div class="stick-label">左：前后</div>
+  </div>
+  <div class="stick drive-stick right">
+    <div class="stick-base" id="stick-right" data-axis="yaw">
+      <div class="stick-knob" id="stick-right-knob"></div>
+    </div>
+    <div class="stick-label">右：转向</div>
+  </div>
+</div>
+<script>
+const TELEOP_BTNS = ["forward", "back", "left", "right"];
+const KEY_MAP = {ArrowUp: "forward", ArrowDown: "back", ArrowLeft: "left", ArrowRight: "right"};
+let lastStatus = {};
+let refreshBusy = false;
+let stickThrottle = 0;
+let stickYaw = 0;
+let stickSendAt = 0;
+let driveOpen = false;
+let cameraOn = false;
+const keysHeld = {};
+
+function say(text, ok) {
+  const el = document.getElementById("msg");
+  el.textContent = text || "";
+  el.className = text ? (ok ? "ok" : "bad") : "";
+}
+function fill(id, value) {
+  const el = document.getElementById(id);
+  if (!el || document.activeElement === el) return;
+  el.value = value;
+}
+async function post(url, body) {
+  let data;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(body || {})
+    });
+    data = await res.json();
+  } catch (err) {
+    say("请求失败：" + err, false);
+    return {ok: false, message: String(err)};
+  }
+  say(data.message || JSON.stringify(data), data.ok !== false);
+  return data;
+}
+function renderTeleop(s) {
+  const t = s.teleop || {};
+  TELEOP_BTNS.forEach((name) => {
+    const el = document.getElementById("btn-" + name);
+    if (!el) return;
+    el.className = t[name] ? "pressed" : "";
+  });
+  const stopEl = document.getElementById("btn-stop");
+  if (stopEl) stopEl.className = (!t.forward && !t.back && !t.left && !t.right) ? "pressed" : "";
+}
+function renderBattery(s) {
+  const el = document.getElementById("battery");
+  const b = s.battery || {};
+  const v = Number(b.voltage);
+  const p = Number(b.percent);
+  let text = "电量 无数据";
+  let cls = "batt bad";
+  if (b.ok && isFinite(v)) {
+    const pct = isFinite(p) ? Math.round(p) : null;
+    text = pct == null ? ("电量 " + v.toFixed(1) + " V") : ("电量 " + pct + "%  " + v.toFixed(1) + " V");
+    cls = "batt " + (p < 20 ? "bad" : (p < 40 ? "warn" : "ok"));
+  }
+  if (el) {
+    el.textContent = text;
+    el.className = cls;
+  }
+  const driveBatt = document.getElementById("drive-batt");
+  if (driveBatt) {
+    driveBatt.textContent = text;
+    driveBatt.className = cls;
+  }
+}
+async function refresh() {
+  if (refreshBusy) return;
+  refreshBusy = true;
+  try {
+    const res = await fetch("/api/status");
+    const s = await res.json();
+    lastStatus = s;
+    fill("speed", s.speed);
+    renderTeleop(s);
+    renderBattery(s);
+    if (s.last_error) say(s.last_error, false);
+  } catch (err) {
+    say("状态刷新失败：" + err, false);
+  } finally {
+    refreshBusy = false;
+  }
+}
+async function saveSpeed() {
+  await post("/api/config", {speed: Number(document.getElementById("speed").value)});
+  await refresh();
+}
+async function toggleTeleop(button) {
+  await post("/api/teleop", button === "stop" ? {button: "stop"} : {button: button, pressed: false});
+  await refresh();
+}
+function bindTeleopHold(name) {
+  const el = document.getElementById("btn-" + name);
+  if (!el) return;
+  let held = false;
+  const down = function (ev) {
+    ev.preventDefault();
+    if (held) return;
+    held = true;
+    try { el.setPointerCapture(ev.pointerId); } catch (err) {}
+    post("/api/teleop", {button: name, pressed: true}).then(refresh);
+  };
+  const up = function (ev) {
+    if (!held) return;
+    held = false;
+    if (ev && ev.preventDefault) ev.preventDefault();
+    post("/api/teleop", {button: name, pressed: false}).then(refresh);
+  };
+  el.addEventListener("pointerdown", down);
+  el.addEventListener("pointerup", up);
+  el.addEventListener("pointercancel", up);
+  el.addEventListener("lostpointercapture", up);
+  el.addEventListener("contextmenu", function (ev) { ev.preventDefault(); });
+}
+TELEOP_BTNS.forEach(bindTeleopHold);
+function setStickVisual(axis, dx, dy) {
+  const knob = document.getElementById(axis === "throttle" ? "stick-left-knob" : "stick-right-knob");
+  const base = document.getElementById(axis === "throttle" ? "stick-left" : "stick-right");
+  if (!knob || !base) return;
+  const travel = Math.max(24, base.clientWidth * 0.36);
+  knob.style.transform = "translate(calc(-50% + " + (dx * travel) + "px), calc(-50% + " + (-dy * travel) + "px))";
+  const used = axis === "throttle" ? dy : dx;
+  base.classList.toggle("active", Math.abs(used) > 0.08);
+}
+function sendStick(force) {
+  const now = Date.now();
+  if (!force && now - stickSendAt < 50) return;
+  stickSendAt = now;
+  post("/api/teleop", {stick: true, throttle: stickThrottle, yaw: stickYaw});
+}
+function resetSticks(sendStop) {
+  stickThrottle = 0;
+  stickYaw = 0;
+  setStickVisual("throttle", 0, 0);
+  setStickVisual("yaw", 0, 0);
+  if (sendStop) post("/api/teleop", {button: "stop"});
+}
+function startCamera() {
+  const img = document.getElementById("drive-img");
+  const hint = document.getElementById("drive-cam-hint");
+  const box = document.getElementById("drive-cam");
+  if (!img || cameraOn) return;
+  cameraOn = true;
+  if (box) box.classList.add("playing");
+  if (hint) hint.textContent = "正在开相机…";
+  img.onload = function () { if (hint) hint.textContent = "点击停流"; };
+  img.onerror = function () { if (hint) hint.textContent = "无画面，再点重试"; };
+  img.src = "/api/camera/stream?t=" + Date.now();
+}
+function stopCamera() {
+  const img = document.getElementById("drive-img");
+  const hint = document.getElementById("drive-cam-hint");
+  const box = document.getElementById("drive-cam");
+  cameraOn = false;
+  if (box) box.classList.remove("playing");
+  if (img) {
+    img.onload = null;
+    img.onerror = null;
+    img.removeAttribute("src");
+    try { img.src = ""; } catch (err) {}
+  }
+  if (hint) hint.textContent = "点击播放";
+}
+function toggleCamera() {
+  if (cameraOn) stopCamera();
+  else startCamera();
+}
+function openDrive() {
+  driveOpen = true;
+  document.getElementById("drive-sheet").hidden = false;
+  document.documentElement.classList.add("drive-open");
+  document.body.classList.add("drive-open");
+  startCamera();
+}
+function closeDrive() {
+  driveOpen = false;
+  stopCamera();
+  resetSticks(true);
+  document.getElementById("drive-sheet").hidden = true;
+  document.documentElement.classList.remove("drive-open");
+  document.body.classList.remove("drive-open");
+}
+function isPhone() {
+  return window.matchMedia("(max-width: 800px), (pointer: coarse)").matches;
+}
+function bindStick(id, axis) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let pointerId = null;
+  const read = function (ev) {
+    const r = el.getBoundingClientRect();
+    let dx = (ev.clientX - (r.left + r.width / 2)) / (r.width / 2);
+    let dy = ((r.top + r.height / 2) - ev.clientY) / (r.height / 2);
+    const mag = Math.sqrt(dx * dx + dy * dy);
+    if (mag > 1) {
+      dx /= mag;
+      dy /= mag;
+    }
+    return {dx: dx, dy: dy};
+  };
+  const apply = function (pos) {
+    setStickVisual(axis, pos.dx, pos.dy);
+    if (axis === "throttle") {
+      stickThrottle = Math.abs(pos.dy) < 0.08 ? 0 : pos.dy;
+    } else {
+      stickYaw = Math.abs(pos.dx) < 0.08 ? 0 : -pos.dx;
+    }
+  };
+  const down = function (ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (pointerId !== null) return;
+    pointerId = ev.pointerId;
+    try { el.setPointerCapture(ev.pointerId); } catch (err) {}
+    apply(read(ev));
+    sendStick(true);
+  };
+  const move = function (ev) {
+    if (pointerId === null || ev.pointerId !== pointerId) return;
+    ev.preventDefault();
+    apply(read(ev));
+    sendStick(false);
+  };
+  const up = function (ev) {
+    if (pointerId === null || (ev && ev.pointerId !== pointerId)) return;
+    pointerId = null;
+    if (axis === "throttle") stickThrottle = 0;
+    else stickYaw = 0;
+    setStickVisual(axis, 0, 0);
+    sendStick(true);
+  };
+  el.addEventListener("pointerdown", down);
+  el.addEventListener("pointermove", move);
+  el.addEventListener("pointerup", up);
+  el.addEventListener("pointercancel", up);
+  el.addEventListener("lostpointercapture", up);
+}
+bindStick("stick-left", "throttle");
+bindStick("stick-right", "yaw");
+function allowTextEdit(el) {
+  if (!el) return false;
+  const tag = (el.tagName || "").toLowerCase();
+  return tag === "input" || tag === "textarea" || tag === "select" || el.isContentEditable;
+}
+document.addEventListener("keydown", function (ev) {
+  if (allowTextEdit(ev.target)) return;
+  const name = KEY_MAP[ev.key];
+  if (!name || keysHeld[name]) return;
+  ev.preventDefault();
+  keysHeld[name] = true;
+  post("/api/teleop", {button: name, pressed: true}).then(refresh);
+});
+document.addEventListener("keyup", function (ev) {
+  const name = KEY_MAP[ev.key];
+  if (!name || !keysHeld[name]) return;
+  ev.preventDefault();
+  keysHeld[name] = false;
+  post("/api/teleop", {button: name, pressed: false}).then(refresh);
+});
+window.addEventListener("blur", function () {
+  Object.keys(keysHeld).forEach((k) => { keysHeld[k] = false; });
+  resetSticks(true);
+});
+document.addEventListener("visibilitychange", function () {
+  if (document.hidden) {
+    resetSticks(true);
+    stopCamera();
+  }
+});
+refresh();
+setInterval(refresh, 350);
+if (isPhone()) openDrive();
+</script>
+</body>
+</html>

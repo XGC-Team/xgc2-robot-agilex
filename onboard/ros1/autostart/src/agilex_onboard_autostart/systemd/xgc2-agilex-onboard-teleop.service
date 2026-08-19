@@ -1,0 +1,21 @@
+[Unit]
+Description=XGC2 onboard teleop viewer (Web :8100)
+After=network.target xgc2-agilex-roscore.service
+Wants=xgc2-agilex-roscore.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=agilex
+Group=agilex
+WorkingDirectory=/home/agilex
+EnvironmentFile=-/etc/xgc2/agilex/onboard.env
+ExecStart=/opt/ros/melodic/lib/agilex_onboard_autostart/start-onboard-teleop
+Restart=always
+RestartSec=3
+TimeoutStartSec=90
+TimeoutStopSec=20
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target

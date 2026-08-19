@@ -1,11 +1,11 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-ros1
 name: XGC2 AgileX Onboard ROS1
-version: 0.2.0-26
+version: 0.2.0-27
 kind: ros1-apt
 summary: Vehicle-true AgileX Scout Mini onboard runtime for Melodic and
   Noetic. Chassis, bridge, and autostart are the install set; IMU, Helios
-  16, and RViz are optional published packages.
+  16, RViz, and onboard teleop viewer are optional published packages.
 groups:
 - robotics
 - agilex
@@ -19,6 +19,7 @@ ros:
   - scout_base
   - agilex_swarm_ros_bridge
   - agilex_onboard_autostart
+  - xgc2_onboard_teleop
   - serial_imu
   - rslidar_sdk
   - agilex_onboard_rviz
@@ -42,6 +43,8 @@ apt:
     - bionic
     ros-melodic-xgc2-agilex-onboard-autostart:
     - bionic
+    ros-melodic-xgc2-agilex-onboard-teleop:
+    - bionic
     ros-melodic-xgc2-agilex-serial-imu:
     - bionic
     ros-melodic-xgc2-agilex-rslidar-sdk:
@@ -62,6 +65,8 @@ apt:
     - focal
     ros-noetic-xgc2-agilex-onboard-autostart:
     - focal
+    ros-noetic-xgc2-agilex-onboard-teleop:
+    - focal
     ros-noetic-xgc2-agilex-serial-imu:
     - focal
     ros-noetic-xgc2-agilex-rslidar-sdk:
@@ -76,6 +81,7 @@ apt:
   - ros-melodic-xgc2-agilex-scout-base
   - ros-melodic-xgc2-agilex-swarm-ros-bridge
   - ros-melodic-xgc2-agilex-onboard-autostart
+  - ros-melodic-xgc2-agilex-onboard-teleop
   - ros-melodic-xgc2-agilex-serial-imu
   - ros-melodic-xgc2-agilex-rslidar-sdk
   - ros-melodic-xgc2-agilex-onboard-rviz
@@ -86,6 +92,7 @@ apt:
   - ros-noetic-xgc2-agilex-scout-base
   - ros-noetic-xgc2-agilex-swarm-ros-bridge
   - ros-noetic-xgc2-agilex-onboard-autostart
+  - ros-noetic-xgc2-agilex-onboard-teleop
   - ros-noetic-xgc2-agilex-serial-imu
   - ros-noetic-xgc2-agilex-rslidar-sdk
   - ros-noetic-xgc2-agilex-onboard-rviz
@@ -139,5 +146,5 @@ release:
     xgc2-scout-description: verify
     xgc2-swarm-ros-bridge: verify
   apt_versions:
-    bionic: 0.2.0-26
-    focal: 0.2.0-26
+    bionic: 0.2.0-27
+    focal: 0.2.0-27

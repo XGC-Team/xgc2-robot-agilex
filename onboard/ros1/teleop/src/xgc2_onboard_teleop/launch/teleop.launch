@@ -1,0 +1,12 @@
+<launch>
+  <arg name="port" default="8100" />
+  <arg name="bind" default="0.0.0.0" />
+  <arg name="cmd_vel" default="/cmd_vel" />
+
+  <env name="ONBOARD_TELEOP_PORT" value="$(arg port)" />
+  <env name="ONBOARD_TELEOP_BIND" value="$(arg bind)" />
+  <env name="ONBOARD_TELEOP_CMD_VEL" value="$(arg cmd_vel)" />
+  <env name="ONBOARD_TELEOP_WEB" value="$(find xgc2_onboard_teleop)/web" />
+
+  <node pkg="xgc2_onboard_teleop" type="onboard_teleop_node" name="xgc2_onboard_teleop" output="screen" />
+</launch>

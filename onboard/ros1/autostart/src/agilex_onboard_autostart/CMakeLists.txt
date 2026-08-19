@@ -18,6 +18,7 @@ install(PROGRAMS
   scripts/start-mocap
   scripts/start-lidar-helios16
   scripts/start-field-panel
+  scripts/start-onboard-teleop
   scripts/wait-device
   scripts/serve_triple_preview
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

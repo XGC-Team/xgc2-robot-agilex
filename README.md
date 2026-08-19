@@ -45,6 +45,9 @@ xgc2-agilex-camera.service
 xgc2-agilex-lidar-helios16.service
 xgc2-agilex-mocap.service
   start-mocap: VRPN client only, no /pose or /ugv/pose relay
+xgc2-agilex-onboard-teleop.service
+  optional; not enabled. Web :8100 camera + D-pad / dual-stick.
+  Requires ros-*-xgc2-agilex-onboard-teleop. Not field-panel (:8099).
 ```
 
 ## Packages
@@ -59,7 +62,7 @@ xgc2-agilex-mocap.service
 | `ros-melodic-swarm-ros-bridge` | `swarm_ros_bridge` | Official XGC2 bridge (APT, not rebuilt here) |
 | `ros-melodic-xgc2-agilex-swarm-ros-bridge` | `agilex_swarm_ros_bridge` | Vehicle YAML+launch for the official bridge |
 | `ros-melodic-xgc2-agilex` | (meta) | Vehicle chassis + bridge + autostart units; does not enable or start them |
-| `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | standalone roscore + chassis/IMU/comm/camera/lidar/mocap/panel units; install-only. Site params in `/etc/xgc2/agilex/onboard.env`. Enable chassis (Wants roscore). Mocap for Agent sessions is `agilex-mocap-ros1`. |
+| `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | standalone roscore + chassis/IMU/comm/camera/lidar/mocap/panel/teleop units; install-only. Site params in `/etc/xgc2/agilex/onboard.env`. Enable chassis (Wants roscore). Mocap for Agent sessions is `agilex-mocap-ros1`. Teleop viewer is optional: `ros-melodic-xgc2-agilex-onboard-teleop` then `xgc2-agilex-onboard-teleop.service`. |
 
 D435 / D435i capture lives in the shared [`xgc2-camera-d435`](https://github.com/XGC-Team/xgc2-camera-d435) product. Scout only names topics in `agilex_onboard_autostart/camera.launch`.
 
@@ -68,6 +71,7 @@ D435 / D435i capture lives in the shared [`xgc2-camera-d435`](https://github.com
 | `ros-melodic-xgc2-agilex-serial-imu` | `serial_imu` | Optional HI226 driver, `/dev/imu`. Field-effective rate is 100 Hz; Gazebo Scout IMU in `xgc2-gazebo-sim-agilex` must match. |
 | `ros-melodic-xgc2-agilex-rslidar-sdk` | `rslidar_sdk` | Helios 16, `/rslidar_points`, frame `rslidar` |
 | `ros-melodic-xgc2-agilex-onboard-rviz` | `agilex_onboard_rviz` | Onboard RViz config |
+| `ros-melodic-xgc2-agilex-onboard-teleop` | `xgc2_onboard_teleop` | Optional camera + dual-page teleop (D-pad / dual-stick). Not field-panel. Web `:8100`. Unit `xgc2-agilex-onboard-teleop.service` is install-only. |
 
 ```bash
 sudo apt-get install ros-melodic-xgc2-agilex-onboard-rviz
@@ -146,6 +150,9 @@ sudo systemctl enable xgc2-agilex-chassis.service
 # Agent process.run-definition agilex-mocap-ros1 starts mocap for a Session.
 # sudo apt-get install ros-melodic-xgc2-agilex-serial-imu
 # sudo apt-get install ros-melodic-xgc2-agilex-onboard-rviz
+# Optional camera+teleop viewer (does not enable at boot; port 8100, not 8099):
+# sudo apt-get install ros-melodic-xgc2-agilex-onboard-teleop
+# sudo systemctl enable --now xgc2-agilex-onboard-teleop.service
 ```
 
 Vehicle without IMU (Orin NX / Noetic chassis only):

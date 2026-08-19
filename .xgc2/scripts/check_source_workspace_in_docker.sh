@@ -62,6 +62,7 @@ docker run --rm --network none \
       /workspace/agilex/onboard/ros1/perception/src \
       /workspace/agilex/onboard/ros1/control/src \
       /workspace/agilex/onboard/ros1/autostart/src \
+      /workspace/agilex/onboard/ros1/teleop/src \
       \( -name package.xml -o -name "*.launch" -o -name "*.xacro" -o -name "*.urdf" \) \
       -print0 | xargs -0 xmllint --noout
     test ! -d /workspace/agilex/onboard/ros1/src
@@ -74,6 +75,7 @@ docker run --rm --network none \
     test ! -d /workspace/agilex/onboard/ros1/perception/src/agilex_mocap
     test ! -d /workspace/agilex/onboard/ros1/sensors/src/agilex_mocap
     test -f /workspace/agilex/onboard/ros1/autostart/src/agilex_onboard_autostart/package.xml
+    test -f /workspace/agilex/onboard/ros1/teleop/src/xgc2_onboard_teleop/package.xml
     test -f /workspace/agilex/onboard/ros1/communication/src/agilex_swarm_ros_bridge/package.xml
     test -f /workspace/agilex/onboard/ros1/perception/src/agilex_estimator/package.xml
     test -f /workspace/agilex/onboard/ros1/perception/src/agilex_estimator/launch/mocap.launch
@@ -88,10 +90,11 @@ docker run --rm --network none \
     test ! -d /workspace/agilex/onboard/ros1/sensors/src/agilex_onboard_sensors
 
     rm -rf /workspace/work/build /workspace/work/devel /workspace/work/src
-    mkdir -p /workspace/work/src/agilex-chassis /workspace/work/src/agilex-communication /workspace/work/src/agilex-autostart
+    mkdir -p /workspace/work/src/agilex-chassis /workspace/work/src/agilex-communication /workspace/work/src/agilex-autostart /workspace/work/src/agilex-teleop
     rsync -a --delete /workspace/agilex/onboard/ros1/chassis/src/ /workspace/work/src/agilex-chassis/
     rsync -a --delete /workspace/agilex/onboard/ros1/communication/src/ /workspace/work/src/agilex-communication/
     rsync -a --delete /workspace/agilex/onboard/ros1/autostart/src/ /workspace/work/src/agilex-autostart/
+    rsync -a --delete /workspace/agilex/onboard/ros1/teleop/src/ /workspace/work/src/agilex-teleop/
 
     cd /workspace/work
     set +u
@@ -125,6 +128,7 @@ docker run --rm --network none \
     test ! -d /workspace/work/src/agilex-communication/agilex_mocap
     test ! -d /workspace/work/src/agilex-chassis/communication
     test "$(rospack find agilex_onboard_autostart)" = "/workspace/work/src/agilex-autostart/agilex_onboard_autostart"
+    test "$(rospack find xgc2_onboard_teleop)" = "/workspace/work/src/agilex-teleop/xgc2_onboard_teleop"
     test ! -d /workspace/work/src/agilex-chassis/autostart
     test ! -d /workspace/work/src/agilex-chassis/sensors
     test ! -d /workspace/work/src/agilex-chassis/scout_bringup
@@ -151,6 +155,14 @@ docker run --rm --network none \
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/wait-roscore
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/usb-recover
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-field-panel
+    test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-onboard-teleop
+    test -x /opt/ros/${ROS_DISTRO}/lib/xgc2_onboard_teleop/onboard_teleop_node
+    test -f "$(rospack find xgc2_onboard_teleop)/web/index.html"
+    test -f "$(rospack find xgc2_onboard_teleop)/launch/teleop.launch"
+    ! grep -E 'look_angle_shaping|guidance_two_stage|agilex_nmpc|xgc2_field_panel' \
+      /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-onboard-teleop
+    ! grep -E 'look_angle_shaping|guidance_two_stage|agilex_nmpc' \
+      /opt/ros/${ROS_DISTRO}/lib/xgc2_onboard_teleop/onboard_teleop_node
     test ! -e /opt/ros/${ROS_DISTRO}/lib/agilex_estimator/vrpn_relay
     grep -q 'xgc2_vrpn_relay' /workspace/agilex/onboard/ros1/perception/src/agilex_estimator/launch/mocap.launch
     grep -q 'vrpn.launch' /workspace/agilex/onboard/ros1/perception/src/agilex_estimator/launch/mocap.launch
@@ -166,6 +178,7 @@ docker run --rm --network none \
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-roscore.service"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-usb-recover@.service"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-field-panel.service"
+    test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-onboard-teleop.service"
     test -f "$(rospack find agilex_onboard_autostart)/udev/99-xgc2-agilex-usb-recover.rules"
     test ! -d "$(rospack find agilex_swarm_ros_bridge)/systemd"
     test ! -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-onboard.target"
@@ -179,4 +192,5 @@ docker run --rm --network none \
     roslaunch --files agilex_swarm_ros_bridge swarm.launch >/dev/null
     roslaunch --files agilex_onboard_autostart swarm.launch >/dev/null
     roslaunch --files scout_base scout_mini_base.launch >/dev/null
+    roslaunch --files xgc2_onboard_teleop teleop.launch >/dev/null
   '
