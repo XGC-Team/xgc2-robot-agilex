@@ -170,8 +170,8 @@ docker run --rm --network none \
     test ! -d "$(rospack find agilex_swarm_ros_bridge)/systemd"
     test ! -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-onboard.target"
     test ! -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-roscore.service"
-    grep -q 'roslaunch --wait' "$(rospack find agilex_onboard_autostart)/scripts/start-chassis"
-    grep -q 'required="true"' /workspace/agilex/onboard/ros1/chassis/src/scout_base/launch/scout_mini_base.launch
+    grep -q "roslaunch --wait" "$(rospack find agilex_onboard_autostart)/scripts/start-chassis"
+    grep -q "required=.true." /workspace/agilex/onboard/ros1/chassis/src/scout_base/launch/scout_mini_base.launch
 
     roslaunch --files agilex_onboard_autostart imu-hi226.launch >/dev/null
     roslaunch --files agilex_onboard_autostart chassis.launch >/dev/null
