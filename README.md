@@ -34,12 +34,13 @@ xgc2-agilex-chassis.service
   roslaunch --wait chassis.launch (scout_base_node required)
 xgc2-agilex-imu-hi226.service
   wait-roscore; stagger; wait /dev/imu
-  roslaunch --wait imu-hi226.launch (HI226 required) -> /imu/data
+  roslaunch --wait imu-hi226.launch (HI226 required) -> /imu/data_raw
 xgc2-agilex-swarm-ros-bridge.service
-  start-swarm-ros-bridge: wait /scout_status; wait /imu/data if present
+  start-swarm-ros-bridge: wait /scout_status; wait /imu/data_raw if present
   agilex_swarm_ros_bridge/swarm.launch
-    /imu/data Imu max 30 Hz :3001
-    /scout/status_text String max 2 Hz :3002
+    /imu/data_raw Imu max 20 Hz :3001
+    /PowerVoltage Float32 0.5 Hz :3002
+    /scout/chassis_state UInt32 1 Hz :3003
     /cmd_vel in from gcs :3001
 xgc2-agilex-camera.service
 xgc2-agilex-lidar-helios16.service
@@ -163,7 +164,7 @@ sudo apt-get install ros-noetic-xgc2-agilex-onboard-autostart
 sudo systemctl enable xgc2-agilex-chassis.service
 ```
 
-Chassis still publishes `/scout_status` locally and is not sent across the official bridge. A 2 Hz relay copies bag-validated fields onto `/scout/status_text` (`std_msgs/String`) on port 3002. The official bridge also sends `/imu/data` at most 30 Hz on 3001 and receives `/cmd_vel` from `gcs` on that car's GCS bind port (3001 for the first car). Point the station at those ports and keep the vehicle YAML `gcs` address on the same subnet. Do not enable the onboard systemd target on a laptop.
+Chassis still publishes `/scout_status` locally and is not sent across the official bridge. A relay copies voltage onto `/PowerVoltage` (`std_msgs/Float32`, 0.5 Hz, port 3002) — same name and type as the Wheeltec MCU — and packed `control_mode`/`base_state`/`fault_code` onto `/scout/chassis_state` (`std_msgs/UInt32`, 1 Hz, port 3003). HI226 publishes raw IMU on `/imu/data_raw`; `/imu/data` is reserved for a later fused estimate. The official bridge sends `/imu/data_raw` at most 20 Hz on 3001 and receives `/cmd_vel` from `gcs` on that car's GCS bind port (3001 for the first car). Point the station at those ports and keep the vehicle YAML `gcs` address on the same subnet. Do not enable the onboard systemd target on a laptop.
 
 ## CI
 

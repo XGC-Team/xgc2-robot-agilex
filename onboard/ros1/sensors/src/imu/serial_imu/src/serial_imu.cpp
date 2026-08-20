@@ -50,7 +50,8 @@ static void publish_imu_data(const receive_imusol_packet_t *data,
 int main(int argc, char **argv) {
   ros::init(argc, argv, "serial_imu");
   ros::NodeHandle n;
-  ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("imu/data", 200);
+  // Raw chassis IMU. Leave /imu/data for a later fused estimate.
+  ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("imu/data_raw", 200);
 
   serial::Serial sp;
   sp.setPort(IMU_SERIAL);

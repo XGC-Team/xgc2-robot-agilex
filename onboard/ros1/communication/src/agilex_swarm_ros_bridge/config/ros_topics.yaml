@@ -1,6 +1,7 @@
-### Official swarm_ros_bridge types: Imu, Twist, String.
+### Official swarm_ros_bridge types: Imu, Twist, String, Float32, UInt32.
 ### Vehicle send ports increment from 3001 (IMU).
 ### recv srcPort is the ground-station port and stays 3001.
+### max_freq is an int; 0.5 Hz voltage is limited by scout_status_to_std.
 
 IP:
   self: '*'
@@ -8,16 +9,21 @@ IP:
   test_local: 127.0.0.1
 
 send_topics:
-- topic_name: /imu/data
+- topic_name: /imu/data_raw
   msg_type: sensor_msgs/Imu
-  max_freq: 30
+  max_freq: 20
   srcIP: self
   srcPort: 3001
-- topic_name: /scout/status_text
-  msg_type: std_msgs/String
-  max_freq: 2
+- topic_name: /PowerVoltage
+  msg_type: std_msgs/Float32
+  max_freq: 1
   srcIP: self
   srcPort: 3002
+- topic_name: /scout/chassis_state
+  msg_type: std_msgs/UInt32
+  max_freq: 1
+  srcIP: self
+  srcPort: 3003
 
 recv_topics:
 - topic_name: /cmd_vel

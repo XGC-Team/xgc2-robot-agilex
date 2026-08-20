@@ -39,11 +39,11 @@ except ImportError:
 try:
     import rospy
     from geometry_msgs.msg import Twist
-    from std_msgs.msg import String
+    from std_msgs.msg import Float32
 except ImportError:
     rospy = None
     Twist = None
-    String = None
+    Float32 = None
 
 try:
     from scout_msgs.msg import ScoutStatus
@@ -52,7 +52,6 @@ except ImportError:
 
 BATTERY_EMPTY_V = 20.5
 BATTERY_FULL_V = 29.2
-BATT_RE = __import__("re").compile(r"batt=([0-9.]+)")
 
 BIND = os.environ.get("ONBOARD_TELEOP_BIND", "0.0.0.0")
 PORT = int(os.environ.get("ONBOARD_TELEOP_PORT", "8100"))
@@ -612,12 +611,8 @@ def _on_scout_status(msg):
     _note_battery(getattr(msg, "battery_voltage", None), "scout_status")
 
 
-def _on_scout_status_text(msg):
-    text = getattr(msg, "data", "") or ""
-    match = BATT_RE.search(text)
-    if not match:
-        return
-    _note_battery(match.group(1), "status_text")
+def _on_battery_voltage(msg):
+    _note_battery(getattr(msg, "data", None), "battery_voltage")
 
 
 def _on_cmd(msg):
@@ -633,8 +628,8 @@ def ros_setup():
     rospy.Subscriber(CMD_VEL_TOPIC, Twist, _on_cmd)
     if ScoutStatus is not None:
         rospy.Subscriber("/scout_status", ScoutStatus, _on_scout_status, queue_size=1)
-    if String is not None:
-        rospy.Subscriber("/scout/status_text", String, _on_scout_status_text, queue_size=1)
+    if Float32 is not None:
+        rospy.Subscriber("/PowerVoltage", Float32, _on_battery_voltage, queue_size=1)
 
 
 def teleop_loop():

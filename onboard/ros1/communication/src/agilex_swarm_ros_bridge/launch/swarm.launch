@@ -2,8 +2,10 @@
   <arg name="config" default="$(find agilex_swarm_ros_bridge)/config/ros_topics.yaml" />
 
   <node pkg="agilex_swarm_ros_bridge" type="scout_status_to_std" name="scout_status_to_std">
-    <param name="rate" value="2.0" />
-    <param name="text_topic" value="/scout/status_text" />
+    <param name="voltage_rate" value="0.5" />
+    <param name="chassis_rate" value="1.0" />
+    <param name="voltage_topic" value="/PowerVoltage" />
+    <param name="chassis_topic" value="/scout/chassis_state" />
   </node>
 
   <node pkg="swarm_ros_bridge" type="bridge_node" name="swarm_bridge_node" output="screen">

@@ -4,7 +4,7 @@
   <arg name="port" default="3883" />
   <arg name="tracker" default="pose_0" />
   <arg name="ns" default="ugv1" />
-  <arg name="imu_topic" default="/imu/data" />
+  <arg name="imu_topic" default="/imu/data_raw" />
   <arg name="world_frame" default="world" />
   <arg name="estimator_frame" default="estimator" />
 

@@ -49,7 +49,7 @@ sleep "${sec}"
 wait_master "${ROS_MASTER_WAIT_TIMEOUT:-60}"
 wait_topic "${SCOUT_STATUS_TOPIC:-/scout_status}" "${SCOUT_STATUS_WAIT_TIMEOUT:-90}"
 if [[ "${IMU_REQUIRED:-0}" == "1" || -e "${IMU_DEVICE:-/dev/imu}" ]]; then
-  wait_topic "${IMU_READY_TOPIC:-/imu/data}" "${IMU_TOPIC_WAIT_TIMEOUT:-90}"
+  wait_topic "${IMU_READY_TOPIC:-/imu/data_raw}" "${IMU_TOPIC_WAIT_TIMEOUT:-90}"
 fi
 
 CONFIG="${SWARM_ROS_BRIDGE_CONFIG:-/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml}"
