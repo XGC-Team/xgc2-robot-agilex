@@ -159,14 +159,14 @@ docker run --rm --network none \
     test -x /opt/ros/${ROS_DISTRO}/lib/xgc2_onboard_teleop/onboard_teleop_node
     test -f "$(rospack find xgc2_onboard_teleop)/web/index.html"
     test -f "$(rospack find xgc2_onboard_teleop)/launch/teleop.launch"
-    ! grep -E 'look_angle_shaping|guidance_two_stage|agilex_nmpc|xgc2_field_panel' \
+    ! grep -E "look_angle_shaping|guidance_two_stage|agilex_nmpc|xgc2_field_panel" \
       /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-onboard-teleop
-    ! grep -E 'look_angle_shaping|guidance_two_stage|agilex_nmpc' \
+    ! grep -E "look_angle_shaping|guidance_two_stage|agilex_nmpc" \
       /opt/ros/${ROS_DISTRO}/lib/xgc2_onboard_teleop/onboard_teleop_node
     test ! -e /opt/ros/${ROS_DISTRO}/lib/agilex_estimator/vrpn_relay
-    grep -q 'xgc2_vrpn_relay' /workspace/agilex/onboard/ros1/perception/src/agilex_estimator/launch/mocap.launch
-    grep -q 'vrpn.launch' /workspace/agilex/onboard/ros1/perception/src/agilex_estimator/launch/mocap.launch
-    ! grep -q 'pose_out' /workspace/agilex/onboard/ros1/perception/src/agilex_estimator/launch/mocap.launch
+    grep -q "xgc2_vrpn_relay" /workspace/agilex/onboard/ros1/perception/src/agilex_estimator/launch/mocap.launch
+    grep -q "vrpn.launch" /workspace/agilex/onboard/ros1/perception/src/agilex_estimator/launch/mocap.launch
+    ! grep -q "pose_out" /workspace/agilex/onboard/ros1/perception/src/agilex_estimator/launch/mocap.launch
     test -f "$(rospack find agilex_swarm_ros_bridge)/src/scout_status_to_std.cpp"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-chassis.service"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-imu-hi226.service"
