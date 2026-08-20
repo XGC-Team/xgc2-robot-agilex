@@ -22,8 +22,10 @@ the published `xgc2-scout-msgs` and `xgc2-scout-description` packages.
 
 All systemd units live in `agilex_onboard_autostart`.
 `apt install ros-melodic-xgc2-agilex` installs chassis, bridge, and
-autostart. No unit is enabled or started. IMU, camera, and lidar still
-need the matching sensors packages before those units can actually start.
+autostart. A fresh install does not enable or start any unit. Later package
+upgrades preserve operator-enabled chassis, roscore, and HI226 units. IMU,
+camera, and lidar still need the matching sensors packages before those units
+can actually start.
 
 ```text
 xgc2-agilex-roscore.service

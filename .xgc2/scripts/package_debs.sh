@@ -287,7 +287,8 @@ if [ "$1" = "configure" ]; then
       udevadm trigger --subsystem-match=net --action=add >/dev/null 2>&1 || true
     fi
     systemctl disable xgc2-agilex-imu.service >/dev/null 2>&1 || true
-    systemctl disable xgc2-agilex-imu-hi226.service >/dev/null 2>&1 || true
+    # HI226 is operator-owned on vehicles that have the accessory (same as
+    # chassis). Do not disable on upgrade; a later apt must not wipe enable.
     systemctl disable xgc2-agilex-communication.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-swarm-ros-bridge.service >/dev/null 2>&1 || true
     systemctl disable xgc2-agilex-camera.service >/dev/null 2>&1 || true
