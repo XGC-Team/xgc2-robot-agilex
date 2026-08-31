@@ -97,7 +97,14 @@ test ! -e "${PREFIX}/lib/agilex_onboard_autostart/scout_status_to_std"
 test -x "${PREFIX}/lib/agilex_swarm_ros_bridge/scout_status_to_std"
 test ! -e "${PREFIX}/lib/agilex_swarm_ros_bridge/start-swarm-ros-bridge"
 test -f "${PREFIX}/share/agilex_swarm_ros_bridge/launch/swarm.launch"
-test -f "${PREFIX}/share/agilex_swarm_ros_bridge/config/ros_topics.yaml"
+BRIDGE_CONFIG="${PREFIX}/share/agilex_swarm_ros_bridge/config/ros_topics.yaml"
+test -f "${BRIDGE_CONFIG}"
+test "$(grep -c '^- topic_name: /cmd_vel$' "${BRIDGE_CONFIG}")" = 3
+test "$(grep -c '^  max_freq: 0$' "${BRIDGE_CONFIG}")" = 3
+grep -qx '  gcs150: 127.0.0.1' "${BRIDGE_CONFIG}"
+grep -qx '  gcs199: 127.0.0.1' "${BRIDGE_CONFIG}"
+grep -qx '  gcs251: 127.0.0.1' "${BRIDGE_CONFIG}"
+grep -q '^- topic_name: /scout/chassis_state$' "${BRIDGE_CONFIG}"
 test ! -f "${PREFIX}/share/agilex_onboard_autostart/config/ros_topics.yaml"
 test -f "${PREFIX}/share/agilex_onboard_autostart/launch/swarm.launch"
 test -f /lib/systemd/system/xgc2-agilex-chassis.service
@@ -140,6 +147,7 @@ grep -q 'EnvironmentFile=-/etc/xgc2/agilex/onboard.env' /lib/systemd/system/xgc2
 grep -q 'roslaunch --wait' "${PREFIX}/lib/agilex_onboard_autostart/start-chassis"
 grep -q 'required="true"' "${PREFIX}/share/scout_base/launch/scout_mini_base.launch"
 test -f /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
+cmp -s "${BRIDGE_CONFIG}" /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
 
 roslaunch --files agilex_onboard_autostart imu-hi226.launch >/dev/null
 roslaunch --files agilex_onboard_autostart chassis.launch >/dev/null

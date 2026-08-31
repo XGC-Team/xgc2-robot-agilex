@@ -1,11 +1,21 @@
-### Official swarm_ros_bridge types: Imu, Twist, String, Float32, UInt32.
-### Vehicle send ports increment from 3001 (IMU).
-### recv srcPort is the ground-station port and stays 3001.
-### max_freq is an int; 0.5 Hz voltage is limited by scout_status_to_std.
+### Official swarm_ros_bridge: ZMQ PUB/SUB over TCP.
+### send binds tcp://*:srcPort — any GCS can SUB IMU / voltage / chassis.
+### recv connects tcp://peer:srcPort — one recv_topics row per GCS that may
+### publish /cmd_vel. Last octets 150 / 199 / 251 are XGC1 Scout Lab,
+### XGC1 Mecanum Lab, and the XGC2 station. Do not ship a field LAN prefix;
+### configure-linux.sh writes the real /24. Placeholders stay on loopback.
+### XGC1 uses Imu + PowerVoltage + cmd_vel. chassis_state :3003 is XGC2-only;
+### an older XGC1 ground simply does not subscribe that port.
+### Two stations sending /cmd_vel at once is last-writer-wins; do not dual-drive.
+### recv max_freq is required by bridge_node; 0 means no extra throttle.
 
 IP:
   self: '*'
-  gcs: 192.168.51.150
+  gcs150: 127.0.0.1
+  gcs199: 127.0.0.1
+  gcs251: 127.0.0.1
+  qgc: 127.0.0.1
+  gcs: 127.0.0.1
   test_local: 127.0.0.1
 
 send_topics:
@@ -28,5 +38,16 @@ send_topics:
 recv_topics:
 - topic_name: /cmd_vel
   msg_type: geometry_msgs/Twist
-  srcIP: gcs
+  max_freq: 0
+  srcIP: gcs150
+  srcPort: 3001
+- topic_name: /cmd_vel
+  msg_type: geometry_msgs/Twist
+  max_freq: 0
+  srcIP: gcs199
+  srcPort: 3001
+- topic_name: /cmd_vel
+  msg_type: geometry_msgs/Twist
+  max_freq: 0
+  srcIP: gcs251
   srcPort: 3001
