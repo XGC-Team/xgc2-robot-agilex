@@ -14,13 +14,32 @@
 namespace westonrobot
 {
   ScoutROSMessenger::ScoutROSMessenger(ros::NodeHandle *nh)
-      : scout_(nullptr), nh_(nh) {}
+      : scout_(nullptr), nh_(nh), hold_gate_(std::string()) {}
 
   ScoutROSMessenger::ScoutROSMessenger(ScoutBase *scout, ros::NodeHandle *nh)
-      : scout_(scout), nh_(nh) {}
+      : scout_(scout), nh_(nh), hold_gate_(std::string()) {}
+
+  ScoutROSMessenger::~ScoutROSMessenger() {
+    xgc_chassis_hold::Hub::instance().remove(&hold_gate_);
+  }
+
+  void ScoutROSMessenger::HoldZeroThunk(void *self) {
+    static_cast<ScoutROSMessenger *>(self)->HoldZero();
+  }
+
+  void ScoutROSMessenger::HoldZero() {
+    if (!simulated_robot_ && scout_ != nullptr) {
+      scout_->SetMotionCommand(0.0, 0.0);
+      return;
+    }
+    std::lock_guard<std::mutex> guard(twist_mutex_);
+    current_twist_ = geometry_msgs::Twist();
+  }
 
   void ScoutROSMessenger::SetupSubscription()
   {
+    hold_gate_.setZeroThunk(&ScoutROSMessenger::HoldZeroThunk, this);
+    xgc_chassis_hold::Hub::instance().add(&hold_gate_);
     status_publisher_ =
         nh_->advertise<scout_msgs::ScoutStatus>("/scout_status", 10);
 
@@ -34,6 +53,10 @@ namespace westonrobot
   void ScoutROSMessenger::TwistCmdCallback(
       const geometry_msgs::Twist::ConstPtr &msg)
   {
+    if (hold_gate_.held()) {
+      HoldZero();
+      return;
+    }
     if (!simulated_robot_)
     {
       scout_->SetMotionCommand(msg->linear.x, msg->angular.z);

@@ -18,6 +18,7 @@
 
 #include "scout_msgs/ScoutLightCmd.h"
 #include "ugv_sdk/scout/scout_base.hpp"
+#include "xgc_chassis_hold/udp.hpp"
 
 namespace westonrobot
 {
@@ -26,6 +27,7 @@ class ScoutROSMessenger
 public:
     explicit ScoutROSMessenger(ros::NodeHandle *nh);
     ScoutROSMessenger(ScoutBase *scout, ros::NodeHandle *nh);
+    ~ScoutROSMessenger();
 
     bool simulated_robot_ = false;
     int sim_control_rate_ = 50;
@@ -53,6 +55,10 @@ private:
 
     void TwistCmdCallback(const geometry_msgs::Twist::ConstPtr &msg);
     void LightCmdCallback(const scout_msgs::ScoutLightCmd::ConstPtr &msg);
+    void HoldZero();
+    static void HoldZeroThunk(void *self);
+
+    xgc_chassis_hold::Gate hold_gate_;
 };
 } // namespace westonrobot
 
