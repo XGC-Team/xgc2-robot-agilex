@@ -85,7 +85,7 @@ roslaunch agilex_onboard_autostart lidar.launch
 
 Onboard RViz is `agilex_onboard_rviz/rviz/viz.rviz`. Camera runtime also needs the vehicle `librealsense2` (on Xavier it is `/usr/local/lib`).
 
-`docs/` in this product only keeps the vendor manual PDF. Field notes live in the main repo `docs/field/agilex/`.
+`docs/` in this product only keeps the vendor manual PDF. Field notes live in the main repo `memory/field/agilex/`.
 
 ## APT
 
