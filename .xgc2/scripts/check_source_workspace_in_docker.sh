@@ -186,11 +186,17 @@ docker run --rm --network none \
     grep -q "roslaunch --wait" "$(rospack find agilex_onboard_autostart)/scripts/start-chassis"
     grep -q "required=.true." /workspace/agilex/onboard/ros1/chassis/src/scout_base/launch/scout_mini_base.launch
 
+    bridge_stub="$(mktemp)"
+    cat >"${bridge_stub}" <<'"'"'YAML'"'"'
+send_topics: []
+recv_topics: []
+YAML
     roslaunch --files agilex_onboard_autostart imu-hi226.launch >/dev/null
     roslaunch --files agilex_onboard_autostart chassis.launch >/dev/null
     roslaunch --files agilex_onboard_autostart description.launch >/dev/null
-    roslaunch --files agilex_swarm_ros_bridge swarm.launch >/dev/null
-    roslaunch --files agilex_onboard_autostart swarm.launch >/dev/null
+    roslaunch --files agilex_swarm_ros_bridge swarm.launch "config:=${bridge_stub}" >/dev/null
+    roslaunch --files agilex_onboard_autostart swarm.launch "config:=${bridge_stub}" >/dev/null
     roslaunch --files scout_base scout_mini_base.launch >/dev/null
     roslaunch --files xgc2_onboard_teleop teleop.launch >/dev/null
+    rm -f -- "${bridge_stub}"
   '

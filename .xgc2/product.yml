@@ -137,7 +137,7 @@ usage:
     roslaunch --files agilex_onboard_autostart chassis.launch
     test -f "$(rospack find scout_description)/urdf/scout_visual.urdf"
     rospack find swarm_ros_bridge
-    roslaunch --files agilex_swarm_ros_bridge swarm.launch
+    rospack find agilex_swarm_ros_bridge
 release:
   workflow: release.yml
   dependency_policy:
