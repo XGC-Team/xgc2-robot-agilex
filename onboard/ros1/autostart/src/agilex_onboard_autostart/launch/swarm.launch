@@ -1,5 +1,5 @@
 <launch>
-  <arg name="config" default="$(find agilex_swarm_ros_bridge)/config/ros_topics.yaml" />
+  <arg name="config" default="/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml" />
   <include file="$(find agilex_swarm_ros_bridge)/launch/swarm.launch">
     <arg name="config" value="$(arg config)" />
   </include>

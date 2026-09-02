@@ -429,17 +429,13 @@ build_communication_deb() {
     echo "missing installed package.xml for ${ros_pkg}" >&2
     exit 1
   fi
-  if [[ ! -e "${PREFIX_ROOT}/share/${ros_pkg}/config/ros_topics.yaml" ]]; then
-    echo "missing vehicle swarm YAML from ${ros_pkg}" >&2
+  if [[ -e "${PREFIX_ROOT}/share/${ros_pkg}/config/ros_topics.yaml" ]]; then
+    echo "vehicle swarm YAML must not ship in ${ros_pkg}; configure-network writes /etc" >&2
     exit 1
   fi
 
-  mkdir -p "${pkg_root}/etc/xgc2/agilex/swarm_ros_bridge"
-  cp -a "${PREFIX_ROOT}/share/${ros_pkg}/config/ros_topics.yaml" \
-    "${pkg_root}/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml"
-
   # Official swarm-ros-bridge is published for Melodic only. Noetic CI must
-  # still configure this YAML/launch package; the vehicle pulls the official
+  # still configure this launch/relay package; the vehicle pulls the official
   # bridge from APT when that distro is published.
   local comm_depends="ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-roscpp, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-std-msgs, ${scout_msgs_dep}"
   if [[ "${ROS_DISTRO}" == "melodic" ]]; then
@@ -451,18 +447,13 @@ build_communication_deb() {
     "${deb_pkg}" \
     "${version}" \
     "${comm_depends}" \
-    "Vehicle YAML, launch, and ScoutStatus relay for the official swarm_ros_bridge"
+    "ScoutStatus relay and launch for the official swarm_ros_bridge; field yaml is written by configure-network"
   write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}" "${version}"
-
-  cat > "${pkg_root}/DEBIAN/conffiles" <<EOF
-/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
-EOF
 
   find "${pkg_root}" -type d -exec chmod 0755 {} +
   chmod 0755 "${pkg_root}/DEBIAN"
-  chmod 0644 "${pkg_root}/DEBIAN/control" "${pkg_root}/DEBIAN/conffiles"
+  chmod 0644 "${pkg_root}/DEBIAN/control"
   chmod 0644 "${pkg_root}/usr/share/doc/${deb_pkg}/README"
-  chmod 0644 "${pkg_root}/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml"
 
   fakeroot dpkg-deb --build "${pkg_root}" "${OUTPUT_DIR}/${deb_pkg}_${version}_${ARCH}.deb" >/dev/null
 }

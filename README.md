@@ -63,7 +63,7 @@ xgc2-agilex-onboard-teleop.service
 | `ros-melodic-xgc2-agilex-scout-base` | `scout_base` | Chassis node |
 | `ros-melodic-xgc2-scout-description` | `scout_description` | Mini visual/TF from `xgc2-scout-description` (not packaged here) |
 | `ros-melodic-swarm-ros-bridge` | `swarm_ros_bridge` | Official XGC2 bridge (APT, not rebuilt here) |
-| `ros-melodic-xgc2-agilex-swarm-ros-bridge` | `agilex_swarm_ros_bridge` | Vehicle YAML+launch for the official bridge |
+| `ros-melodic-xgc2-agilex-swarm-ros-bridge` | `agilex_swarm_ros_bridge` | ScoutStatus relay + launch; field yaml is `/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml` |
 | `ros-melodic-xgc2-agilex` | (meta) | Vehicle chassis + bridge + autostart units; does not enable or start them |
 | `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | standalone roscore + chassis/IMU/comm/camera/lidar/mocap/panel/teleop units; install-only. Site params in `/etc/xgc2/agilex/onboard.env`. Enable chassis (Wants roscore). Mocap for Agent sessions is `agilex-mocap-ros1`. Teleop viewer is optional: `ros-melodic-xgc2-agilex-onboard-teleop` then `xgc2-agilex-onboard-teleop.service`. |
 

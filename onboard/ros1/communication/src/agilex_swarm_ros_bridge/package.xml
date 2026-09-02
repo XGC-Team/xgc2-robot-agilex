@@ -2,7 +2,7 @@
 <package format="2">
   <name>agilex_swarm_ros_bridge</name>
   <version>0.1.0</version>
-  <description>Vehicle YAML, launch, and ScoutStatus-to-std relay for the official swarm_ros_bridge. systemd lives in agilex_onboard_autostart.</description>
+  <description>ScoutStatus-to-std relay and launch for the official swarm_ros_bridge. Field yaml is written by configure-network to /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml. systemd lives in agilex_onboard_autostart.</description>
 
   <maintainer email="apt@example.com">XGC2</maintainer>
   <license>Proprietary</license>

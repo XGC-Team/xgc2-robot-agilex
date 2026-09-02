@@ -138,14 +138,7 @@ docker run --rm --network none \
     test ! -f "$(rospack find agilex_onboard_autostart)/launch/base.launch"
     test -f "$(rospack find agilex_onboard_autostart)/launch/description.launch"
     test -f "$(rospack find agilex_swarm_ros_bridge)/launch/swarm.launch"
-    bridge_config="$(rospack find agilex_swarm_ros_bridge)/config/ros_topics.yaml"
-    test -f "${bridge_config}"
-    test "$(grep -c "^- topic_name: /cmd_vel$" "${bridge_config}")" = 3
-    test "$(grep -c "^  max_freq: 0$" "${bridge_config}")" = 3
-    grep -qx "  gcs150: 127.0.0.1" "${bridge_config}"
-    grep -qx "  gcs199: 127.0.0.1" "${bridge_config}"
-    grep -qx "  gcs251: 127.0.0.1" "${bridge_config}"
-    grep -q "^- topic_name: /scout/chassis_state$" "${bridge_config}"
+    test ! -f "$(rospack find agilex_swarm_ros_bridge)/config/ros_topics.yaml"
     test -f "$(rospack find agilex_onboard_autostart)/launch/swarm.launch"
     test ! -f "$(rospack find agilex_onboard_autostart)/config/ros_topics.yaml"
     test ! -e /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/scout_status_to_std

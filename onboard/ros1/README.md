@@ -6,8 +6,9 @@ Seven sibling workspaces.
 chassis/src/             wrp_io, ugv_sdk, scout_base
                          (scout_msgs and scout_description come from APT)
 
-communication/src/       agilex_swarm_ros_bridge (YAML+launch+relay)
+communication/src/       agilex_swarm_ros_bridge (launch+ScoutStatus relay)
                          official swarm_ros_bridge from APT
+                         field yaml: /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml
 
 perception/src/          agilex_estimator
                          (mocap.launch + estimator.launch)

@@ -1,5 +1,5 @@
 <launch>
-  <arg name="config" default="$(find agilex_swarm_ros_bridge)/config/ros_topics.yaml" />
+  <arg name="config" default="/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml" />
 
   <node pkg="agilex_swarm_ros_bridge" type="scout_status_to_std" name="scout_status_to_std">
     <param name="voltage_rate" value="0.5" />
