@@ -1,6 +1,14 @@
 <launch>
   <arg name="config" default="/etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml" />
-  <include file="$(find agilex_swarm_ros_bridge)/launch/swarm.launch">
-    <arg name="config" value="$(arg config)" />
-  </include>
+
+  <node pkg="agilex_swarm_ros_bridge" type="scout_status_to_std" name="scout_status_to_std">
+    <param name="voltage_rate" value="0.5" />
+    <param name="chassis_rate" value="1.0" />
+    <param name="voltage_topic" value="/PowerVoltage" />
+    <param name="chassis_topic" value="/scout/chassis_state" />
+  </node>
+
+  <node pkg="swarm_ros_bridge" type="bridge_node" name="swarm_bridge_node" output="screen">
+    <rosparam command="load" file="$(arg config)" />
+  </node>
 </launch>
