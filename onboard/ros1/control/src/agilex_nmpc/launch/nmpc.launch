@@ -26,7 +26,6 @@
 
   <include file="$(find unicycle_ugv_controller)/launch/ugv_unicycle_nmpc_controller.launch">
     <arg name="ns" value="$(arg ns)" />
-    <arg name="vrpn_rigid_body" value="$(arg tracker)" />
     <arg name="auto_start_tracking" value="$(arg auto_start_tracking)" />
     <arg name="cmd_vel_topic" value="/cmd_vel" />
   </include>
