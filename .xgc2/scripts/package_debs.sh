@@ -252,6 +252,20 @@ build_autostart_deb() {
 /etc/xgc2/agilex/onboard.env
 EOF
 
+  cat > "${pkg_root}/DEBIAN/preinst" <<'EOF'
+#!/bin/sh
+set -e
+
+if [ "$1" = "upgrade" ] && command -v systemctl >/dev/null 2>&1; then
+  # The old unit is still installed here; stop it and remove its enable links
+  # before dpkg removes the retired unit and launcher during unpack.
+  systemctl stop xgc2-field-panel.service >/dev/null 2>&1 || true
+  systemctl disable xgc2-field-panel.service >/dev/null 2>&1 || true
+fi
+
+exit 0
+EOF
+
   cat > "${pkg_root}/DEBIAN/postinst" <<'EOF'
 #!/bin/sh
 set -e
@@ -271,6 +285,10 @@ if [ "$1" = "configure" ]; then
   fi
 
   if command -v systemctl >/dev/null 2>&1; then
+    # Also finish retirement after an interrupted upgrade. No retained unit
+    # is stopped by this cleanup.
+    systemctl stop xgc2-field-panel.service >/dev/null 2>&1 || true
+    systemctl disable xgc2-field-panel.service >/dev/null 2>&1 || true
     systemctl daemon-reload >/dev/null 2>&1 || true
     # Keep old unit files on disk. Experiment-time units stay disabled so
     # they cannot race Agent process.run-definition. Chassis is operator-owned.
@@ -344,7 +362,7 @@ EOF
   chmod 0644 "${pkg_root}/DEBIAN/control" "${pkg_root}/DEBIAN/conffiles"
   sed -i -e "s|ROS_DISTRO_PLACEHOLDER|${ROS_DISTRO}|g" \
     "${pkg_root}/DEBIAN/postinst"
-  chmod 0755 "${pkg_root}/DEBIAN/postinst" "${pkg_root}/DEBIAN/prerm" "${pkg_root}/DEBIAN/postrm"
+  chmod 0755 "${pkg_root}/DEBIAN/preinst" "${pkg_root}/DEBIAN/postinst" "${pkg_root}/DEBIAN/prerm" "${pkg_root}/DEBIAN/postrm"
   chmod 0644 "${pkg_root}/usr/share/doc/${deb_pkg}/README"
   find "${pkg_root}/lib/systemd/system" -type f -exec chmod 0644 {} +
   if [[ -f "${pkg_root}/etc/udev/rules.d/99-xgc2-agilex-usb-recover.rules" ]]; then

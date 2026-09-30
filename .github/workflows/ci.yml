@@ -71,6 +71,7 @@ jobs:
           bash -n onboard/ros1/autostart/src/agilex_onboard_autostart/scripts/start-media-edge
           bash -n onboard/ros1/autostart/src/agilex_onboard_autostart/scripts/start-camera
           python3 onboard/ros1/teleop/src/xgc2_onboard_teleop/test/test_layout.py
+          python3 .xgc2/tests/test_field_panel_upgrade.py
           python3 - <<'PY'
           from pathlib import Path
           import xml.etree.ElementTree as ET
