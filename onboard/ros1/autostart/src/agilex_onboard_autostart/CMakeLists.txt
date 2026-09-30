@@ -18,7 +18,6 @@ install(PROGRAMS
   scripts/start-swarm-ros-bridge
   scripts/start-mocap
   scripts/start-lidar-helios16
-  scripts/start-field-panel
   scripts/start-onboard-teleop
   scripts/wait-device
   scripts/serve_triple_preview

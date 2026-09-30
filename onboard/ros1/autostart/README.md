@@ -10,7 +10,7 @@ they do not bake `MOCAP_RIGID_BODY` or `ROS_IP`. Copy the packaged
 
 Install-only by default: the package does not enable or start any unit.
 Enable **chassis** at boot if the vehicle should always have CAN/TF.
-Leave mocap, IMU, camera, lidar, the swarm bridge, field-panel, and
+Leave mocap, IMU, camera, lidar, the swarm bridge, and
 onboard teleop disabled. Agent
 `process.run-definition` `agilex-mocap-ros1` starts mocap for a Session
 with per-run `rigidBody` / `vrpnServer`.
@@ -25,7 +25,6 @@ src/agilex_onboard_autostart
   systemd/xgc2-agilex-media-edge.service
   systemd/xgc2-agilex-lidar-helios16.service
   systemd/xgc2-agilex-mocap.service
-  systemd/xgc2-field-panel.service
   systemd/xgc2-agilex-onboard-teleop.service
   systemd/xgc2-agilex-usb-recover@.service
 ```
