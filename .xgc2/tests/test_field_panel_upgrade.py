@@ -34,8 +34,9 @@ class FieldPanelUpgrade(unittest.TestCase):
         self.assertIsNotNone(systemctl)
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            unit_dir = root / 'lib/systemd/system'
+            unit_dir = root / 'usr/lib/systemd/system'
             unit_dir.mkdir(parents=True)
+            (root / 'lib').symlink_to('usr/lib')
             units = PROTECTED + [RETIRED]
             for unit in units:
                 (unit_dir / unit).write_text(
