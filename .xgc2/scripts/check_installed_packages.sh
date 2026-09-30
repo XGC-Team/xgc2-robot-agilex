@@ -89,7 +89,7 @@ test -x "${PREFIX}/lib/agilex_onboard_autostart/wait-device"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-roscore"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/wait-roscore"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/usb-recover"
-test -x "${PREFIX}/lib/agilex_onboard_autostart/start-field-panel"
+test ! -e "${PREFIX}/lib/agilex_onboard_autostart/start-field-panel"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-onboard-teleop"
 test -x "${PREFIX}/lib/xgc2_onboard_teleop/onboard_teleop_node"
 test -f "${PREFIX}/share/xgc2_onboard_teleop/web/index.html"
@@ -105,7 +105,7 @@ test -f "${PREFIX}/share/agilex_onboard_autostart/launch/swarm.launch"
 test -f /lib/systemd/system/xgc2-agilex-chassis.service
 test -f /lib/systemd/system/xgc2-agilex-roscore.service
 test -f /lib/systemd/system/xgc2-agilex-usb-recover@.service
-test -f /lib/systemd/system/xgc2-field-panel.service
+test ! -e /lib/systemd/system/xgc2-field-panel.service
 test -f /lib/systemd/system/xgc2-agilex-onboard-teleop.service
 test -f /lib/systemd/system/xgc2-agilex-imu-hi226.service
 test -f /lib/systemd/system/xgc2-agilex-swarm-ros-bridge.service
@@ -134,9 +134,7 @@ test -f /etc/udev/rules.d/99-xgc2-agilex-usb-recover.rules
 test -f /etc/xgc2/agilex/onboard.env
 grep -q '^MOCAP_RIGID_BODY=' /etc/xgc2/agilex/onboard.env
 grep -q '^VRPN_SERVER=' /etc/xgc2/agilex/onboard.env
-grep -q '^FIELD_PANEL_STATE_SOURCE=estimator$' /etc/xgc2/agilex/onboard.env
 ! grep -E '^Environment=' /lib/systemd/system/xgc2-agilex-*.service
-! grep -E '^Environment=' /lib/systemd/system/xgc2-field-panel.service
 ! grep -E '^Environment=' /lib/systemd/system/xgc2-agilex-onboard-teleop.service
 grep -q 'EnvironmentFile=-/etc/xgc2/agilex/onboard.env' /lib/systemd/system/xgc2-agilex-chassis.service
 grep -q 'EnvironmentFile=-/etc/xgc2/agilex/onboard.env' /lib/systemd/system/xgc2-agilex-roscore.service

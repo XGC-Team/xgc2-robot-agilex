@@ -51,7 +51,7 @@ xgc2-agilex-mocap.service
   start-mocap: VRPN client only, no /pose or /ugv/pose relay
 xgc2-agilex-onboard-teleop.service
   optional; not enabled. Web :8100 camera + D-pad / dual-stick.
-  Requires ros-*-xgc2-agilex-onboard-teleop. Not field-panel (:8099).
+  Requires ros-*-xgc2-agilex-onboard-teleop.
 ```
 
 ## Packages
@@ -75,7 +75,7 @@ D435 color capture assembles the shared [`xgc2-camera-ros1`](https://github.com/
 | `ros-melodic-xgc2-agilex-serial-imu` | `serial_imu` | Optional HI226 driver, `/dev/imu`. Field-effective rate is 100 Hz; Gazebo Scout IMU in `xgc2-gazebo-sim-agilex` must match. |
 | `ros-melodic-xgc2-agilex-rslidar-sdk` | `rslidar_sdk` | Helios 16, `/rslidar_points`, frame `rslidar` |
 | `ros-melodic-xgc2-agilex-onboard-rviz` | `agilex_onboard_rviz` | Onboard RViz config |
-| `ros-melodic-xgc2-agilex-onboard-teleop` | `xgc2_onboard_teleop` | Optional camera + dual-page teleop (D-pad / dual-stick). Not field-panel. Web `:8100`. Unit `xgc2-agilex-onboard-teleop.service` is install-only. |
+| `ros-melodic-xgc2-agilex-onboard-teleop` | `xgc2_onboard_teleop` | Optional camera + dual-page teleop (D-pad / dual-stick). Web `:8100`. Unit `xgc2-agilex-onboard-teleop.service` is install-only. |
 
 ```bash
 sudo apt-get install ros-melodic-xgc2-agilex-onboard-rviz

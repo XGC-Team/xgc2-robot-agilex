@@ -166,7 +166,7 @@ docker run --rm --network none \
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-roscore
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/wait-roscore
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/usb-recover
-    test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-field-panel
+    test ! -e /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-field-panel
     test -x /opt/ros/${ROS_DISTRO}/lib/agilex_onboard_autostart/start-onboard-teleop
     test -x /opt/ros/${ROS_DISTRO}/lib/xgc2_onboard_teleop/onboard_teleop_node
     test -f "$(rospack find xgc2_onboard_teleop)/web/index.html"
@@ -190,7 +190,7 @@ docker run --rm --network none \
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-mocap.service"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-roscore.service"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-usb-recover@.service"
-    test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-field-panel.service"
+    test ! -e "$(rospack find agilex_onboard_autostart)/systemd/xgc2-field-panel.service"
     test -f "$(rospack find agilex_onboard_autostart)/systemd/xgc2-agilex-onboard-teleop.service"
     test -f "$(rospack find agilex_onboard_autostart)/udev/99-xgc2-agilex-usb-recover.rules"
     test ! -d "$(rospack find agilex_swarm_ros_bridge)/systemd"

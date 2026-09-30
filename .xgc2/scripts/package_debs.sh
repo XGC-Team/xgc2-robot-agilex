@@ -500,6 +500,6 @@ build_deb \
   "ros-${ROS_DISTRO}-xgc2-agilex-onboard-teleop" \
   "xgc2_onboard_teleop" \
   "ros-${ROS_DISTRO}-geometry-msgs, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-rospy, ros-${ROS_DISTRO}-sensor-msgs, ros-${ROS_DISTRO}-std-msgs" \
-  "Optional onboard camera viewer and dual-page teleop (not field-panel)"
+  "Optional onboard camera viewer and dual-page teleop"
 
 find "${OUTPUT_DIR}" -maxdepth 1 -type f -name "ros-${ROS_DISTRO}-xgc2-agilex*.deb" -print | sort

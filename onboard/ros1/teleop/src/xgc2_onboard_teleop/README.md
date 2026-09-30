@@ -1,6 +1,6 @@
 # xgc2_onboard_teleop
 
-车上通用「看图像 + 手动遥控」服务。从 `look_angle_shaping` 只抽出十字键页、双手握持全屏页、相机 MJPEG。**不是** field-panel，不含制导 / NMPC / 动捕 / 轨迹。
+车上通用「看图像 + 手动遥控」服务。从 `look_angle_shaping` 只抽出十字键页、双手握持全屏页、相机 MJPEG。不含制导 / NMPC / 动捕 / 轨迹。
 
 ## 包名
 
@@ -12,7 +12,7 @@
 | systemd | `xgc2-agilex-onboard-teleop.service` |
 | 浏览器 | `http://<车上IP>:8100/` |
 
-默认 **不** 随 `ros-*-xgc2-agilex` 元包装上，也 **不** enable。不要和 field-panel `:8099` 抢端口。
+默认 **不** 随 `ros-*-xgc2-agilex` 元包装上，也 **不** enable。Web 服务使用 `:8100`。
 
 ## 车上安装（生产 APT，禁止手拷）
 
