@@ -97,6 +97,9 @@ apt:
   - ros-noetic-xgc2-agilex-rslidar-sdk
   - ros-noetic-xgc2-agilex-onboard-rviz
   depends:
+  - libxgc2-xrpc-dev (>= 0.1.0)
+  - libxgc2-robotics-interfaces-dev
+  - libjsoncpp-dev (>= 1.9.4)
   - ros-melodic-scout-msgs
   - ros-noetic-scout-msgs
   - ros-melodic-xgc2-scout-description
@@ -134,13 +137,15 @@ usage:
   smoke_test: |
     rospack find scout_msgs
     rospack find scout_base
-    roslaunch --files agilex_onboard_autostart chassis.launch
+    roslaunch --files agilex_onboard_autostart chassis.launch robot_id:=launch-validation hold_socket:=/tmp/launch-validation.sock
     test -f "$(rospack find scout_description)/urdf/scout_visual.urdf"
     rospack find swarm_ros_bridge
     rospack find agilex_swarm_ros_bridge
 release:
   workflow: release.yml
   dependency_policy:
+    xgc2-xrpc: verify
+    xgc2-robotics-interfaces: verify
     xgc2-scout-msgs: rebuild
     xgc2-ros-melodic-scout-description: verify
     xgc2-scout-description: verify

@@ -12,13 +12,14 @@
 
 #include <string>
 #include <mutex>
+#include <memory>
 
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
 
 #include "scout_msgs/ScoutLightCmd.h"
 #include "ugv_sdk/scout/scout_base.hpp"
-#include "xgc_chassis_hold/udp.hpp"
+#include <xgc2/chassis_hold/provider.hpp>
 
 namespace westonrobot
 {
@@ -33,6 +34,7 @@ public:
     int sim_control_rate_ = 50;
 
     void SetupSubscription();
+    void ControlTick();
 
     void PublishStateToROS();
     void PublishSimStateToROS(double linear, double angular);
@@ -56,9 +58,8 @@ private:
     void TwistCmdCallback(const geometry_msgs::Twist::ConstPtr &msg);
     void LightCmdCallback(const scout_msgs::ScoutLightCmd::ConstPtr &msg);
     void HoldZero();
-    static void HoldZeroThunk(void *self);
-
-    xgc_chassis_hold::Gate hold_gate_;
+    static bool ApplyHoldZero(void *self, std::size_t robot) noexcept;
+    std::unique_ptr<xgc2::chassis_hold::Provider> hold_provider_;
 };
 } // namespace westonrobot
 

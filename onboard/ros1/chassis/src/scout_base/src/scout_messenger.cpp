@@ -10,21 +10,40 @@
 #include "scout_base/scout_messenger.hpp"
 
 #include "scout_msgs/ScoutStatus.h"
+extern char **environ;
 
 namespace westonrobot
 {
   ScoutROSMessenger::ScoutROSMessenger(ros::NodeHandle *nh)
-      : scout_(nullptr), nh_(nh), hold_gate_(std::string()) {}
+      : scout_(nullptr), nh_(nh) {}
 
   ScoutROSMessenger::ScoutROSMessenger(ScoutBase *scout, ros::NodeHandle *nh)
-      : scout_(scout), nh_(nh), hold_gate_(std::string()) {}
+      : scout_(scout), nh_(nh) {}
 
   ScoutROSMessenger::~ScoutROSMessenger() {
-    xgc_chassis_hold::Hub::instance().remove(&hold_gate_);
+    (void)ApplyHoldZero(this, 0);
+    if (!simulated_robot_ && scout_ != nullptr) scout_->Terminate();
+    hold_provider_.reset();
   }
 
-  void ScoutROSMessenger::HoldZeroThunk(void *self) {
-    static_cast<ScoutROSMessenger *>(self)->HoldZero();
+  bool ScoutROSMessenger::ApplyHoldZero(void *self, std::size_t robot) noexcept {
+    if (robot != 0) return false;
+    try {
+      auto *messenger = static_cast<ScoutROSMessenger *>(self);
+      if (!messenger->simulated_robot_ && messenger->scout_ == nullptr) return false;
+      messenger->HoldZero();
+      return true;
+    } catch (...) {
+      return false;
+    }
+  }
+
+  void ScoutROSMessenger::ControlTick() {
+    if (!hold_provider_ || !hold_provider_->healthy()) {
+      HoldZero();
+      throw std::runtime_error("chassis hold HTTP owner unavailable");
+    }
+    hold_provider_->control_tick(&ScoutROSMessenger::ApplyHoldZero, this);
   }
 
   void ScoutROSMessenger::HoldZero() {
@@ -38,8 +57,19 @@ namespace westonrobot
 
   void ScoutROSMessenger::SetupSubscription()
   {
-    hold_gate_.setZeroThunk(&ScoutROSMessenger::HoldZeroThunk, this);
-    xgc_chassis_hold::Hub::instance().add(&hold_gate_);
+    ros::NodeHandle private_node("~");
+    xgc2::chassis_hold::Options options;
+    std::string robot_id;
+    if (!private_node.getParam("hold_robot_id", robot_id) ||
+        !private_node.getParam("hold_socket", options.socket_path))
+      throw std::invalid_argument("explicit hold_robot_id and hold_socket required");
+    options.target_id = robot_id;
+    options.robot_ids = {robot_id};
+    options.instance_id = xgc2::xrpc::new_instance_id();
+    options.environment = xgc2::chassis_hold::environment_snapshot(environ);
+    // Warm the existing native SDK's one command worker before admission.
+    HoldZero();
+    hold_provider_ = std::make_unique<xgc2::chassis_hold::Provider>(std::move(options));
     status_publisher_ =
         nh_->advertise<scout_msgs::ScoutStatus>("/scout_status", 10);
 
@@ -53,7 +83,7 @@ namespace westonrobot
   void ScoutROSMessenger::TwistCmdCallback(
       const geometry_msgs::Twist::ConstPtr &msg)
   {
-    if (hold_gate_.held()) {
+    if (!hold_provider_ || !hold_provider_->healthy() || hold_provider_->held()) {
       HoldZero();
       return;
     }

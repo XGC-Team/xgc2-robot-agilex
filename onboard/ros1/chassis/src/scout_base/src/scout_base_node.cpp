@@ -10,18 +10,12 @@ using namespace westonrobot;
 
 std::shared_ptr<ScoutBase> robot;
 
-void DetachRobot(int signal) {
-  robot->Disconnect();
-  robot->Terminate();
-}
-
 int main(int argc, char **argv) {
   // setup ROS node
   ros::init(argc, argv, "scout_odom");
   ros::NodeHandle node(""), private_node("~");
 
-  std::signal(SIGINT, DetachRobot);
-
+  try {
   // check wether controlling scout mini
   bool is_scout_mini = false;
   private_node.param<bool>("is_scout_mini", is_scout_mini, false);
@@ -51,8 +45,9 @@ int main(int argc, char **argv) {
   messenger.SetupSubscription();
 
   // publish robot state at 50Hz while listening to twist commands
-  ros::Rate rate(50);
-  while (true) {
+  ros::WallRate rate(50);
+  while (ros::ok()) {
+    messenger.ControlTick();
     if (!messenger.simulated_robot_) {
       messenger.PublishStateToROS();
     } else {
@@ -61,8 +56,13 @@ int main(int argc, char **argv) {
       messenger.PublishSimStateToROS(linear, angular);
     }
     ros::spinOnce();
+    messenger.ControlTick();
     rate.sleep();
   }
 
   return 0;
+  } catch (const std::exception &error) {
+    ROS_FATAL_STREAM("scout chassis startup/control failed: " << error.what());
+    return 1;
+  }
 }

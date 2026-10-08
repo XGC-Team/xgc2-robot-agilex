@@ -1,8 +1,9 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.16)
 project(scout_base)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+find_package(XgcRoboticsInterfaces CONFIG REQUIRED COMPONENTS ChassisHold)
 
 find_package(catkin REQUIRED COMPONENTS    
     roslaunch 
@@ -42,7 +43,8 @@ include_directories(
 
 add_library(scout_messenger STATIC src/scout_messenger.cpp)
 find_package(Threads REQUIRED)
-target_link_libraries(scout_messenger ${catkin_LIBRARIES} Threads::Threads)
+target_link_libraries(scout_messenger ${catkin_LIBRARIES} Threads::Threads
+  XgcRoboticsInterfaces::ChassisHold)
 add_dependencies(scout_messenger ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_executable(scout_base_node src/scout_base_node.cpp)

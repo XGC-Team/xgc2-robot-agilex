@@ -103,6 +103,14 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 	$<INSTALL_INTERFACE:include>
     PRIVATE src)
     
+# Test the actual native command-worker lifetime without opening a device.
+if(NOT BUILD_WITHOUT_ROS AND CATKIN_ENABLE_TESTING)
+    add_executable(chassis_worker_lifetime_test tests/chassis_worker_lifetime_test.cpp)
+    target_link_libraries(chassis_worker_lifetime_test ${PROJECT_NAME} Threads::Threads)
+    add_test(NAME chassis_worker_lifetime COMMAND chassis_worker_lifetime_test)
+    set_tests_properties(chassis_worker_lifetime PROPERTIES TIMEOUT 5)
+endif()
+
 # Build apps
 if(BUILD_WITHOUT_ROS)
     # Check wether to build monitor tool

@@ -10,6 +10,9 @@ Type=simple
 User=agilex
 Group=agilex
 SupplementaryGroups=dialout
+RuntimeDirectory=xgc2-agilex-chassis
+RuntimeDirectoryMode=0700
+Environment=XGC2_CHASSIS_HOLD_SOCKET=/run/xgc2-agilex-chassis/hold.sock
 WorkingDirectory=/home/agilex
 # Site identity (ROS_*, CAN_*, HOME) lives only in onboard.env.
 EnvironmentFile=-/etc/xgc2/agilex/onboard.env

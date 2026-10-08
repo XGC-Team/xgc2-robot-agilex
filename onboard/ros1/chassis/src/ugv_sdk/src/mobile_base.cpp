@@ -17,11 +17,9 @@
 
 namespace westonrobot {
 MobileBase::~MobileBase() {
+  Terminate();
   // release resource if occupied
   Disconnect();
-
-  // joint cmd thread
-  if (cmd_thread_.joinable()) cmd_thread_.join();
 }
 
 void MobileBase::Connect(std::string dev_name, int32_t baud_rate) {
@@ -42,8 +40,11 @@ void MobileBase::Disconnect() {
 }
 
 void MobileBase::Terminate() {
-  keep_running_ = false;
-  std::terminate();
+  // Called by the native command owner, outside signal handlers, before its
+  // object/output context or the RPC endpoint lifetime can end.
+  keep_running_.store(false, std::memory_order_release);
+  if (cmd_thread_.joinable()) cmd_thread_.join();
+  cmd_thread_started_ = false;
 }
 
 void MobileBase::ConfigureCAN(const std::string &can_if_name) {

@@ -153,7 +153,7 @@ recv_topics: []
 YAML
 
 roslaunch --files agilex_onboard_autostart imu-hi226.launch >/dev/null
-roslaunch --files agilex_onboard_autostart chassis.launch >/dev/null
+roslaunch --files agilex_onboard_autostart chassis.launch robot_id:=launch-validation hold_socket:=/tmp/launch-validation.sock >/dev/null
 roslaunch --files agilex_swarm_ros_bridge swarm.launch "config:=${bridge_stub}" >/dev/null
 roslaunch --files agilex_onboard_autostart swarm.launch "config:=${bridge_stub}" >/dev/null
 roslaunch --files xgc2_onboard_teleop teleop.launch >/dev/null

@@ -25,7 +25,8 @@ class ScoutBase : public MobileBase {
  public:
   ScoutBase(bool is_scout_mini = false)
     : MobileBase(),is_scout_mini_(is_scout_mini){};
-  ~ScoutBase() = default;
+  // Stop the worker before its virtual target and command state are destroyed.
+  ~ScoutBase() override { Terminate(); }
 
   // get robot state
   ScoutState GetScoutState();
