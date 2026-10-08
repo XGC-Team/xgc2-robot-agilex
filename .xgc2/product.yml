@@ -98,7 +98,7 @@ apt:
   - ros-noetic-xgc2-agilex-onboard-rviz
   depends:
   - libxgc2-xrpc-dev (>= 0.1.0)
-  - libxgc2-robotics-interfaces-dev
+  - libxgc2-robotics-interfaces-dev (>= 0.2.0)
   - libjsoncpp-dev (>= 1.9.4)
   - ros-melodic-scout-msgs
   - ros-noetic-scout-msgs
