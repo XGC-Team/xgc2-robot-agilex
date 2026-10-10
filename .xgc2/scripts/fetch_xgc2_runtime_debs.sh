@@ -66,7 +66,7 @@ if [[ "${ros_distro}" == "melodic" ]]; then
   fetch "ros-${ros_distro}-xgc2-scout-description" "0.4.10-3"
   fetch "ros-${ros_distro}-swarm-ros-bridge" "1.1.0-12"
 else
-  fetch "ros-${ros_distro}-xgc2-scout-description" "0.4.10-16"
+  fetch "ros-${ros_distro}-xgc2-scout-description" "0.4.10-17"
   fetch "ros-${ros_distro}-swarm-ros-bridge" "1.1.0-12"
 fi
 
