@@ -6,7 +6,8 @@ set -euo pipefail
 ros_distro="${ROS_DISTRO:?set ROS_DISTRO}"
 arch="${XGC2_DEB_ARCH:-$(dpkg --print-architecture)}"
 out_dir="${1:?output directory}"
-base_url="${XGC2_SCOUT_MSGS_APT_BASE_URL:-https://xgc2.apt.xiaokang.ink}"
+base_url="${XGC2_APT_OVERLAY_URL:-${XGC2_SCOUT_MSGS_APT_BASE_URL:-https://xgc2.apt.xiaokang.ink}}"
+[[ "${base_url}" == https://* && "${base_url}" != *[[:space:]]* ]]
 
 case "${ros_distro}" in
   melodic) distribution="bionic" ;;
@@ -19,29 +20,38 @@ esac
 
 mkdir -p "${out_dir}"
 
+# Resolve exact package identities from a signed, isolated APT view. Pool
+# prefixes and Architecture: all filenames belong to the repository index.
+apt_state="$(mktemp -d)"
+trap 'rm -rf "${apt_state}"' EXIT
+mkdir -p "${apt_state}/lists/partial" "${apt_state}/cache/archives/partial" "${apt_state}/empty"
+touch "${apt_state}/status" "${apt_state}/empty.conf"
+curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 \
+  https://xgc2.apt.xiaokang.ink/xgc2-archive-keyring.gpg -o "${apt_state}/keyring.gpg"
+printf '%s  %s\n' 8dfe063f8ac11b6d2b224a86abb4f7fa3da2e3ccc95a27d57279313f532c8510 \
+  "${apt_state}/keyring.gpg" | sha256sum --check --status
+printf 'deb [arch=%s signed-by=%s/keyring.gpg] %s %s main\n' \
+  "${arch}" "${apt_state}" "${base_url%/}" "${distribution}" > "${apt_state}/sources.list"
+cat > "${apt_state}/apt.conf" <<EOF
+Dir::Etc::sourcelist "${apt_state}/sources.list";
+Dir::Etc::sourceparts "${apt_state}/empty";
+Dir::Etc::parts "${apt_state}/empty";
+Dir::Etc::main "${apt_state}/empty.conf";
+Dir::State "${apt_state}";
+Dir::State::lists "${apt_state}/lists";
+Dir::State::status "${apt_state}/status";
+Dir::Cache "${apt_state}/cache";
+APT::Architecture "${arch}";
+APT::Architectures { "${arch}"; };
+APT::Sandbox::User "$(id -un)";
+Acquire::Languages "none";
+EOF
+APT_CONFIG="${apt_state}/apt.conf" apt-get -o APT::Update::Error-Mode=any update
+
 fetch() {
-  local package="$1"
-  local version="$2"
-  local required="${3:-required}"
-  local filename="${package}_${version}_${arch}.deb"
-  local url="${base_url%/}/pool/${distribution}/main/r/${package}/${filename}"
-  local dest="${out_dir}/${filename}"
-  if [[ -f "${dest}" ]]; then
-    return 0
-  fi
-  echo "fetch ${url}"
-  if curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 \
-    "${url}" -o "${dest}.partial"; then
-    mv "${dest}.partial" "${dest}"
-    return 0
-  fi
-  rm -f "${dest}.partial"
-  if [[ "${required}" == "optional" ]]; then
-    echo "optional ${package} ${version} is not published for ${distribution}/${arch}" >&2
-    return 0
-  fi
-  echo "failed to fetch ${url}" >&2
-  return 1
+  # APT uses the authenticated Filename/SHA256, including Architecture: all,
+  # and verifies package bytes rather than trusting an existing cache file.
+  (cd "${out_dir}" && APT_CONFIG="${apt_state}/apt.conf" apt-get download "${1}:${arch}=${2}")
 }
 
 # Native HOLD link dependencies, including their SDK inputs, are installed
