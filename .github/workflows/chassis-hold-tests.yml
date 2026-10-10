@@ -46,9 +46,10 @@ jobs:
               prefix="$work/prefix"
               flags=()
               if [[ "$VARIANT" == sanitized ]]; then
+                # Shared ASAN permits the fixture's new/delete fault injection.
                 flags=(-DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer"
                        -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=address,undefined"
-                       -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined")
+                       -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined -shared-libasan -Wl,-rpath,$(clang++-10 -print-resource-dir)/lib/linux")
               fi
               for component in state-machine xrpc chassis-hold; do
                 cmake -S "/repo/_dependencies/$component" -B "$work/$component" \
