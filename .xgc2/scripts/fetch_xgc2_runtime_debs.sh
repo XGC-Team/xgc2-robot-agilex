@@ -44,6 +44,13 @@ fetch() {
   return 1
 }
 
+# Native HOLD link dependencies, including their SDK inputs, are installed
+# from the same distribution as the driver. No cross-distribution fallback.
+fetch "libxgc2-chassis-hold0" "0.1.0-1~${distribution}"
+fetch "libxgc2-chassis-hold-dev" "0.1.0-1~${distribution}"
+fetch "libxgc2-xrpc1" "0.1.0-2~${distribution}"
+fetch "libxgc2-xrpc-dev" "0.1.0-2~${distribution}"
+fetch "libxgc2-state-machine-dev" "0.1.3-12~${distribution}"
 fetch "ros-${ros_distro}-scout-msgs" "0.3.3-11"
 if [[ "${ros_distro}" == "melodic" ]]; then
   fetch "ros-${ros_distro}-xgc2-scout-description" "0.4.10-3"

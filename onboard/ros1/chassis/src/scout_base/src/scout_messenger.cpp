@@ -58,18 +58,17 @@ namespace westonrobot
   void ScoutROSMessenger::SetupSubscription()
   {
     ros::NodeHandle private_node("~");
-    xgc2::chassis_hold::Options options;
+    xgc2::chassis_hold::ServerOptions options;
     std::string robot_id;
     if (!private_node.getParam("hold_robot_id", robot_id) ||
         !private_node.getParam("hold_socket", options.socket_path))
       throw std::invalid_argument("explicit hold_robot_id and hold_socket required");
     options.target_id = robot_id;
     options.robot_ids = {robot_id};
-    options.instance_id = xgc2::xrpc::new_instance_id();
     options.environment = xgc2::chassis_hold::environment_snapshot(environ);
     // Warm the existing native SDK's one command worker before admission.
     HoldZero();
-    hold_provider_ = std::make_unique<xgc2::chassis_hold::Provider>(std::move(options));
+    hold_provider_ = std::make_unique<xgc2::chassis_hold::HoldServer>(std::move(options));
     status_publisher_ =
         nh_->advertise<scout_msgs::ScoutStatus>("/scout_status", 10);
 

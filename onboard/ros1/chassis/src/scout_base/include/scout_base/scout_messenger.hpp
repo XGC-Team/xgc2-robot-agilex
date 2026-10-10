@@ -19,7 +19,7 @@
 
 #include "scout_msgs/ScoutLightCmd.h"
 #include "ugv_sdk/scout/scout_base.hpp"
-#include <xgc2/chassis_hold/provider.hpp>
+#include <xgc2/chassis_hold/server.hpp>
 
 namespace westonrobot
 {
@@ -59,7 +59,7 @@ private:
     void LightCmdCallback(const scout_msgs::ScoutLightCmd::ConstPtr &msg);
     void HoldZero();
     static bool ApplyHoldZero(void *self, std::size_t robot) noexcept;
-    std::unique_ptr<xgc2::chassis_hold::Provider> hold_provider_;
+    std::unique_ptr<xgc2::chassis_hold::HoldServer> hold_provider_;
 };
 } // namespace westonrobot
 
