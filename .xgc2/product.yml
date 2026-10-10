@@ -144,7 +144,7 @@ release:
   dependency_policy:
     xgc2-xrpc: verify
     libxgc2-chassis-hold-dev: verify
-    xgc2-scout-msgs: rebuild
+    xgc2-ros-msgs: rebuild
     xgc2-ros-melodic-scout-description: verify
     xgc2-scout-description: verify
     xgc2-swarm-ros-bridge: verify

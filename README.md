@@ -8,7 +8,8 @@ the chassis in `onboard/ros1/chassis`, the ground-station bridge in
 install-only systemd units in `onboard/ros1/autostart`. IMU, camera, and
 LiDAR drivers live in `onboard/ros1/sensors`. RViz and compose launches
 live in `onboard/ros1/visualization`. Chassis messages and the Mini visual/TF model come from
-the published `xgc2-scout-msgs` and `xgc2-scout-description` packages.
+the `scout_msgs` domain package in `xgc2-ros-msgs` and the published
+`xgc2-scout-description` package.
 
 ## Vehicle
 
@@ -60,7 +61,7 @@ xgc2-agilex-onboard-teleop.service
 | --- | --- | --- |
 | `ros-melodic-xgc2-agilex-wrp-io` | `wrp_io` | CAN/serial IO |
 | `ros-melodic-xgc2-agilex-ugv-sdk` | `ugv_sdk` | Scout CAN protocol |
-| `ros-melodic-scout-msgs` | `scout_msgs` | Chassis messages from `xgc2-scout-msgs` (not packaged here) |
+| `ros-melodic-scout-msgs` | `scout_msgs` | Chassis messages from `xgc2-ros-msgs` (not packaged here) |
 | `ros-melodic-xgc2-agilex-scout-base` | `scout_base` | Chassis node |
 | `ros-melodic-xgc2-scout-description` | `scout_description` | Mini visual/TF from `xgc2-scout-description` (not packaged here) |
 | `ros-melodic-swarm-ros-bridge` | `swarm_ros_bridge` | Official XGC2 bridge (APT, not rebuilt here) |
