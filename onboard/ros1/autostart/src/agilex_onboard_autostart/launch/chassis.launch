@@ -4,14 +4,23 @@
   <arg name="is_scout_mini" default="true" />
   <arg name="model" default="$(find scout_description)/urdf/scout_visual.urdf" />
   <arg name="robot_id" />
-  <arg name="hold_socket" />
+  <!-- Robot setup owns provisioning; this package ships no key.
+       /etc/xgc2 is root:root 0755; the key is agilex:agilex 0600.
+       install -o agilex -g agilex -m 0600 <keyfile> /etc/xgc2/chassis-hold.key -->
+  <arg name="hold_port" default="19530" />
+  <arg name="hold_key_file" default="/etc/xgc2/chassis-hold.key" />
+  <arg name="hold_boot_held" default="false" />
+  <arg name="hold_required" default="true" />
 
   <include file="$(find scout_base)/launch/scout_mini_base.launch">
     <arg name="port_name" value="$(arg port_name)" />
     <arg name="simulated_robot" value="$(arg simulated_robot)" />
     <arg name="is_scout_mini" value="$(arg is_scout_mini)" />
     <arg name="robot_id" value="$(arg robot_id)" />
-    <arg name="hold_socket" value="$(arg hold_socket)" />
+    <arg name="hold_port" value="$(arg hold_port)" />
+    <arg name="hold_key_file" value="$(arg hold_key_file)" />
+    <arg name="hold_boot_held" value="$(arg hold_boot_held)" />
+    <arg name="hold_required" value="$(arg hold_required)" />
   </include>
 
   <include file="$(find agilex_onboard_autostart)/launch/description.launch">

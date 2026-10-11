@@ -9,10 +9,9 @@ StartLimitIntervalSec=0
 Type=simple
 User=agilex
 Group=agilex
+# Robot setup provisions /etc/xgc2/chassis-hold.key as agilex:agilex, mode 0600.
+# Its parent directory /etc/xgc2 is root:root, mode 0755; this package ships no key.
 SupplementaryGroups=dialout
-RuntimeDirectory=xgc2-agilex-chassis
-RuntimeDirectoryMode=0700
-Environment=XGC2_CHASSIS_HOLD_SOCKET=/run/xgc2-agilex-chassis/hold.sock
 WorkingDirectory=/home/agilex
 # Site identity (ROS_*, CAN_*, HOME) lives only in onboard.env.
 EnvironmentFile=-/etc/xgc2/agilex/onboard.env
