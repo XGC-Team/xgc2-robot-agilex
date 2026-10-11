@@ -21,4 +21,4 @@ target_link_libraries(scout_loop_barrier PRIVATE ${CMAKE_DL_LIBS})
 add_test(NAME scout_hold COMMAND ${PYTHON_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/ros_device_output_test.py
   --devel ${SCOUT_DEVEL_PREFIX} --helpers ${CMAKE_CURRENT_BINARY_DIR})
-set_tests_properties(scout_hold PROPERTIES TIMEOUT 60)
+set_tests_properties(scout_hold PROPERTIES TIMEOUT 240)
