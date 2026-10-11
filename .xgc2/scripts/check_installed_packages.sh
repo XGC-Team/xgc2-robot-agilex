@@ -4,6 +4,10 @@ set -euo pipefail
 ROS_DISTRO="${ROS_DISTRO:-melodic}"
 PREFIX="/opt/ros/${ROS_DISTRO}"
 
+test -f /usr/share/xgc2/process-definitions/agilex-mocap-ros1.json
+test -f "${PREFIX}/share/agilex_estimator/package.xml"
+test -f "${PREFIX}/share/agilex_estimator/launch/mocap.launch"
+
 deb_packages=(
   "libxgc2-chassis-hold1"
   "libxgc2-xrpc-udp1"

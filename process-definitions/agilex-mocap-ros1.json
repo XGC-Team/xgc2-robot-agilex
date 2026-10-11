@@ -1,0 +1,103 @@
+{
+  "apiVersion": "xgc.execution.process/v1",
+  "definitions": [
+    {
+      "id": "agilex-mocap-ros1",
+      "version": "1.0.0",
+      "label": "AgileX onboard VRPN mocap",
+      "description": "Installed AgileX mocap launch with the onboard VRPN client; no relay onto canonical robot poses.",
+      "parameters": {
+        "groups": [
+          {
+            "id": "ros-advanced",
+            "label": "ROS Advanced",
+            "collapsed": true,
+            "parameters": [
+              "rosDistro",
+              "rosMasterUri",
+              "rosIp"
+            ]
+          }
+        ],
+        "properties": {
+          "rosDistro": {
+            "type": "string",
+            "description": "Installed ROS1 distribution.",
+            "default": "melodic",
+            "enum": [
+              "melodic",
+              "noetic"
+            ]
+          },
+          "rosMasterUri": {
+            "type": "string",
+            "description": "Onboard ROS_MASTER_URI",
+            "default": "http://127.0.0.1:11311",
+            "output": true
+          },
+          "rosIp": {
+            "type": "string",
+            "description": "Onboard ROS_IP",
+            "default": "127.0.0.1",
+            "output": true
+          },
+          "vrpnServer": {
+            "type": "string",
+            "description": "Motion-capture VRPN server host",
+            "default": "127.0.0.1"
+          },
+          "vrpnPort": {
+            "type": "integer",
+            "description": "Motion-capture VRPN TCP port",
+            "default": 3883,
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "rigidBody": {
+            "type": "string",
+            "description": "This vehicle's VRPN rigid-body name",
+            "default": "pose_0"
+          },
+          "rosHome": {
+            "type": "string",
+            "x-xgc-path-kind": "directory"
+          }
+        },
+        "required": [
+          "rosHome",
+          "rosMasterUri"
+        ]
+      },
+      "command": {
+        "executable": "roslaunch",
+        "args": [
+          "--wait",
+          "agilex_estimator",
+          "mocap.launch",
+          "server:=${vrpnServer}",
+          "port:=${vrpnPort}",
+          "tracker:=${rigidBody}"
+        ],
+        "env": {
+          "ROS_MASTER_URI": "${rosMasterUri}",
+          "ROS_IP": "${rosIp}",
+          "ROS_HOSTNAME": "",
+          "ROS_HOME": "${rosHome}"
+        }
+      },
+      "setupFiles": [
+        "/opt/ros/${rosDistro}/setup.bash"
+      ],
+      "readiness": {
+        "kind": "none"
+      },
+      "stop": {
+        "graceMs": 15000
+      },
+      "logs": {
+        "maxBytes": 1048576,
+        "files": 3
+      }
+    }
+  ]
+}

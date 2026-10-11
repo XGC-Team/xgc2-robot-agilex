@@ -217,6 +217,14 @@ build_autostart_deb() {
   mkdir -p "${pkg_root}"
   copy_ros_package_paths "${ros_pkg}" "${pkg_root}"
 
+  install -D -m 0644 "${REPO_ROOT}/process-definitions/agilex-mocap-ros1.json" \
+    "${pkg_root}/usr/share/xgc2/process-definitions/agilex-mocap-ros1.json"
+  local mocap_source="${REPO_ROOT}/onboard/ros1/perception/src/agilex_estimator"
+  install -D -m 0644 "${mocap_source}/package.xml" \
+    "${pkg_root}${PREFIX}/share/agilex_estimator/package.xml"
+  install -D -m 0644 "${mocap_source}/launch/mocap.launch" \
+    "${pkg_root}${PREFIX}/share/agilex_estimator/launch/mocap.launch"
+
   if [[ ! -e "${pkg_root}${PREFIX}/share/${ros_pkg}/package.xml" ]]; then
     echo "missing installed package.xml for ${ros_pkg}" >&2
     exit 1
@@ -249,7 +257,7 @@ build_autostart_deb() {
     "${pkg_root}" \
     "${deb_pkg}" \
     "${version}" \
-    "iproute2, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version agilex_swarm_ros_bridge)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
+    "iproute2, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xgc2-vrpn-relay (>= 0.2.0-1), ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version agilex_swarm_ros_bridge)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
     "Unified AgileX systemd manager (install-only; does not enable or start any unit)" \
     "ros-${ROS_DISTRO}-xgc2-agilex-serial-imu, ros-${ROS_DISTRO}-xgc2-camera-driver (>= 0.4.0-1), ${media_edge_dependency}, gstreamer1.0-tools, gstreamer1.0-plugins-good, gstreamer1.0-plugins-ugly"
   write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}" "${version}"

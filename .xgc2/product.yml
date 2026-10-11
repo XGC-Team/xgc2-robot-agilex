@@ -97,6 +97,8 @@ apt:
   - ros-noetic-xgc2-agilex-rslidar-sdk
   - ros-noetic-xgc2-agilex-onboard-rviz
   depends:
+  - ros-melodic-xgc2-vrpn-relay (>= 0.2.0-1)
+  - ros-noetic-xgc2-vrpn-relay (>= 0.2.0-1)
   - libxgc2-chassis-hold1 (>= 0.2.0)
   - libxgc2-xrpc-udp1 (>= 0.2.0)
   - ros-melodic-scout-msgs
@@ -148,9 +150,15 @@ usage:
     test -f "$(rospack find scout_description)/urdf/scout_visual.urdf"
     rospack find swarm_ros_bridge
     rospack find agilex_swarm_ros_bridge
+ownership:
+  paths:
+  - /usr/share/xgc2/process-definitions/agilex-mocap-ros1.json
+  - /opt/ros/melodic/share/agilex_estimator
+  - /opt/ros/noetic/share/agilex_estimator
 release:
   workflow: release.yml
   dependency_policy:
+    xgc2-vrpn-relay: verify
     libxgc2-chassis-hold-dev: verify
     xgc2-camera-ros1: order
     xgc2-media-edge: order
