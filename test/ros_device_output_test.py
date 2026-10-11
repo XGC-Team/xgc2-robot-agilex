@@ -1,205 +1,285 @@
 #!/usr/bin/env python3
-"""Isolated Noetic fixture: simulated Scout + actual Wheeltec serial PTY output.
-Run after sourcing the isolated catkin workspace. Never attaches a live master.
-The PTY-only modem shim accepts DTR/RTS ioctls; this isn't a board ACK test.
+"""Exercise the Scout udp.v1 HOLD host with its actual simulated SDK output.
+
+Owns a private ROS master and temporary keys. A fixture-only sleep barrier
+keeps ROS receipt and UDP IO running while delaying the native control loop.
 """
 import argparse
+import base64
 import collections
 import json
 import os
 from pathlib import Path
-import pty
-import select
+import re
+import secrets
 import signal
 import socket
-import struct
 import subprocess
 import tempfile
-import threading
 import time
 import xmlrpc.client
 
 
-def wait_for(check, label, seconds=4):
+def wait_for(check, label, seconds=5, interval=.02):
     deadline = time.monotonic() + seconds
     while time.monotonic() < deadline:
-        if check():
-            return
-        time.sleep(.01)
+        result = check()
+        if result:
+            return result
+        time.sleep(interval)
     raise AssertionError(label)
 
 
 def stop(process):
-    if process and process.poll() is None:
+    if process.poll() is None:
         os.killpg(process.pid, signal.SIGINT)
         try:
-            process.wait(4)
+            process.wait(5)
         except subprocess.TimeoutExpired:
             os.killpg(process.pid, signal.SIGKILL)
             process.wait()
-            raise AssertionError('native process did not quiesce on SIGINT')
+            raise AssertionError('process did not quiesce on SIGINT')
+    else:
+        process.wait()
+
+
+def free_port(kind):
+    for _ in range(100):
+        port = 20000 + secrets.randbelow(20001)
+        with socket.socket(socket.AF_INET, kind) as reservation:
+            try:
+                reservation.bind(('127.0.0.1', port))
+                return port
+            except OSError:
+                pass
+    raise AssertionError('no private port available in 20000..40000')
 
 
 def main():
-    args = argparse.ArgumentParser()
-    args.add_argument('--devel', required=True, type=Path)
-    args.add_argument('--helpers', required=True, type=Path)
-    args = args.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--devel', required=True, type=Path)
+    parser.add_argument('--helpers', required=True, type=Path)
+    args = parser.parse_args()
     processes = []
-    serial_stop = threading.Event()
-    serial_thread = None
-    master_fd = slave_fd = None
-    with tempfile.TemporaryDirectory(prefix='chassis-ros-native-') as temporary:
+    with tempfile.TemporaryDirectory(prefix='scout-hold-') as temporary:
         directory = Path(temporary)
-        with socket.socket() as reservation:
-            reservation.bind(('127.0.0.1', 0))
-            port = reservation.getsockname()[1]
+        port = free_port(socket.SOCK_STREAM)
+        hold_port = free_port(socket.SOCK_DGRAM)
+        console = directory/'rosconsole.config'
+        console.write_text('log4j.logger.ros.scout_base=DEBUG\n')
         env = os.environ.copy()
         env.update(ROS_MASTER_URI=f'http://127.0.0.1:{port}', ROS_HOSTNAME='127.0.0.1',
-                   ROS_HOME=str(directory/'ros-home'), ROS_LOG_DIR=str(directory/'ros-log'))
-        os.environ.update({k: env[k] for k in ('ROS_MASTER_URI', 'ROS_HOSTNAME', 'ROS_HOME', 'ROS_LOG_DIR')})
-        log = (directory/'process.log').open('w+')
-        def launch(command, extra=None):
+                   ROS_IP='127.0.0.1', ROS_HOME=str(directory/'ros-home'),
+                   ROS_LOG_DIR=str(directory/'ros-log'), ROSCONSOLE_CONFIG_FILE=str(console),
+                   ROSCONSOLE_STDOUT_LINE_BUFFERED='1')
+        os.environ.update({key: env[key] for key in
+                           ('ROS_MASTER_URI', 'ROS_HOSTNAME', 'ROS_IP', 'ROS_HOME', 'ROS_LOG_DIR')})
+        barrier = directory/'loop-barrier'
+        key_file = directory/'hold.key'
+        wrong_key = directory/'wrong.key'
+        unreadable_key = directory/'unreadable.key'
+        for path in (key_file, wrong_key, unreadable_key):
+            path.write_text('1 ' + base64.b64encode(secrets.token_bytes(32)).decode('ascii') + '\n')
+            path.chmod(0o600)
+            assert path.stat().st_uid == os.geteuid() and path.stat().st_mode & 0o777 == 0o600
+        unreadable_key.chmod(0o000)
+        log_path = directory/'process.log'
+        log = log_path.open('w+')
+
+        def launch(command, extra=None, capture=False):
             configuration = env.copy()
             configuration.update(extra or {})
-            process = subprocess.Popen(command, env=configuration, stdout=log,
-                                       stderr=subprocess.STDOUT, start_new_session=True)
+            process = subprocess.Popen(command, env=configuration,
+                                       stdout=subprocess.PIPE if capture else log,
+                                       stderr=subprocess.STDOUT, text=True, start_new_session=True)
             processes.append(process)
             return process
+
+        def cli_command(*words, key=key_file, timeout=2000):
+            return ['xgc2-hold', '--endpoint', f'127.0.0.1:{hold_port}',
+                    '--key-file', str(key), '--timeout-ms', str(timeout), *words]
+
+        def cli(*words, key=key_file, timeout=2000, code=0):
+            result = subprocess.run(cli_command(*words, key=key, timeout=timeout),
+                                    env=env, capture_output=True, text=True, timeout=6)
+            assert result.returncode == code, f'CLI {words}: {result.stdout} {result.stderr}'
+            return json.loads(result.stdout)
+
+        def state():
+            return cli('state', '--robot', 'scout-fixture')['reply']['robots'][0]
+
+        def writes(since=0):
+            return [(float(linear), float(angular)) for linear, angular in re.findall(
+                r'Scout motion command written: linear=([^ ]+) angular=([^\s\x1b]+)',
+                log_path.read_text()[since:])]
+
         try:
             core = launch(['roscore', '-p', str(port)])
+
             def master_ready():
-                if core.poll() is not None:
-                    raise AssertionError('isolated roscore startup failed')
+                assert core.poll() is None, 'private roscore startup failed'
                 try:
                     return xmlrpc.client.ServerProxy(env['ROS_MASTER_URI']).getPid('/fixture')[0] == 1
                 except (ConnectionError, OSError):
                     return False
-            wait_for(master_ready, 'isolated roscore timeout')
+
+            wait_for(master_ready, 'private roscore timeout')
             import rospy
             from geometry_msgs.msg import Twist
             from scout_msgs.msg import ScoutStatus
-            rospy.init_node('device_output_fixture', disable_signals=True)
-            # Native management must continue while the private ROS clock is paused.
-            rospy.set_param('/use_sim_time', True)
-            scout_values = collections.deque(maxlen=2000)
-            rospy.Subscriber('/fixture/scout_status', ScoutStatus,
-                             lambda msg: scout_values.append((time.monotonic(), msg.linear_velocity, msg.angular_velocity)))
-            scout_pub = rospy.Publisher('/fixture/scout_cmd', Twist, queue_size=1)
-            wheel_pub = rospy.Publisher('/fixture/wheel_cmd', Twist, queue_size=1)
-            twist = Twist()
-            twist.linear.x, twist.angular.z = .2, .3
-            def publish():
-                while not serial_stop.is_set():
-                    scout_pub.publish(twist)
-                    wheel_pub.publish(twist)
-                    time.sleep(.01)
-            publisher = threading.Thread(target=publish)
-            publisher.start()
-            def call(path, revision=None, robot=None, held=None):
-                command = [str(args.helpers/'chassis_hold_peer'), str(path)]
-                command += ['GET'] if revision is None else ['POST', str(revision), robot, str(held).lower()]
-                result = subprocess.run(command, env=env, capture_output=True, text=True, timeout=2)
-                assert result.returncode == 0, f"SDK peer failed: {result.stderr}"
-                status, body = result.stdout.split('\n', 1)
-                return int(status), json.loads(body)
-            scout_socket = directory/'scout.sock'
-            scout = launch([str(args.devel/'lib/scout_base/scout_base_node'),
-                            '_simulated_robot:=true', '_hold_robot_id:=scout-fixture',
-                            f'_hold_socket:={scout_socket}', '/cmd_vel:=/fixture/scout_cmd',
-                            '/scout_status:=/fixture/scout_status'])
-            wait_for(lambda: scout_socket.exists(), 'Scout HTTP startup timeout')
-            wait_for(lambda: any(abs(x) > .1 for _, x, _ in scout_values), 'Scout native cmd did not move')
-            status, receipt = call(scout_socket, 0, 'scout-fixture', True)
-            assert status == 200 and receipt['stage'] == 'applied' and receipt['revision'] == 1
-            assert receipt['changes'][0]['zero_applied'] and not receipt['physical_stop_confirmed']
-            stamp = time.monotonic()
-            wait_for(lambda: any(t > stamp and x == 0 and yaw == 0 for t, x, yaw in scout_values), 'Scout hold did not update actual sim command state')
-            time.sleep(.10)
-            assert all(x == 0 and yaw == 0 for t, x, yaw in scout_values if t > stamp+.03), 'Scout held callback emitted nonzero'
-            assert call(scout_socket, 0, 'scout-fixture', False)[0] == 409
-            assert call(scout_socket, 1, 'scout-fixture', False)[0] == 200
-            stamp = time.monotonic()
-            wait_for(lambda: any(t > stamp and abs(x) > .1 for t, x, _ in scout_values), 'Scout release rejected fresh ROS command')
-            stop(scout)
-            assert scout.returncode == 0 and not scout_socket.exists(), 'Scout shutdown leaked endpoint or aborted'
+            rospy.init_node('scout_hold_fixture', disable_signals=True)
+            values = collections.deque(maxlen=2000)
+            subscriber = rospy.Subscriber('/fixture/scout_status', ScoutStatus,
+                lambda msg: values.append((time.monotonic(), msg.linear_velocity, msg.angular_velocity)))
+            publisher = rospy.Publisher('/fixture/cmd_vel', Twist, queue_size=100)
 
-            master_fd, slave_fd = pty.openpty()
-            slave = os.ttyname(slave_fd)
-            os.set_blocking(master_fd, False)
-            frames = collections.deque(maxlen=2000)
-            # Real device telemetry encoding, all zero motion. XOR BCC then tail.
-            telemetry = bytearray(24)
-            telemetry[0] = 0x7b
-            telemetry[22] = 0x7b
-            telemetry[23] = 0x7d
-            def serial_peer():
-                buffer = bytearray()
-                while not serial_stop.is_set():
-                    try:
-                        os.write(master_fd, telemetry)
-                        if select.select([master_fd], [], [], .01)[0]:
-                            buffer.extend(os.read(master_fd, 4096))
-                        while len(buffer) >= 11:
-                            if buffer[0] != 0x7b:
-                                del buffer[0]
-                                continue
-                            frame = bytes(buffer[:11])
-                            del buffer[:11]
-                            if frame[-1] != 0x7d:
-                                continue
-                            checksum = 0
-                            for byte in frame[:9]:
-                                checksum ^= byte
-                            if checksum == frame[9]:
-                                frames.append((time.monotonic(), struct.unpack('>hhh', frame[3:9])))
-                    except (OSError, BlockingIOError):
-                        time.sleep(.01)
-            # Disable PTY echo so board telemetry cannot masquerade as output.
-            import tty
-            tty.setraw(slave_fd)
-            serial_thread = threading.Thread(target=serial_peer)
-            serial_thread.start()
-            wheel_socket = directory/'wheel.sock'
-            wheel = launch([str(args.devel/'lib/turn_on_wheeltec_robot/wheeltec_robot_node'),
-                            f'_usart_port_name:={slave}', '_hold_robot_id:=wheel-fixture',
-                            f'_hold_socket:={wheel_socket}', 'cmd_vel:=/fixture/wheel_cmd'],
-                           {'LD_PRELOAD': str(args.helpers/'libpty_modem_shim.so')})
-            wait_for(lambda: wheel_socket.exists(), 'Wheeltec HTTP startup timeout')
-            wait_for(lambda: any(any(v != 0 for v in velocity) for _, velocity in frames), 'Wheeltec actual serial cmd did not move')
-            status, receipt = call(wheel_socket, 0, 'wheel-fixture', True)
-            assert status == 200 and receipt['stage'] == 'applied' and receipt['revision'] == 1
-            assert receipt['changes'][0]['zero_applied'] and not receipt['physical_stop_confirmed']
-            stamp = time.monotonic()
-            wait_for(lambda: any(t > stamp and velocity == (0, 0, 0) for t, velocity in frames), 'Wheeltec hold omitted native zero frame')
+            def driver(key=key_file, *options):
+                # Private parameters outlive a node on the master. Each launch
+                # must test its own defaults, not the preceding node's settings.
+                if rospy.has_param('/scout_odom'):
+                    rospy.delete_param('/scout_odom')
+                preload = str(args.helpers/'libscout_loop_barrier.so')
+                runtime = env.get('SCOUT_TEST_RUNTIME_PRELOAD', '')
+                if runtime:
+                    preload = runtime + ':' + preload
+                return launch([str(args.devel/'lib/scout_base/scout_base_node'),
+                               '_simulated_robot:=true', '_hold_robot_id:=scout-fixture',
+                               f'_hold_port:={hold_port}', f'_hold_key_file:={key}',
+                               '/cmd_vel:=/fixture/cmd_vel', '/scout_status:=/fixture/scout_status',
+                               *options], {'LD_PRELOAD': preload, 'SCOUT_TEST_LOOP_BARRIER': str(barrier)})
+
+            def connected(process):
+                assert process.poll() is None, 'driver exited unexpectedly'
+                return publisher.get_num_connections() == 1
+
+            def publish(value):
+                twist = Twist()
+                twist.linear.x, twist.angular.z = value, value/2
+                publisher.publish(twist)
+
+            def saw(value, since):
+                return any(linear == value for linear, _ in writes(since))
+
+            scout = driver()
+            wait_for(lambda: connected(scout), 'driver ROS startup timeout')
+            described = cli('describe')['reply']
+            instance = described['instance']
+            assert described['robots'] == ['scout-fixture'] and described['feedback']['scout-fixture']
+            initial = state()
+            assert not initial['held'] and initial['revision'] == 0 and initial['stage'] == 'released'
+            offset = log_path.stat().st_size
+            publish(.2)
+            wait_for(lambda: saw(.2, offset), 'released command did not reach Scout output')
+            wait_for(lambda: any(linear == .2 for _, linear, _ in list(values)), 'simulated state did not move')
+
+            engaged = cli('engage', '--robot', 'scout-fixture')['reply']['robots'][0]
+            assert engaged['outcome'] == 'engaged' and engaged['revision'] == 1
+            assert engaged['stage'] == 'zero_written', 'native tick did not write zero for engage'
+            assert state()['stage'] == 'zero_written'
+            offset = log_path.stat().st_size
+            for _ in range(15):
+                publish(.4)
+                time.sleep(.01)
+            held_writes = writes(offset)
+            assert len(held_writes) >= 5, 'zero output was not re-asserted across control ticks'
+            assert all(command == (0, 0) for command in held_writes), 'held command reached Scout output'
+
+            def stopped_state():
+                current = state()
+                return current if current['stage'] == 'stopped' else None
+
+            stopped = wait_for(stopped_state, 'resting Scout state did not report stopped', interval=.08)
+            assert stopped['zero_written_at_ms'] <= stopped['stopped_at_ms']
+            assert stopped['stopped_at_ms'] - stopped['zero_written_at_ms'] >= 300
+
+            stale = cli('release', '--robot', 'scout-fixture=0', '--instance', instance, code=1)
+            assert stale['reply']['robots'][0]['outcome'] == 'conflict' and state()['held']
+            stale_instance = ('1' if instance[0] != '1' else '2') + instance[1:]
+            rejected = cli('release', '--robot', 'scout-fixture=1', '--instance', stale_instance, code=2)
+            assert rejected['status'] == 'conflict' and state()['held']
+            unauthenticated = cli('engage', '--all', key=wrong_key, timeout=250, code=2)
+            assert unauthenticated['disposition'] == 'outcome_unknown' and 'reply' not in unauthenticated
+            released = cli('release', '--robot', 'scout-fixture=1', '--instance', instance)['reply']['robots'][0]
+            assert released['outcome'] == 'released' and released['revision'] == 2
+            offset = log_path.stat().st_size
             time.sleep(.10)
-            assert all(velocity == (0, 0, 0) for t, velocity in frames if t > stamp+.03), 'Wheeltec held callback emitted nonzero frame'
-            assert call(wheel_socket, 0, 'wheel-fixture', False)[0] == 409
-            assert call(wheel_socket, 1, 'wheel-fixture', False)[0] == 200
-            stamp = time.monotonic()
-            wait_for(lambda: any(t > stamp and any(v != 0 for v in velocity) for t, velocity in frames), 'Wheeltec release rejected fresh ROS command')
-            stop(wheel)
-            assert wheel.returncode == 0 and not wheel_socket.exists(), 'Wheeltec shutdown leaked endpoint or failed'
-            print('PASS actual Scout simulated command state and Wheeltec serial output arbitration, CAS, release and SIGINT')
+            assert not writes(offset), 'release replayed a command received while held'
+            publish(.3)
+            wait_for(lambda: saw(.3, offset), 'release did not accept a fresh command')
+
+            engaged = cli('engage', '--all')['reply']['robots'][0]
+            assert engaged['held'] and engaged['revision'] == 3
+            barrier.touch()
+            wait_for(lambda: Path(str(barrier)+'.paused').exists(), 'native control loop did not pause')
+            offset = log_path.stat().st_size
+            publish(.6)
+            time.sleep(.10)  # ROS IO receives it while the main loop sleeps.
+            pending = launch(cli_command('release', '--robot', 'scout-fixture=3', '--instance', instance), capture=True)
+            time.sleep(.20)
+            assert pending.poll() is None, 'release did not wait for the native tick'
+            barrier.unlink()
+            output, _ = pending.communicate(timeout=6)
+            assert pending.returncode == 0 and json.loads(output)['reply']['robots'][0]['outcome'] == 'released'
+            wait_for(lambda: 'Scout motion command dropped: held=false' in log_path.read_text()[offset:],
+                     'queued receipt was not dropped after the release opened the gate')
+            assert not saw(.6, offset), 'pre-release receipt reached Scout output after release'
+            publish(.7)
+            wait_for(lambda: saw(.7, offset), 'fresh command rejected after queued release')
+            stop(scout)
+            assert scout.returncode == 0, 'normal driver shutdown failed'
+            wait_for(lambda: publisher.get_num_connections() == 0, 'driver subscriber did not close')
+
+            boot = driver(key_file, '_hold_boot_held:=true')
+            wait_for(lambda: connected(boot), 'boot-held driver startup timeout')
+            assert state()['held'] and state()['revision'] == 1
+            assert cli('describe')['reply']['instance'] != instance, 'restart reused the HOLD instance'
+            offset = log_path.stat().st_size
+            publish(.8)
+            time.sleep(.12)
+            assert not saw(.8, offset), 'boot-held driver accepted motion'
+            stop(boot)
+            assert boot.returncode == 0
+            wait_for(lambda: publisher.get_num_connections() == 0, 'boot-held subscriber did not close')
+
+            # Missing and unreadable keys must obey the same required/optional rule.
+            bad_keys = [directory/'missing.key']
+            if os.geteuid() != 0:
+                bad_keys.append(unreadable_key)
+            for key in bad_keys:
+                required = driver(key)
+                required.wait(timeout=6)
+                assert required.returncode != 0, 'hold_required accepted an unusable key'
+                offset = log_path.stat().st_size
+                optional = driver(key, '_hold_required:=false', '_hold_boot_held:=true')
+                wait_for(lambda: connected(optional), 'optional HOLD driver failed to start')
+                publish(.9)
+                wait_for(lambda: saw(.9, offset), 'optional HOLD without a key did not pass commands')
+                absent = cli('describe', timeout=250, code=2)
+                assert 'reply' not in absent, 'optional HOLD exposed a service without a key'
+                stop(optional)
+                assert optional.returncode == 0
+                assert log_path.read_text()[offset:].count('HOLD unavailable; driving without HOLD:') == 1
+                wait_for(lambda: publisher.get_num_connections() == 0, 'optional subscriber did not close')
+            subscriber.unregister()
+            publisher.unregister()
+            print(f'PASS Scout HOLD: receipt fence, zero ticks, state feedback, CAS, keys, boot and shutdown '
+                  f'(master {port}, UDP {hold_port}, ROS_HOME {env["ROS_HOME"]})')
         except Exception:
-            log.flush()
-            log.seek(0)
-            print(log.read()[-8000:])
+            print(log_path.read_text()[-10000:])
             raise
         finally:
-            serial_stop.set()
-            if serial_thread:
-                serial_thread.join()
-            if 'publisher' in locals():
-                publisher.join()
+            if barrier.exists():
+                barrier.unlink()
+            cleanup_errors = []
+            for process in reversed(processes):
+                try:
+                    stop(process)
+                except Exception as error:
+                    cleanup_errors.append(error)
             if 'rospy' in locals():
                 rospy.signal_shutdown('fixture complete')
-            for process in reversed(processes):
-                stop(process)
-            if master_fd is not None:
-                os.close(master_fd)
-                os.close(slave_fd)
             log.close()
+            assert not cleanup_errors, f'process cleanup failed: {cleanup_errors}'
 
 
 if __name__ == '__main__':
