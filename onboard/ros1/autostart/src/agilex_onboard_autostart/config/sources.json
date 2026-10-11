@@ -2,8 +2,17 @@
   "sources": [
     {
       "id": "color",
+      "kind": "pipeline",
       "rtpListenAddress": "127.0.0.1:5004",
-      "controlSocket": "/tmp/xgc2/media/color.sock"
+      "width": 640,
+      "height": 480,
+      "fps": 30,
+      "frameId": "d435_optical_frame",
+      "pipeline": {
+        "template": "nvv4l2-fdsrc",
+        "parameters": {"format": "bgr"},
+        "producer": ["/opt/ros/melodic/lib/xgc2_camera_driver/xgc2_ros_image_pipe", "--topic", "/d435/image_raw", "--format", "bgr8"]
+      }
     }
   ]
 }

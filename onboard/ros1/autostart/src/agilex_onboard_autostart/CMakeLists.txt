@@ -24,8 +24,14 @@ install(PROGRAMS
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(DIRECTORY launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+install(FILES
+  launch/camera.launch
+  launch/chassis.launch
+  launch/description.launch
+  launch/imu-hi226.launch
+  launch/lidar-helios16.launch
+  launch/swarm.launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
 )
 
 install(DIRECTORY web

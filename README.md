@@ -46,7 +46,10 @@ xgc2-agilex-swarm-ros-bridge.service
     /scout/chassis_state UInt32 1 Hz :3003
     /cmd_vel in from gcs :3001
 xgc2-agilex-camera.service
+  camera.launch: D435 V4L2 owner -> /d435/image_raw
 xgc2-agilex-media-edge.service
+  color pipeline: ROS image pipe -> Jetson H.264/RTP -> browser WebRTC
+  producer and encoder run only while leased
 xgc2-agilex-lidar-helios16.service
 xgc2-agilex-mocap.service
   start-mocap: VRPN client only, no /pose or /ugv/pose relay
@@ -70,6 +73,12 @@ xgc2-agilex-onboard-teleop.service
 | `ros-melodic-xgc2-agilex-onboard-autostart` | `agilex_onboard_autostart` | standalone roscore + chassis/IMU/comm/camera/lidar/mocap/panel/teleop units; install-only. Site params in `/etc/xgc2/agilex/onboard.env`. Enable chassis (Wants roscore). Mocap for Agent sessions is `agilex-mocap-ros1`. Teleop viewer is optional: `ros-melodic-xgc2-agilex-onboard-teleop` then `xgc2-agilex-onboard-teleop.service`. |
 
 D435 color capture assembles the shared [`xgc2-camera-ros1`](https://github.com/XGC-Team/xgc2-camera-driver) V4L2 driver. Scout uses `/dev/xgc2-d435-color`, selected by the D435 RGB USB interface, with YUYV capture. Do not revive `xgc2_camera_d435`.
+
+Browser viewing uses the `color` Media Edge pipeline (`nvv4l2-fdsrc` on Jetson,
+`x264-fdsrc` on other boards) with `xgc2_ros_image_pipe`. Install the shared
+camera driver, Media Edge 0.7.0-1 or newer for the board's Ubuntu suite, and
+the GStreamer tools, good and ugly plugin sets. See [camera assembly](onboard/ros1/CAMERA.md)
+for the roster, ROS environment and private runtime directory.
 
 | Debian package | ROS package | Role |
 | --- | --- | --- |

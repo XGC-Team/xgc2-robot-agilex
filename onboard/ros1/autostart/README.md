@@ -29,9 +29,18 @@ src/agilex_onboard_autostart
   systemd/xgc2-agilex-usb-recover@.service
 ```
 
-`xgc2-agilex-roscore` is the only master. Every other start script
+`xgc2-agilex-roscore` is the only master. ROS launch start scripts
 `wait-roscore`, sleeps a 2s-class stagger, then `roslaunch --wait`.
 Children must not spawn a master. Chassis `Wants=` roscore.
+
+`start-camera` launches `camera.launch` for ROS algorithms. `start-media-edge`
+sources the ROS setup and exports `ROS_MASTER_URI`/`ROS_IP` for its
+`xgc2_ros_image_pipe` child. Media Edge's `color` pipeline uses `nvv4l2-fdsrc`
+on Jetson; set a site `MEDIA_SOURCES` roster with `x264-fdsrc` for other boards.
+The unit is softly ordered after the camera unit and grants a 0700 runtime
+directory. The starter runs `prepare-runtime` there and passes the target id,
+control socket, MediaMTX directory and pipeline directory. See
+[camera assembly](../CAMERA.md) for dependencies and roster details.
 
 USB Hub unplug: `scout_base_node` / `HI226` are `required="true"` so the
 launch dies and systemd restarts; `can0` add runs `usb-recover@can`

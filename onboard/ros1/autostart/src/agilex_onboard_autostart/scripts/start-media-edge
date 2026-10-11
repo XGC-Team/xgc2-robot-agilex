@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Browser WebRTC. Does not open the camera.
+# Media Edge owns the ROS image producer and encoder while a viewer needs them.
 EDGE="${XGC_MEDIA_EDGE:-$(command -v xgc-media-edge || true)}"
 if [[ -z "${EDGE}" || ! -x "${EDGE}" ]]; then
   echo "xgc-media-edge not installed (apt xgc2-media-edge)" >&2
   exit 1
 fi
 ROS_DISTRO="${ROS_DISTRO:-melodic}"
+# shellcheck disable=SC1091
+set +u
+source "/opt/ros/${ROS_DISTRO}/setup.bash"
+set -u
+export ROS_MASTER_URI="${ROS_MASTER_URI:-http://127.0.0.1:11311}"
+export ROS_IP="${ROS_IP:-127.0.0.1}"
+
 ROSTER="${MEDIA_SOURCES:-/opt/ros/${ROS_DISTRO}/share/agilex_onboard_autostart/config/sources.json}"
 if [[ ! -f "${ROSTER}" ]]; then
   echo "missing media roster: ${ROSTER}" >&2
@@ -17,11 +24,17 @@ PUBLIC_IP="${MEDIA_PUBLIC_IP:-}"
 if [[ -z "${PUBLIC_IP}" ]]; then
   PUBLIC_IP="$(ip -4 -o addr show wlan1 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -1 || true)"
 fi
-mkdir -p /tmp/xgc2/media /run/xgc2/media-edge
+RUNTIME="${MEDIA_RUNTIME:-/run/xgc2/media-edge}"
+/usr/lib/xgc2-media-edge/prepare-runtime \
+  --runtime-root "${RUNTIME}" --uid "$(id -u)" --gid "$(id -g)" >/dev/null
+
 ARGS=(
   --control-address "${MEDIA_CONTROL_ADDRESS:-0.0.0.0:18090}"
+  --target-id "${XGC2_TARGET_ID:-$(hostname)}"
+  --rpc-socket "${RUNTIME}/control/control.sock"
+  --mediamtx-runtime-dir "${RUNTIME}/mediamtx"
+  --pipeline-runtime-dir "${RUNTIME}/pipelines"
   --sources-config "${ROSTER}"
-  --mediamtx-runtime-dir "${MEDIA_MTX_RUNTIME:-/run/xgc2/media-edge}"
 )
 if [[ -n "${PUBLIC_IP}" ]]; then
   ARGS+=(--public-ip "${PUBLIC_IP}")
