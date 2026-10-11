@@ -63,7 +63,7 @@ fetch "libxgc2-xrpc-udp-dev" "0.2.0-1~${distribution}"
 if [[ "${distribution}" != "bionic" ]]; then
   fetch "libxgc2-xrpc2" "0.2.0-1~${distribution}"
 fi
-fetch "libxgc2-state-machine-dev" "0.1.3-12~${distribution}"
+fetch "libxgc2-state-machine-dev" "0.1.3-13~${distribution}"
 fetch "ros-${ros_distro}-scout-msgs" "0.3.3-11"
 if [[ "${ros_distro}" == "melodic" ]]; then
   fetch "ros-${ros_distro}-xgc2-scout-description" "0.4.10-3"
