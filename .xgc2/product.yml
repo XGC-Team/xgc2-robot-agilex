@@ -157,7 +157,12 @@ ownership:
   - /opt/ros/noetic/share/agilex_estimator
 release:
   workflow: release.yml
+  requires:
+  - libxgc2-chassis-hold-dev
+  - libxgc2-state-machine-dev
+  - xgc2-xrpc
   dependency_policy:
+    libxgc2-state-machine-dev: rebuild
     xgc2-vrpn-relay: verify
     libxgc2-chassis-hold-dev: verify
     xgc2-camera-ros1: order
