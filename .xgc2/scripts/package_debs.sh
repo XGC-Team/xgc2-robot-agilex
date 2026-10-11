@@ -439,7 +439,7 @@ build_deb \
   "AgileX UGV SDK from the vehicle tree" \
   "lib/libugv_sdk.*"
 
-scout_msgs_dep="ros-${ROS_DISTRO}-scout-msgs (>= 0.3.3-11)"
+scout_msgs_dep="ros-${ROS_DISTRO}-scout-msgs (>= 1.5.0-1)"
 ugv_sdk_dep="ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk))"
 
 build_deb \
