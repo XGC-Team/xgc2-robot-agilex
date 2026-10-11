@@ -61,7 +61,10 @@ fetch "libxgc2-chassis-hold-dev" "0.2.0-1~${distribution}"
 fetch "libxgc2-xrpc-udp1" "0.2.0-1~${distribution}"
 fetch "libxgc2-xrpc-udp-dev" "0.2.0-1~${distribution}"
 if [[ "${distribution}" != "bionic" ]]; then
+  # The focal chassis HOLD development package depends on the XRPC development
+  # package, which in turn depends on the runtime library.
   fetch "libxgc2-xrpc2" "0.2.0-1~${distribution}"
+  fetch "libxgc2-xrpc-dev" "0.2.0-1~${distribution}"
 fi
 fetch "libxgc2-state-machine-dev" "0.1.3-13~${distribution}"
 fetch "ros-${ros_distro}-scout-msgs" "1.5.0-1"
