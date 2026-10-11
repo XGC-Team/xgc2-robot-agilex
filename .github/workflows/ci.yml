@@ -70,6 +70,27 @@ jobs:
           bash -n onboard/ros1/autostart/src/agilex_onboard_autostart/scripts/start-onboard-teleop
           bash -n onboard/ros1/autostart/src/agilex_onboard_autostart/scripts/start-media-edge
           bash -n onboard/ros1/autostart/src/agilex_onboard_autostart/scripts/start-camera
+          ! grep -RE 'xgc_(camera_replay|native_v4l2_rtp|ros_image_rtp)|((camera-media|webrtc|fallback_webrtc[^/]*)\.launch)' onboard README.md
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("onboard/ros1/autostart/src/agilex_onboard_autostart")
+          (source,) = json.loads((root / "config/sources.json").read_text())["sources"]
+          assert source["id"] == "color" and source["kind"] == "pipeline"
+          assert "controlSocket" not in source
+          assert (source["width"], source["height"], source["fps"]) == (640, 480, 30)
+          assert source["frameId"] == "d435_optical_frame"
+          assert source["rtpListenAddress"] == "127.0.0.1:5004"
+          assert source["pipeline"] == {
+              "template": "nvv4l2-fdsrc", "parameters": {"format": "bgr"},
+              "producer": ["/opt/ros/melodic/lib/xgc2_camera_driver/xgc2_ros_image_pipe",
+                           "--topic", "/d435/image_raw", "--format", "bgr8"],
+          }
+          unit = (root / "systemd/xgc2-agilex-media-edge.service").read_text()
+          assert "RuntimeDirectoryMode=0700" in unit
+          assert "After=network-online.target xgc2-agilex-camera.service" in unit
+          assert "ExecStartPre=" not in unit
+          PY
           python3 onboard/ros1/teleop/src/xgc2_onboard_teleop/test/test_layout.py
           python3 .xgc2/tests/test_field_panel_upgrade.py
           python3 - <<'PY'

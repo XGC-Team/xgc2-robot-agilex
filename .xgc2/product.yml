@@ -1,7 +1,7 @@
 schema: xgc2.product.v1
 id: xgc2-agilex-onboard-ros1
 name: XGC2 AgileX Onboard ROS1
-version: 0.2.0-36
+version: 0.2.0-37
 kind: ros1-apt
 summary: Vehicle-true AgileX Scout Mini onboard runtime for Melodic and
   Noetic. Chassis, bridge, and autostart are the install set; IMU, Helios
@@ -122,6 +122,14 @@ apt:
   - iproute2
   - systemd
   - udev
+  recommends:
+  - ros-melodic-xgc2-camera-driver (>= 0.4.0-1)
+  - ros-noetic-xgc2-camera-driver (>= 0.4.0-1)
+  - xgc2-media-edge (>= 0.7.0-1~bionic)
+  - xgc2-media-edge (>= 0.7.0-1~focal)
+  - gstreamer1.0-tools
+  - gstreamer1.0-plugins-good
+  - gstreamer1.0-plugins-ugly
 vehicle:
   os: ubuntu-18.04
   ros_distro: melodic
@@ -148,5 +156,5 @@ release:
     xgc2-scout-description: verify
     xgc2-swarm-ros-bridge: verify
   apt_versions:
-    bionic: 0.2.0-36
-    focal: 0.2.0-36
+    bionic: 0.2.0-37
+    focal: 0.2.0-37

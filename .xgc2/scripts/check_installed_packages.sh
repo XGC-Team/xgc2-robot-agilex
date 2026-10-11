@@ -79,7 +79,26 @@ test -x "${PREFIX}/lib/agilex_onboard_autostart/start-imu-hi226"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-swarm-ros-bridge"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-camera"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-media-edge"
-grep -q 'camera-media.launch' "${PREFIX}/lib/agilex_onboard_autostart/start-camera"
+grep -Fq 'agilex_onboard_autostart camera.launch' "${PREFIX}/lib/agilex_onboard_autostart/start-camera"
+! grep -RE 'xgc_(camera_replay|native_v4l2_rtp|ros_image_rtp)|((camera-media|webrtc|fallback_webrtc[^/]*)\.launch)' \
+  "${PREFIX}/lib/agilex_onboard_autostart" "${PREFIX}/share/agilex_onboard_autostart"
+python3 - "${PREFIX}/share/agilex_onboard_autostart/config/sources.json" "${ROS_DISTRO}" <<'PY'
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as handle:
+    (source,) = json.load(handle)["sources"]
+assert source["id"] == "color" and source["kind"] == "pipeline"
+assert "controlSocket" not in source
+assert (source["width"], source["height"], source["fps"]) == (640, 480, 30)
+assert source["frameId"] == "d435_optical_frame"
+assert source["rtpListenAddress"] == "127.0.0.1:5004"
+assert source["pipeline"]["template"] == "nvv4l2-fdsrc"
+assert source["pipeline"]["parameters"]["format"] == "bgr"
+assert source["pipeline"]["producer"] == [
+    "/opt/ros/" + sys.argv[2] + "/lib/xgc2_camera_driver/xgc2_ros_image_pipe",
+    "--topic", "/d435/image_raw", "--format", "bgr8",
+]
+PY
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-lidar-helios16"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-mocap"
 test ! -e "${PREFIX}/lib/agilex_estimator/vrpn_relay"
@@ -140,6 +159,13 @@ grep -q 'EnvironmentFile=-/etc/xgc2/agilex/onboard.env' /lib/systemd/system/xgc2
 grep -q 'EnvironmentFile=-/etc/xgc2/agilex/onboard.env' /lib/systemd/system/xgc2-agilex-roscore.service
 grep -q 'EnvironmentFile=-/etc/xgc2/agilex/onboard.env' /lib/systemd/system/xgc2-agilex-mocap.service
 grep -q 'EnvironmentFile=-/etc/xgc2/agilex/onboard.env' /lib/systemd/system/xgc2-agilex-media-edge.service
+grep -qx 'RuntimeDirectoryMode=0700' /lib/systemd/system/xgc2-agilex-media-edge.service
+grep -qx 'After=network-online.target xgc2-agilex-camera.service' /lib/systemd/system/xgc2-agilex-media-edge.service
+! grep -q '^ExecStartPre=' /lib/systemd/system/xgc2-agilex-media-edge.service
+grep -Fq '/usr/lib/xgc2-media-edge/prepare-runtime' "${PREFIX}/lib/agilex_onboard_autostart/start-media-edge"
+for flag in target-id rpc-socket mediamtx-runtime-dir pipeline-runtime-dir; do
+  grep -Fq -- "--${flag}" "${PREFIX}/lib/agilex_onboard_autostart/start-media-edge"
+done
 grep -q 'roslaunch --wait' "${PREFIX}/lib/agilex_onboard_autostart/start-chassis"
 grep -q 'required="true"' "${PREFIX}/share/scout_base/launch/scout_mini_base.launch"
 test ! -e /etc/xgc2/agilex/swarm_ros_bridge/ros_topics.yaml

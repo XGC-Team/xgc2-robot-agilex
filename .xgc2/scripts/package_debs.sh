@@ -207,6 +207,10 @@ build_autostart_deb() {
   local deb_pkg="ros-${ROS_DISTRO}-xgc2-agilex-onboard-autostart"
   local ros_pkg="agilex_onboard_autostart"
   local version
+  local media_edge_dependency="xgc2-media-edge (>= 0.7.0-1~focal)"
+  if [[ "${ROS_DISTRO}" == "melodic" ]]; then
+    media_edge_dependency="xgc2-media-edge (>= 0.7.0-1~bionic)"
+  fi
   local pkg_root="${BUILD_DIR}/${deb_pkg}"
   version="$(deb_version "${ros_pkg}")"
 
@@ -225,6 +229,8 @@ build_autostart_deb() {
 
   cp -a "${PREFIX_ROOT}/share/${ros_pkg}/config/onboard.env" \
     "${pkg_root}/etc/xgc2/agilex/onboard.env"
+  sed -i -e "s|/opt/ros/melodic/|/opt/ros/${ROS_DISTRO}/|g" \
+    "${pkg_root}${PREFIX}/share/${ros_pkg}/config/sources.json"
   cp -a "${PREFIX_ROOT}/share/${ros_pkg}/systemd/"* \
     "${pkg_root}/lib/systemd/system/"
   if [[ -f "${PREFIX_ROOT}/share/${ros_pkg}/udev/99-xgc2-agilex-usb-recover.rules" ]]; then
@@ -245,7 +251,7 @@ build_autostart_deb() {
     "${version}" \
     "iproute2, udev, ros-${ROS_DISTRO}-rosgraph, ros-${ROS_DISTRO}-roslaunch, ros-${ROS_DISTRO}-joint-state-publisher, ros-${ROS_DISTRO}-robot-state-publisher, ros-${ROS_DISTRO}-xgc2-scout-description, ros-${ROS_DISTRO}-xgc2-agilex-swarm-ros-bridge (>= $(deb_version agilex_swarm_ros_bridge)), ros-${ROS_DISTRO}-xgc2-agilex-wrp-io (>= $(deb_version wrp_io)), ros-${ROS_DISTRO}-xgc2-agilex-ugv-sdk (>= $(deb_version ugv_sdk)), ros-${ROS_DISTRO}-xgc2-agilex-scout-base (>= $(deb_version scout_base))" \
     "Unified AgileX systemd manager (install-only; does not enable or start any unit)" \
-    "ros-${ROS_DISTRO}-xgc2-agilex-serial-imu"
+    "ros-${ROS_DISTRO}-xgc2-agilex-serial-imu, ros-${ROS_DISTRO}-xgc2-camera-driver (>= 0.4.0-1), ${media_edge_dependency}, gstreamer1.0-tools, gstreamer1.0-plugins-good, gstreamer1.0-plugins-ugly"
   write_readme "${pkg_root}" "${deb_pkg}" "${ros_pkg}" "${version}"
 
   cat > "${pkg_root}/DEBIAN/conffiles" <<EOF
