@@ -1,122 +1,74 @@
-# Chassis hold v1
+# Scout chassis HOLD host
 
-The private UDP Hub is retired. The platform control route uses the installed
-`XgcChassisHold::Server` component and the actual XRPC HTTP SDK.
-One native chassis process owns one Unix endpoint; world embedding shares its
-framework's existing endpoint and instance. `hold_robot_id` and `hold_socket`
-are explicit launch inputs. The systemd unit owns `/run/xgc2-agilex-chassis` (0700),
-and its socket is `/run/xgc2-agilex-chassis/hold.sock`. The process exports a fresh
-instance ID; a caller must discover and bind that instance before mutations.
+The driver instantiates `ChassisHold` and `UdpEndpoint` from chassis-hold
+0.2.0 and serves `xgc2.chassis.hold` over `udp.v1`, bound to `0.0.0.0`.
+The library owns the state machine, service methods, authentication,
+instance identity and release revisions. See its
+[contract](https://github.com/XGC-Team/xgc2-chassis-hold/blob/fcfe8f441ad257b049c27dfc0ea4351bae6733f0/contracts/chassis-hold.md).
+The driver links only the `core` and `udp` components, which support Bionic.
 
-`GET /v1/chassis/descriptor` is the explicit discovery method. It returns the
-ServiceRef (`target_id`, service `chassis.hold`, API version `1`, instance ID,
-profile `http.v1`, Unix address), fixed robot roster, batch and queue bounds,
-and completion capability. Empty/wildcard robot IDs are rejected.
+| Private ROS parameter | Default | Meaning |
+| --- | --- | --- |
+| `hold_robot_id` | Required | Registered identity of this one chassis |
+| `hold_port` | `19530` | UDP service port, 1..65535 |
+| `hold_key_file` | `/etc/xgc2/chassis-hold.key` | Authentication key file |
+| `hold_boot_held` | `false` | Start held after each process restart |
+| `hold_required` | `true` | Exit with an error when the endpoint cannot start |
 
-`POST /v1/chassis/hold` accepts exactly this JSON schema, with unsigned integer
-CAS revision and 1..16 distinct registered robot IDs:
+Launches require `robot_id` and forward the other four parameters as
+arguments with these defaults. Autostart reads the corresponding
+`XGC2_CHASSIS_HOLD_*` settings from `/etc/xgc2/agilex/onboard.env`.
 
-```json
-{"expected_revision":0,"changes":[{"robot_id":"site-robot-01","held":true}]}
-```
-
-`GET /v1/chassis/hold` observes the native state after earlier admitted queue
-entries. The initial revision is 0 and gates are open. A successful POST returns
-200 only after the sole native command owner masks the complete affected batch,
-applies zero for every affected robot, and returns from those command writes.
-Release (`held:false`) also writes zero before opening the gate. A receipt is:
-
-```json
-{"stage":"applied","revision":1,"completion":"command-gated","physical_stop_confirmed":false,"robots":[{"robot_id":"site-robot-01","held":true}],"changes":[{"robot_id":"site-robot-01","requested_held":true,"zero_applied":true}]}
-```
-
-A stale revision returns 409 without a command write. Schema failures return
-400, oversized payloads 413, and full admission returns 429 or SDK connection
-rejection. A native write failure returns 503 (`stage:failed`); all affected
-gates stay held, individual `zero_applied` values expose partial writes, and
-the revision advances because hardware effects cannot be rolled back. A queued
-deadline/cancellation produces `not-applied` (504/499) when a response remains
-possible. A caller that disconnects or times out after execution starts has
-unknown delivery and must observe the instance/revision; the client must not
-replay a mutation automatically. Transport receipt, physical velocity zero,
-and board acknowledgement are separate facts. This provider supports only
-`command-gated`, always reports `physical_stop_confirmed:false`, and exposes
-`physical_stop_supported:false` in discovery.
-
-The provider's one IO owner performs HTTP/JSON/identity work. It passes only
-fixed plain commands through 32 retained slots to one fixed native executor.
-The native tick processes at most 16 queue entries by default, with no socket,
-JSON, transport reply, allocation, or new thread. Cancelled callers retain
-admission until their native work terminates. Embedded providers create no
-listener or worker: the framework IO owner calls `handle` and `finish`, and
-its native owner calls `control_tick` and `held(index)` against a fixed roster.
-Native command work must quiesce before destroying the provider; queued work
-is then aborted, IO is joined, retained replies are released, and the endpoint
-lease ends after the native output context has stopped. An executing request
-keeps the old source owner fenced even if its caller leaves.
-
-The composition root captures only explicit reserved `XGC2_XRPC_*` environment
-settings once. `GET /v1/chassis/runtime-policy` reports the actually resolved
-SDK policy and source; this provider exposes no live policy mutation. Product
-ceilings are 32 connections/inflight, 4096 header/request bytes, 8192 response
-bytes, and 250 ms call time. Unknown, unsupported, and over-ceiling settings
-fail before opening an endpoint. Embedded routes consume their existing
-framework policy, still enforcing their own 4096-byte and 250-ms domain bounds.
-The hold roster, revision, queue and replies are process-local memory; this
-route adds no durable state or history store. The only transport filesystem
-writes are the SDK-owned lease/socket in the explicitly owned runtime directory.
-
-`test/CMakeLists.txt` consumes installed dependencies and exercises real Unix
-HTTP, CAS, batch masking, partial native failure, release zero, native output
-thread ownership, allocation-free gate/idle queries, malformed payloads, stale instance,
-deadline, retained cancellation, overload, queued/executing shutdown lifetime,
-and framework embedding. The workflow tests amd64/arm64 plain and ASan/UBSan,
-including the installed SDK libraries. The workflow pins exact XRPC,
-state-machine and chassis-hold source revisions and uses the controlled Focal
-build image. HOLD is supplied by xgc2-chassis-hold, without a robotics-interfaces
-dependency.
-
-Installed-consumer build:
+The robot setup user-script provisions the key; this package ships no key.
+The file contains one `<key_id> <base64 of 32 bytes>` entry per line and is
+owned by `agilex:agilex`, the chassis service account (`User=agilex`), mode
+`0600`. Its parent directory `/etc/xgc2` is `root:root`, mode `0755`:
 
 ```sh
-cmake -S test -B build/chassis-hold-test -DCMAKE_PREFIX_PATH=/path/to/installed/prefix
-cmake --build build/chassis-hold-test --parallel 2
-ctest --test-dir build/chassis-hold-test --output-on-failure
+sudo install -d -o root -g root -m 0755 /etc/xgc2
+sudo install -o agilex -g agilex -m 0600 <keyfile> /etc/xgc2/chassis-hold.key
 ```
 
-The State and Server public APIs require C++17. Rpc integration and the SDK
-implementation require C++20. Controlled Focal builds use clang++-10 with the
-matching libstdc++ runtime. JSON-HTTP encoding belongs to XRPC; JsonCpp >=1.7.4
-is used only by the independent test peer. State-machine transitions may
-allocate in their bounded diagnostics; native gate/idle queries do not allocate.
-No maintained Bionic XRPC package or vehicle-compatible Bionic toolchain/ABI
-has been validated. Source and isolated Focal tests do not establish a vehicle
-installation or measured physical stop.
-The existing native CAN/serial protocol and user ROS topics remain their device
-and algorithm interfaces.
+With `hold_required=true`, an unreadable, missing, empty or malformed key
+ends the process non-zero. With false, the driver logs the endpoint error
+once and drives without HOLD, including when `hold_boot_held` was requested.
 
-Scout wiring: `ScoutROSMessenger::ControlTick` runs before and after `ros::spinOnce`
-on the existing main WallRate loop. Its sole Twist callback and hold zero sink
-update `ScoutBase::SetMotionCommand`; SDK command state zero is completion,
-without a CAN/UART delivery acknowledgement. The existing command worker is
-warmed before HTTP admission and stopped/joined before endpoint teardown. The
-vendor's old aborting `Terminate` and non-stopping destructor were corrected;
-`ScoutBase` joins before destroying its virtual command state. This lifetime
-fix does not strengthen physical stop or board acknowledgement semantics.
+The `/cmd_vel` callback receives a ROS `MessageEvent` and passes its
+`getReceiptTime().toNSec()` to `admit` before `SetMotionCommand`. The domain
+clock is `ros::Time::now().toNSec()`. Held commands and commands received
+before the last release are dropped, including a callback dispatched after
+release. Release never replays an old command.
 
-Optional isolated device-output fixture (both built device targets required):
+The messenger's existing 50 Hz run loop owns SDK output and calls `tick()`
+once per cycle before dispatching queued callbacks. Each held tick calls
+`SetMotionCommand(0, 0)` through `HoldZero`, keeping zero CAN frames flowing.
+A successful write allows `zero_written`. Feedback is the Scout state
+linear and angular velocity the messenger already reads, with the ROS stamp.
+Only reported rest after zero output can advance to `stopped`, using the
+library defaults of 0.02 m/s, 0.05 rad/s and a continuous 300 ms dwell.
+The simulated robot supplies its published simulated velocities as feedback.
+
+SDK exceptions and failed HOLD zero writes end the process non-zero.
+Normal shutdown stops the endpoint and library, writes zero and terminates
+the SDK worker. The required ROS node ends its launch on exit; the chassis
+systemd unit retains `Restart=always` with a five-second delay. Every new
+driver process has a new library instance. Real-vehicle acceptance is out
+of scope for this fixture.
+
+The driver fixture uses the installed `xgc2-hold`, temporary keys owned by
+the test user with mode `0600`, and a private ROS master on a random port in
+20000..40000 with its own `ROS_HOME`. It runs `scout_base_node` with
+`_simulated_robot:=true`, counts actual command-write debug traces, checks
+state feedback and tests missing/unreadable keys. A fixture-only sleep
+barrier queues a command before release and verifies its later callback is
+dropped with the gate open. Library contract and transport-fault tests stay
+in the chassis-hold repository.
 
 ```sh
-. /path/to/isolated-catkin/devel/setup.bash
-/usr/bin/python3 test/ros_device_output_test.py \
-  --devel /path/to/isolated-catkin/devel --helpers build/chassis-hold-test
+. /path/to/catkin/devel/setup.bash
+cmake -S test -B .work/hold-test \
+  -DSCOUT_DEVEL_PREFIX=/path/to/catkin/devel \
+  -DPYTHON_EXECUTABLE=/usr/bin/python3
+cmake --build .work/hold-test --parallel 2
+(cd .work/hold-test && ctest --output-on-failure)
 ```
-
-The fixture owns a random-port ROS master and private temporary ROS home/logs,
-pauses ROS time, and tests the actual simulated Scout messenger plus actual
-Wheeltec serial frames through a PTY. A fixture-only DTR/RTS ioctl shim permits
-PTY modem operations; data bytes still use the actual serial library. It
-checks hold masking under ongoing nonzero ROS commands, stale CAS, release,
-normal SIGINT and socket cleanup. No CAN, real serial device, physical chassis
-or existing ROS master is used. The actual Scout worker lifetime also has a
-catkin CTest entry `chassis_worker_lifetime`, without opening any device.

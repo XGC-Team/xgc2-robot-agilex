@@ -58,6 +58,23 @@ xgc2-agilex-onboard-teleop.service
   Requires ros-*-xgc2-agilex-onboard-teleop.
 ```
 
+The chassis driver serves `xgc2.chassis.hold` over `udp.v1` on port 19530.
+Set `XGC2_CHASSIS_ROBOT_ID` to this vehicle's registered identity before
+enabling chassis. The robot setup user-script provisions the key owned by
+the service account `agilex:agilex`, mode `0600`, in root-owned `/etc/xgc2`
+with mode `0755`; this package ships no key:
+
+```sh
+sudo install -d -o root -g root -m 0755 /etc/xgc2
+sudo install -o agilex -g agilex -m 0600 <keyfile> /etc/xgc2/chassis-hold.key
+```
+
+HOLD is required by default. Launch `chassis.launch`, `scout_base.launch`
+or `scout_mini_base.launch` with `robot_id:=<registered-id>`; optional
+`hold_port`, `hold_key_file`, `hold_boot_held` and `hold_required` arguments
+use the same defaults. See the [driver HOLD contract](docs/chassis-hold-contract.md)
+for the receipt-time gate, feedback and verification.
+
 ## Packages
 
 | Debian package | ROS package | Role |

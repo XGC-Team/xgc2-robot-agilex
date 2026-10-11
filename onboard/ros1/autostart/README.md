@@ -33,6 +33,32 @@ src/agilex_onboard_autostart
 `wait-roscore`, sleeps a 2s-class stagger, then `roslaunch --wait`.
 Children must not spawn a master. Chassis `Wants=` roscore.
 
+`start-chassis` requires `XGC2_CHASSIS_ROBOT_ID` and launches
+`chassis.launch`, which includes the driver and its `udp.v1` HOLD endpoint.
+Both `scout_base.launch` and `scout_mini_base.launch` accept the same arguments.
+
+| Site setting | Launch argument | Default |
+| --- | --- | --- |
+| `XGC2_CHASSIS_ROBOT_ID` | `robot_id` | Required |
+| `XGC2_CHASSIS_HOLD_PORT` | `hold_port` | `19530` |
+| `XGC2_CHASSIS_HOLD_KEY_FILE` | `hold_key_file` | `/etc/xgc2/chassis-hold.key` |
+| `XGC2_CHASSIS_HOLD_BOOT_HELD` | `hold_boot_held` | `false` |
+| `XGC2_CHASSIS_HOLD_REQUIRED` | `hold_required` | `true` |
+
+The robot setup user-script provisions `/etc/xgc2/chassis-hold.key` as
+`agilex:agilex`, matching `User=agilex` in the chassis unit, with mode `0600`.
+Its directory `/etc/xgc2` is `root:root`, mode `0755`. This package ships no key.
+
+```sh
+sudo install -d -o root -g root -m 0755 /etc/xgc2
+sudo install -o agilex -g agilex -m 0600 <keyfile> /etc/xgc2/chassis-hold.key
+```
+
+With the default `hold_required=true`, an unusable key ends the driver
+non-zero; the required ROS node ends its launch and systemd restarts it
+after five seconds. With false, the driver logs the endpoint error once
+and drives without HOLD. See the [driver HOLD contract](../../../docs/chassis-hold-contract.md).
+
 `start-camera` launches `camera.launch` for ROS algorithms. `start-media-edge`
 sources the ROS setup and exports `ROS_MASTER_URI`/`ROS_IP` for its
 `xgc2_ros_image_pipe` child. Media Edge's `color` pipeline uses `nvv4l2-fdsrc`

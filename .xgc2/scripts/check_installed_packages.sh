@@ -5,6 +5,8 @@ ROS_DISTRO="${ROS_DISTRO:-melodic}"
 PREFIX="/opt/ros/${ROS_DISTRO}"
 
 deb_packages=(
+  "libxgc2-chassis-hold1"
+  "libxgc2-xrpc-udp1"
   "ros-${ROS_DISTRO}-scout-msgs"
   "ros-${ROS_DISTRO}-xgc2-agilex"
   "ros-${ROS_DISTRO}-xgc2-agilex-wrp-io"
@@ -35,6 +37,11 @@ ros_packages=(
 for package in "${deb_packages[@]}"; do
   dpkg -s "${package}" >/dev/null
 done
+
+for package in libxgc2-chassis-hold1 libxgc2-xrpc-udp1; do
+  dpkg --compare-versions "$(dpkg-query -W -f='${Version}' "${package}")" ge 0.2.0
+done
+command -v xgc2-hold >/dev/null
 
 if dpkg -s "ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs" >/dev/null 2>&1; then
   echo "retired fork ros-${ROS_DISTRO}-xgc2-agilex-scout-msgs must not be installed" >&2
@@ -122,6 +129,8 @@ test ! -f "${PREFIX}/share/agilex_swarm_ros_bridge/config/ros_topics.yaml"
 test ! -f "${PREFIX}/share/agilex_onboard_autostart/config/ros_topics.yaml"
 test -f "${PREFIX}/share/agilex_onboard_autostart/launch/swarm.launch"
 test -f /lib/systemd/system/xgc2-agilex-chassis.service
+# The documented key owner must be the chassis service account.
+grep -qx 'User=agilex' /lib/systemd/system/xgc2-agilex-chassis.service
 test -f /lib/systemd/system/xgc2-agilex-roscore.service
 test -f /lib/systemd/system/xgc2-agilex-usb-recover@.service
 test ! -e /lib/systemd/system/xgc2-field-panel.service
@@ -179,7 +188,7 @@ recv_topics: []
 YAML
 
 roslaunch --files agilex_onboard_autostart imu-hi226.launch >/dev/null
-roslaunch --files agilex_onboard_autostart chassis.launch robot_id:=launch-validation hold_socket:=/tmp/launch-validation.sock >/dev/null
+roslaunch --files agilex_onboard_autostart chassis.launch robot_id:=launch-validation >/dev/null
 roslaunch --files agilex_swarm_ros_bridge swarm.launch "config:=${bridge_stub}" >/dev/null
 roslaunch --files agilex_onboard_autostart swarm.launch "config:=${bridge_stub}" >/dev/null
 roslaunch --files xgc2_onboard_teleop teleop.launch >/dev/null

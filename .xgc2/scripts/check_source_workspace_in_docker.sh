@@ -56,6 +56,9 @@ docker run --rm --network none \
     : "${ROS_DISTRO:?ROS_DISTRO must be set in the image}"
     /workspace/agilex/.xgc2/scripts/require_image_ros.sh
     /workspace/agilex/.xgc2/scripts/install_local_xgc2_debs.sh
+    dpkg --compare-versions "$(dpkg-query -W -f='"'"'${Version}'"'"' libxgc2-chassis-hold-dev)" ge 0.2.0
+    dpkg -s libxgc2-chassis-hold1 libxgc2-xrpc-udp1 >/dev/null
+    command -v xgc2-hold >/dev/null
 
     find /workspace/agilex/onboard/ros1/chassis/src \
       /workspace/agilex/onboard/ros1/communication/src \
@@ -100,7 +103,7 @@ docker run --rm --network none \
     set +u
     source /opt/ros/${ROS_DISTRO}/setup.bash
     set -u
-    catkin_make install \
+    catkin_make install -j2 \
       -DCMAKE_INSTALL_PREFIX=/opt/ros/${ROS_DISTRO} \
       -DCMAKE_BUILD_TYPE=Release
     set +u
@@ -208,11 +211,11 @@ send_topics: []
 recv_topics: []
 YAML
     roslaunch --files agilex_onboard_autostart imu-hi226.launch >/dev/null
-    roslaunch --files agilex_onboard_autostart chassis.launch robot_id:=launch-validation hold_socket:=/tmp/launch-validation.sock >/dev/null
+    roslaunch --files agilex_onboard_autostart chassis.launch robot_id:=launch-validation >/dev/null
     roslaunch --files agilex_onboard_autostart description.launch >/dev/null
     roslaunch --files agilex_swarm_ros_bridge swarm.launch "config:=${bridge_stub}" >/dev/null
     roslaunch --files agilex_onboard_autostart swarm.launch "config:=${bridge_stub}" >/dev/null
-    roslaunch --files scout_base scout_mini_base.launch robot_id:=launch-validation hold_socket:=/tmp/launch-validation.sock >/dev/null
+    roslaunch --files scout_base scout_mini_base.launch robot_id:=launch-validation >/dev/null
     roslaunch --files xgc2_onboard_teleop teleop.launch >/dev/null
     rm -f -- "${bridge_stub}"
   '
