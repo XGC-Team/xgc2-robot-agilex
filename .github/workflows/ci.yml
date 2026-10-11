@@ -28,6 +28,7 @@ jobs:
         run: |
           set -euo pipefail
           git diff --check HEAD
+          python3 tests/check_camera_rules.py
           test ! -e onboard/ros1/src
           test ! -e onboard/ros1/base
           test ! -e onboard/ros1/chassis/src/autostart
