@@ -5,7 +5,7 @@
   <include file="$(find xgc2_camera_driver)/launch/camera.launch">
     <arg name="camera_ns" value="$(arg camera_ns)" />
     <arg name="config_file" value="$(find agilex_onboard_autostart)/config/d435.yaml" />
-    <arg name="backend" value="v4l2" />
+    <arg name="source_kind" value="v4l2" />
     <arg name="video_device" value="$(arg video_device)" />
     <arg name="width" value="640" />
     <arg name="height" value="480" />
