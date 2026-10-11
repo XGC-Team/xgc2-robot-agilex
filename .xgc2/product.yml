@@ -152,10 +152,13 @@ release:
   workflow: release.yml
   dependency_policy:
     libxgc2-chassis-hold-dev: verify
+    xgc2-camera-ros1: order
+    xgc2-media-edge: order
     xgc2-ros-msgs: rebuild
     xgc2-ros-melodic-scout-description: verify
     xgc2-scout-description: verify
     xgc2-swarm-ros-bridge: verify
+    xgc2-xrpc: rebuild
   apt_versions:
     bionic: 0.2.0-37
     focal: 0.2.0-37
