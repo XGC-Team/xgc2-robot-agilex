@@ -56,7 +56,6 @@ int main(int argc, char **argv) {
       messenger.PublishSimStateToROS(linear, angular);
     }
     ros::spinOnce();
-    messenger.ControlTick();
     rate.sleep();
   }
 

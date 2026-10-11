@@ -14,8 +14,9 @@
   <url type="repository">TODO</url>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>libxgc2-chassis-hold-dev</build_depend>
-  <run_depend>libxgc2-chassis-hold0</run_depend>
+  <build_depend version_gte="0.2.0">libxgc2-chassis-hold-dev</build_depend>
+  <run_depend version_gte="0.2.0">libxgc2-chassis-hold1</run_depend>
+  <run_depend>libxgc2-xrpc-udp1</run_depend>
   <build_depend>scout_msgs</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>roslaunch</build_depend>

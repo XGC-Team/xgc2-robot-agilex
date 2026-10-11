@@ -19,11 +19,13 @@
 
 #include "scout_msgs/ScoutLightCmd.h"
 #include "ugv_sdk/scout/scout_base.hpp"
-#include <xgc2/chassis_hold/server.hpp>
+#include <xgc2/chassis_hold/chassis_hold.hpp>
+#include <xgc2/chassis_hold/udp_endpoint.hpp>
 
 namespace westonrobot
 {
-class ScoutROSMessenger
+class ScoutROSMessenger : private xgc2::chassis_hold::ZeroSink,
+                          private xgc2::chassis_hold::FeedbackSource
 {
 public:
     explicit ScoutROSMessenger(ros::NodeHandle *nh);
@@ -55,11 +57,16 @@ private:
     ros::Time last_time_;
     ros::Time current_time_;
 
-    void TwistCmdCallback(const geometry_msgs::Twist::ConstPtr &msg);
+    void TwistCmdCallback(const ros::MessageEvent<geometry_msgs::Twist const> &event);
     void LightCmdCallback(const scout_msgs::ScoutLightCmd::ConstPtr &msg);
     void HoldZero();
-    static bool ApplyHoldZero(void *self, std::size_t robot) noexcept;
-    std::unique_ptr<xgc2::chassis_hold::HoldServer> hold_provider_;
+    bool write_zero(const std::string &robot_id, std::string &error) override;
+    bool latest(const std::string &robot_id, xgc2::chassis_hold::Feedback &sample) override;
+    std::string hold_robot_id_;
+    xgc2::chassis_hold::Feedback hold_feedback_;
+    bool hold_feedback_available_ = false;
+    std::unique_ptr<xgc2::chassis_hold::ChassisHold> hold_;
+    std::unique_ptr<xgc2::chassis_hold::UdpEndpoint> hold_endpoint_;
 };
 } // namespace westonrobot
 
