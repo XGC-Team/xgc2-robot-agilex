@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 jobs:
-  native-http:
+  scout-udp:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 15
     strategy:
@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: XGC-Team/xgc2-xrpc
-          ref: f8a9258f7d3c395ccdef27405cccadceb794884c
+          ref: d33afa88c42655f3c6ecbe26ce701ea392dbd8fc
           path: _dependencies/xrpc
       - uses: actions/checkout@v4
         with:
@@ -30,8 +30,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: XGC-Team/xgc2-chassis-hold
-          ref: 35ce45b2996824a49c32328342a9c231215907e8
+          ref: fcfe8f441ad257b049c27dfc0ea4351bae6733f0
           path: _dependencies/chassis-hold
+      - uses: actions/checkout@v4
+        with:
+          repository: XGC-Team/xgc2-ros-msgs
+          ref: 1d64dd80324df2a9b8d1db584131855b8bcabc8f
+          path: _dependencies/ros-msgs
       - name: Exercise installed HOLD against pinned SDKs
         env:
           VARIANT: ${{ matrix.variant }}
@@ -46,19 +51,45 @@ jobs:
               prefix="$work/prefix"
               flags=()
               if [[ "$VARIANT" == sanitized ]]; then
-                # Shared ASAN permits the fixture new/delete fault injection.
                 flags=(-DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer"
                        -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=address,undefined"
                        -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined -shared-libasan -Wl,-rpath,$(clang++-10 -print-resource-dir)/lib/linux")
               fi
               for component in state-machine xrpc chassis-hold; do
+                components=()
+                if [[ "$component" == xrpc ]]; then
+                  components=(-DXGC2_XRPC_COMPONENTS=udp)
+                elif [[ "$component" == chassis-hold ]]; then
+                  components=(-DXGC2_CHASSIS_HOLD_BUILD_HTTP=OFF)
+                fi
                 cmake -S "/repo/_dependencies/$component" -B "$work/$component" \
                   -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=OFF \
-                  -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" "${flags[@]}"
+                  -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" \
+                  "${components[@]}" "${flags[@]}"
                 cmake --build "$work/$component" --parallel 2
                 cmake --install "$work/$component"
               done
+              set +u
+              source /opt/ros/noetic/setup.bash
+              set -u
+              export CMAKE_PREFIX_PATH="$prefix:$CMAKE_PREFIX_PATH"
+              export LD_LIBRARY_PATH="$prefix/lib:$(clang++-10 -print-resource-dir)/lib/linux:${LD_LIBRARY_PATH:-}"
+              export PATH="$prefix/bin:$PATH"
+              mkdir -p "$work/src"
+              for package in wrp_io ugv_sdk scout_base; do
+                ln -s "/repo/onboard/ros1/chassis/src/$package" "$work/src/$package"
+              done
+              ln -s /repo/_dependencies/ros-msgs/scout_msgs "$work/src/scout_msgs"
+              catkin_make -C "$work" -j2 -DCMAKE_BUILD_TYPE=Debug \
+                -DPYTHON_EXECUTABLE=/usr/bin/python3 "${flags[@]}"
+              set +u
+              source "$work/devel/setup.bash"
+              set -u
+              if [[ "$VARIANT" == sanitized ]]; then
+                export SCOUT_TEST_RUNTIME_PRELOAD="$(find "$(clang++-10 -print-resource-dir)/lib" -name "libclang_rt.asan-*.so" -print -quit)"
+              fi
               cmake -S /repo/test -B "$work/consumer" -DCMAKE_PREFIX_PATH="$prefix" \
+                -DSCOUT_DEVEL_PREFIX="$work/devel" -DPYTHON_EXECUTABLE=/usr/bin/python3 \
                 -DCMAKE_BUILD_TYPE=Debug "${flags[@]}"
               cmake --build "$work/consumer" --parallel 2
               cd "$work/consumer"

@@ -1,21 +1,24 @@
 cmake_minimum_required(VERSION 3.16)
-project(ChassisHoldNativeTests LANGUAGES CXX)
+project(ScoutHoldTests LANGUAGES CXX)
 include(CTest)
-find_package(XgcChassisHold 0.1.0 CONFIG REQUIRED COMPONENTS Server Rpc)
-find_package(Threads REQUIRED)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(HoldTestJsonCpp REQUIRED IMPORTED_TARGET jsoncpp>=1.7.4)
-add_executable(chassis_hold_native_test chassis_hold_native_test.cpp)
-target_compile_features(chassis_hold_native_test PRIVATE cxx_std_20)
-target_compile_options(chassis_hold_native_test PRIVATE -Wall -Wextra -Werror -UNDEBUG)
-target_link_libraries(chassis_hold_native_test PRIVATE XgcChassisHold::Server XgcChassisHold::Rpc PkgConfig::HoldTestJsonCpp Threads::Threads)
-add_test(NAME chassis_hold_native COMMAND chassis_hold_native_test)
-set_tests_properties(chassis_hold_native PROPERTIES TIMEOUT 20)
-
-# Optional ROS/device-output fixture helpers; not part of installed products.
-add_executable(chassis_hold_peer chassis_hold_peer.cpp)
-target_link_libraries(chassis_hold_peer PRIVATE XgcChassisHold::Server XgcChassisHold::Rpc PkgConfig::HoldTestJsonCpp Threads::Threads)
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  add_library(pty_modem_shim SHARED pty_modem_shim.cpp)
-  target_link_libraries(pty_modem_shim PRIVATE ${CMAKE_DL_LIBS})
+find_package(XgcChassisHold 0.2.0 CONFIG REQUIRED COMPONENTS core udp)
+find_package(PythonInterp 3 REQUIRED)
+find_program(XGC2_HOLD_CLI xgc2-hold)
+if(NOT XGC2_HOLD_CLI)
+  message(FATAL_ERROR "The installed xgc2-hold command line tool is required")
 endif()
+
+set(SCOUT_DEVEL_PREFIX "" CACHE PATH "Catkin devel space containing the Scout driver")
+if(NOT SCOUT_DEVEL_PREFIX)
+  message(FATAL_ERROR "SCOUT_DEVEL_PREFIX must name the built catkin devel space")
+endif()
+
+add_library(scout_loop_barrier SHARED scout_loop_barrier.cpp)
+target_compile_features(scout_loop_barrier PRIVATE cxx_std_17)
+target_compile_options(scout_loop_barrier PRIVATE -Wall -Wextra -Werror)
+target_link_libraries(scout_loop_barrier PRIVATE ${CMAKE_DL_LIBS})
+
+add_test(NAME scout_hold COMMAND ${PYTHON_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/ros_device_output_test.py
+  --devel ${SCOUT_DEVEL_PREFIX} --helpers ${CMAKE_CURRENT_BINARY_DIR})
+set_tests_properties(scout_hold PROPERTIES TIMEOUT 60)
