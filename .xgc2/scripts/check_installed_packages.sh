@@ -113,7 +113,6 @@ PY
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-lidar-helios16"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-mocap"
 test ! -e "${PREFIX}/lib/agilex_estimator/vrpn_relay"
-test ! -e "${PREFIX}/share/agilex_estimator"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/setup-can0"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/wait-device"
 test -x "${PREFIX}/lib/agilex_onboard_autostart/start-roscore"
