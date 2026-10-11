@@ -175,7 +175,10 @@ def main():
             engaged = cli('engage', '--robot', 'scout-fixture')['reply']['robots'][0]
             assert engaged['outcome'] == 'engaged' and engaged['revision'] == 1
             assert engaged['stage'] == 'zero_written', 'native tick did not write zero for engage'
-            assert state()['stage'] == 'zero_written'
+            # The dwell timer keeps running while this CLI process starts, so a slow
+            # (sanitized, emulated) host may already report the resting stage.
+            engaged_state = state()
+            assert engaged_state['held'] and engaged_state['stage'] in ('zero_written', 'stopped')
             offset = log_path.stat().st_size
             for _ in range(15):
                 publish(.4)
