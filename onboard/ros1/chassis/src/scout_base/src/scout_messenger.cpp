@@ -11,6 +11,7 @@
 
 #include "scout_msgs/ScoutStatus.h"
 #include <stdexcept>
+#include <limits>
 
 namespace westonrobot
 {
@@ -42,6 +43,24 @@ namespace westonrobot
 
   bool ScoutROSMessenger::latest(const std::string &,
                                 xgc2::chassis_hold::Feedback &sample) {
+    if (!simulated_robot_) {
+      ScoutState state;
+      std::chrono::steady_clock::time_point received_at;
+      std::int64_t stamp_ns = 0;
+      auto *tracked = dynamic_cast<MotionTrackedScoutBase *>(scout_);
+      const bool valid = tracked != nullptr && tracked->GetMotionState(state, received_at, stamp_ns);
+      const auto age = std::chrono::steady_clock::now() - received_at;
+      // Missing telemetry is unknown, not rest. Explicit nonfinite evidence
+      // also clears an earlier stopped stage and breaks its dwell continuity.
+      if (!valid || age < decltype(age)::zero() || age > std::chrono::milliseconds(200)) {
+        hold_feedback_available_ = false;
+        const double unknown = std::numeric_limits<double>::quiet_NaN();
+        sample = {unknown, unknown, hold_->now()};
+        return true;
+      }
+      hold_feedback_ = {state.linear_velocity, state.angular_velocity, stamp_ns};
+      hold_feedback_available_ = true;
+    }
     sample = hold_feedback_;
     return hold_feedback_available_;
   }
@@ -70,6 +89,8 @@ namespace westonrobot
     xgc2::chassis_hold::HoldOptions options;
     options.robots = {hold_robot_id_};
     options.domain.clock = [] { return ros::Time::now().toNSec(); };
+    if (auto *tracked = dynamic_cast<MotionTrackedScoutBase *>(scout_))
+      tracked->SetMotionFeedbackClock(options.domain.clock);
     private_node.param<bool>("hold_boot_held", options.domain.boot_held, false);
     options.feedback = this;
     xgc2::chassis_hold::UdpEndpointOptions udp_options;
@@ -220,9 +241,6 @@ namespace westonrobot
     }
 
     auto state = scout_->GetScoutState();
-    hold_feedback_ = {state.linear_velocity, state.angular_velocity,
-                      static_cast<xgc2::chassis_hold::TimeNs>(current_time_.toNSec())};
-    hold_feedback_available_ = true;
 
     // publish scout state message
     scout_msgs::ScoutStatus status_msg;

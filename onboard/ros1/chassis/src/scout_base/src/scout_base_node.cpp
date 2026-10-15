@@ -8,7 +8,7 @@
 
 using namespace westonrobot;
 
-std::shared_ptr<ScoutBase> robot;
+std::shared_ptr<MotionTrackedScoutBase> robot;
 
 int main(int argc, char **argv) {
   // setup ROS node
@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
   std::cout << "Working as scout mini: " << is_scout_mini << std::endl;
 
   // instantiate a robot object
-  robot = std::make_shared<ScoutBase>(is_scout_mini);
+  robot = std::make_shared<MotionTrackedScoutBase>(is_scout_mini);
   ScoutROSMessenger messenger(robot.get(), &node);
 
   // fetch parameters before connecting to robot

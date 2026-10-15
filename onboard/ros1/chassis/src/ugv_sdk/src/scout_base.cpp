@@ -96,6 +96,54 @@ ScoutState ScoutBase::GetScoutState() {
   return scout_state_;
 }
 
+MotionTrackedScoutBase::MotionTrackedScoutBase(bool is_scout_mini)
+    : ScoutBase(is_scout_mini) {}
+
+MotionTrackedScoutBase::~MotionTrackedScoutBase() {
+  Terminate();
+  // Quiesce CAN callbacks before destroying the derived receipt state.
+  Disconnect();
+  can_connected_ = false;
+  serial_connected_ = false;
+}
+
+void MotionTrackedScoutBase::SetMotionFeedbackClock(std::function<std::int64_t()> clock) {
+  std::lock_guard<std::mutex> guard(feedback_mutex_);
+  feedback_clock_ = std::move(clock);
+  motion_state_valid_ = false;
+}
+
+bool MotionTrackedScoutBase::GetMotionState(
+    ScoutState &state, std::chrono::steady_clock::time_point &received_at,
+    std::int64_t &measurement_stamp_ns) {
+  // The same outer lock spans base parser updates and this whole snapshot.
+  std::lock_guard<std::mutex> guard(feedback_mutex_);
+  state = GetScoutState();
+  received_at = motion_state_received_at_;
+  measurement_stamp_ns = motion_state_stamp_ns_;
+  return motion_state_valid_;
+}
+
+void MotionTrackedScoutBase::ParseCANFrame(can_frame *rx_frame) {
+  const auto received_at = std::chrono::steady_clock::now();
+  if (rx_frame == nullptr || rx_frame->can_dlc > CAN_MAX_DLEN) return;
+  const bool motion = rx_frame->can_id == CAN_MSG_MOTION_STATE_ID;
+  if (motion && rx_frame->can_dlc != sizeof(MotionStateMessage)) return;
+  std::lock_guard<std::mutex> guard(feedback_mutex_);
+  // Stamp actual ingress once, never a later cache poll. The monotonic age
+  // accounts for any time spent waiting for the snapshot/clock lock.
+  const auto age = std::chrono::steady_clock::now() - received_at;
+  const std::int64_t stamp = feedback_clock_
+      ? feedback_clock_() - std::chrono::duration_cast<std::chrono::nanoseconds>(age).count()
+      : std::chrono::duration_cast<std::chrono::nanoseconds>(received_at.time_since_epoch()).count();
+  ScoutBase::ParseCANFrame(rx_frame);
+  if (motion) {
+    motion_state_received_at_ = received_at;
+    motion_state_stamp_ns_ = stamp;
+    motion_state_valid_ = true;
+  }
+}
+
 void ScoutBase::SetMotionCommand(double linear_vel, double angular_vel) {
   // make sure cmd thread is started before attempting to send commands
   if (!cmd_thread_started_) StartCmdThread();

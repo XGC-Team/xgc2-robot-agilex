@@ -15,6 +15,7 @@
 #include <thread>
 #include <mutex>
 #include <functional>
+#include <chrono>
 
 #include "ugv_sdk/mobile_base.hpp"
 #include "ugv_sdk/proto/agx_msg_parser.h"
@@ -41,6 +42,7 @@ class ScoutBase : public MobileBase {
   void DisableLightCmdControl();
 
  private:
+  friend class MotionTrackedScoutBase;
   bool is_scout_mini_ = false;
   // cmd/status update related variables
   std::mutex scout_state_mutex_;
@@ -59,6 +61,30 @@ class ScoutBase : public MobileBase {
 
   void NewStatusMsgReceivedCallback(const AgxMessage &msg);
   static void UpdateScoutState(const AgxMessage &status_msg, ScoutState &state);
+};
+
+// Explicit opt-in type: the original ScoutBase object layout and virtual table
+// remain unchanged for clients already linked to libugv_sdk.so.
+class MotionTrackedScoutBase final : public ScoutBase {
+ public:
+  explicit MotionTrackedScoutBase(bool is_scout_mini = false);
+  ~MotionTrackedScoutBase() override;
+
+  // Nanoseconds on the consumer's feedback clock. Changing clocks invalidates
+  // cached evidence; only a subsequent complete motion frame makes it valid.
+  void SetMotionFeedbackClock(std::function<std::int64_t()> clock);
+  bool GetMotionState(ScoutState &state,
+                      std::chrono::steady_clock::time_point &received_at,
+                      std::int64_t &measurement_stamp_ns);
+
+ private:
+  std::mutex feedback_mutex_;
+  std::chrono::steady_clock::time_point motion_state_received_at_{};
+  std::int64_t motion_state_stamp_ns_ = 0;
+  std::function<std::int64_t()> feedback_clock_;
+  bool motion_state_valid_ = false;
+
+  void ParseCANFrame(can_frame *rx_frame) override;
 };
 }  // namespace westonrobot
 
