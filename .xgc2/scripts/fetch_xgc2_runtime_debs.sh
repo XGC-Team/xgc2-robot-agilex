@@ -58,22 +58,22 @@ fetch() {
 # from the same distribution as the driver. No cross-distribution fallback.
 fetch "libxgc2-chassis-hold1" "0.2.0-1~${distribution}"
 fetch "libxgc2-chassis-hold-dev" "0.2.0-1~${distribution}"
-fetch "libxgc2-xrpc-udp1" "0.2.0-1~${distribution}"
-fetch "libxgc2-xrpc-udp-dev" "0.2.0-1~${distribution}"
+fetch "libxgc2-xrpc-udp1" "0.2.1-1~${distribution}"
+fetch "libxgc2-xrpc-udp-dev" "0.2.1-1~${distribution}"
 if [[ "${distribution}" != "bionic" ]]; then
   # The focal chassis HOLD development package depends on the XRPC development
   # package, which in turn depends on the runtime library.
-  fetch "libxgc2-xrpc2" "0.2.0-1~${distribution}"
-  fetch "libxgc2-xrpc-dev" "0.2.0-1~${distribution}"
+  fetch "libxgc2-xrpc2" "0.2.1-1~${distribution}"
+  fetch "libxgc2-xrpc-dev" "0.2.1-1~${distribution}"
 fi
 fetch "libxgc2-state-machine-dev" "0.1.3-13~${distribution}"
-fetch "ros-${ros_distro}-scout-msgs" "1.5.0-1"
+fetch "ros-${ros_distro}-scout-msgs" "2.0.0-1"
 if [[ "${ros_distro}" == "melodic" ]]; then
   fetch "ros-${ros_distro}-xgc2-scout-description" "0.4.10-3"
-  fetch "ros-${ros_distro}-swarm-ros-bridge" "1.1.0-12"
+  fetch "ros-${ros_distro}-swarm-ros-bridge" "1.1.0-13"
 else
   fetch "ros-${ros_distro}-xgc2-scout-description" "0.4.10-17"
-  fetch "ros-${ros_distro}-swarm-ros-bridge" "1.1.0-12"
+  fetch "ros-${ros_distro}-swarm-ros-bridge" "1.1.0-13"
 fi
 
 ls -l "${out_dir}"
